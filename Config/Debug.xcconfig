@@ -1,0 +1,6 @@
+// Debug build configuration.
+// Points at the production backend rather than localhost — no local fuel-api dev server is
+// assumed to be running. Switch back to a local URL here if you spin one up.
+// NOTE: xcconfig treats `//` as a comment start, so `$()` (empty macro expansion) is inserted to
+// break up the sequence without changing the substituted value — a standard xcconfig workaround.
+API_BASE_URL = https:/$()/api.fueltracker.uk

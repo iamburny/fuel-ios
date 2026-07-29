@@ -1,0 +1,63 @@
+name: FuelTracker
+options:
+  bundleIdPrefix: uk.co.fuelprices
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    TARGETED_DEVICE_FAMILY: "1"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+
+configs:
+  Debug: debug
+  Release: release
+
+targets:
+  FuelTracker:
+    type: application
+    platform: iOS
+    sources:
+      - path: FuelTracker
+        excludes:
+          - Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: uk.co.fuelprices
+        INFOPLIST_FILE: FuelTracker/Info.plist
+        GENERATE_INFOPLIST_FILE: false
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    configFiles:
+      Debug: Config/Debug.xcconfig
+      Release: Config/Release.xcconfig
+
+  FuelTrackerTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: FuelTrackerTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: uk.co.fuelprices.tests
+        GENERATE_INFOPLIST_FILE: true
+    dependencies:
+      - target: FuelTracker
+
+schemes:
+  FuelTracker:
+    build:
+      targets:
+        FuelTracker: all
+        FuelTrackerTests: [test]
+    test:
+      targets:
+        - FuelTrackerTests
+    run:
+      config: Debug
