@@ -43,6 +43,7 @@
 		BA261E6F96512B3C6ED3405C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B14496D8AC2AFA53A0A331 /* SettingsView.swift */; };
 		C0397FCCAB491510AE5EBE16 /* HeatmapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AF276F8D403CEF92636C33 /* HeatmapTests.swift */; };
 		C6CAB881E9EC5C78D4D8CC5F /* AuthError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153BAC309AF6650C0CFBEAB1 /* AuthError.swift */; };
+		C889F6DACB809DB00405256B /* FavouritesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4938992849D7AC30456936C /* FavouritesViewModel.swift */; };
 		E330C9A3365AD1EBF8776B9E /* FavouritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 813E621897DE404192DB412E /* FavouritesView.swift */; };
 		E625C9992184D039AA1ED603 /* StationDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AAD55E85CFCCC66C91445A2 /* StationDTOs.swift */; };
 		E767F58CA0F6432F9A04B24E /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D8FF2E1E9BE97A4DA15CDF /* AppContainer.swift */; };
@@ -104,6 +105,7 @@
 		C99A3F8C6A03E027CD6E9700 /* FuelCostCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelCostCalculator.swift; sourceTree = "<group>"; };
 		C9D8FF2E1E9BE97A4DA15CDF /* AppContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContainer.swift; sourceTree = "<group>"; };
 		D279C9D6589B0C809B85F2EE /* PricesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PricesView.swift; sourceTree = "<group>"; };
+		D4938992849D7AC30456936C /* FavouritesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavouritesViewModel.swift; sourceTree = "<group>"; };
 		DFCE7D304FDB7E22B42CF25F /* CachedStation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedStation.swift; sourceTree = "<group>"; };
 		EE2681B5EF62475C88251122 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		EFAB747E97673DB1C7E395F4 /* HeatmapMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapMapView.swift; sourceTree = "<group>"; };
@@ -175,6 +177,7 @@
 			isa = PBXGroup;
 			children = (
 				813E621897DE404192DB412E /* FavouritesView.swift */,
+				D4938992849D7AC30456936C /* FavouritesViewModel.swift */,
 			);
 			path = Favourites;
 			sourceTree = "<group>";
@@ -473,6 +476,7 @@
 				761920A623D115613C9E216D /* DetailViewModel.swift in Sources */,
 				B9B53D7709219FA155A09BC5 /* FavouriteAndAlertDTOs.swift in Sources */,
 				E330C9A3365AD1EBF8776B9E /* FavouritesView.swift in Sources */,
+				C889F6DACB809DB00405256B /* FavouritesViewModel.swift in Sources */,
 				49B913EE45B7A7FC18FC7E4C /* FuelCostCalculator.swift in Sources */,
 				F51EA92612A1D15D2AECA6BD /* FuelMapView.swift in Sources */,
 				F2CEDA9D07D8CCDEE09943B9 /* FuelPricesAPI.swift in Sources */,

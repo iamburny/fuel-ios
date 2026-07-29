@@ -70,4 +70,8 @@ enum FuelType: String, Codable, CaseIterable, Identifiable, Sendable {
     static func longLabel(forRaw raw: String) -> String {
         FuelType(rawValue: raw)?.longLabel ?? raw
     }
+
+    static func label(forRaw raw: String, useLongNames: Bool) -> String {
+        useLongNames ? longLabel(forRaw: raw) : shortLabel(forRaw: raw)
+    }
 }
