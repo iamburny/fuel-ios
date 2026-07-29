@@ -4,3 +4,8 @@
 // NOTE: xcconfig treats `//` as a comment start, so `$()` (empty macro expansion) is inserted to
 // break up the sequence without changing the substituted value — a standard xcconfig workaround.
 API_BASE_URL = https:/$()/api.fueltracker.uk
+
+// Google Sign-In web/server client ID — left blank until a real one is supplied via
+// Config/Secrets.xcconfig (gitignored). The "Continue with Google" button shows a friendly
+// "not configured yet" message rather than crashing when this is empty.
+GOOGLE_CLIENT_ID =

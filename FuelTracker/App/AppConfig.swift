@@ -11,4 +11,15 @@ enum AppConfig {
         }
         return url
     }
+
+    /// Google Sign-In web/server client ID. Unlike `apiBaseURL`, absence here isn't fatal — it
+    /// mirrors Android's `BuildConfig.GOOGLE_WEB_CLIENT_ID.isBlank()` guard: the "Continue with
+    /// Google" button degrades to a friendly "not configured yet" message instead of crashing
+    /// when no real OAuth client ID has been supplied via `Config/Secrets.xcconfig`.
+    static var googleClientID: String? {
+        guard let raw = Bundle.main.object(forInfoDictionaryKey: "GoogleClientID") as? String, !raw.isEmpty else {
+            return nil
+        }
+        return raw
+    }
 }

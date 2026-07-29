@@ -37,5 +37,7 @@
 	<string>Fuel Tracker UK uses your location to show nearby fuel stations and estimate drive costs.</string>
 	<key>APIBaseURL</key>
 	<string>$(API_BASE_URL)</string>
+	<key>GoogleClientID</key>
+	<string>$(GOOGLE_CLIENT_ID)</string>
 </dict>
 </plist>
