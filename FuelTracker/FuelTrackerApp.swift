@@ -22,6 +22,7 @@ struct FuelTrackerApp: App {
                 .modelContainer(container.modelContainer)
                 .environment(container.repository)
                 .environment(container.userPreferencesStore)
+                .environment(\.appContainer, container)
                 .onOpenURL { url in
                     GIDSignIn.sharedInstance.handle(url)
                 }

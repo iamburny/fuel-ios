@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import SwiftUI
 
 /// Manual dependency container — the lightweight iOS equivalent of Android's Hilt `AppModule`.
 /// Constructed once in `FuelTrackerApp` and threaded through the view hierarchy via SwiftUI's
@@ -12,6 +13,8 @@ final class AppContainer {
     let apiClient: APIClient
     let api: FuelPricesAPI
     let repository: FuelRepository
+    let locationManager: LocationManager
+    let analytics: AppAnalytics
 
     init() {
         let schema = Schema([CachedStation.self, CachedFuelPrice.self])
@@ -26,5 +29,24 @@ final class AppContainer {
         apiClient = APIClient(baseURL: AppConfig.apiBaseURL, tokenStore: tokenStore)
         api = FuelPricesAPIClient(client: apiClient)
         repository = FuelRepository(api: api, modelContext: container.mainContext, tokenStore: tokenStore)
+        locationManager = LocationManager()
+        analytics = NoOpAppAnalytics() // Phase 8 (Extras) swaps in a real Firebase-backed impl.
+    }
+}
+
+/// Custom `EnvironmentKey` so any view can pull the whole container (needed to construct view
+/// models with several dependencies — e.g. `NearbyViewModel` needs the repository, location
+/// manager, preferences store, AND analytics) without threading each one through separately.
+/// `repository`/`userPreferencesStore` are ALSO injected individually via `.environment(_:)` in
+/// `FuelTrackerApp` so views can read them reactively (`@Environment(FuelRepository.self)`)
+/// without going through this key.
+private struct AppContainerKey: EnvironmentKey {
+    static let defaultValue: AppContainer? = nil
+}
+
+extension EnvironmentValues {
+    var appContainer: AppContainer? {
+        get { self[AppContainerKey.self] }
+        set { self[AppContainerKey.self] = newValue }
     }
 }

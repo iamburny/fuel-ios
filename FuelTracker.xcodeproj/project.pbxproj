@@ -14,6 +14,7 @@
 		18CA9A7884F527DAF99297AB /* CachedStation.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFCE7D304FDB7E22B42CF25F /* CachedStation.swift */; };
 		1C8AFF31C60E93B02A659BF2 /* UserPreferencesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31EB626E9B81C5478B568DF1 /* UserPreferencesStore.swift */; };
 		1F65F367869C32089D7C3BCF /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9724E2CC34089EAEB03A705D /* AuthView.swift */; };
+		2150CE5AC7919E32E28B1F4C /* PriceLineChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3BF373821F6CA70597AE426 /* PriceLineChart.swift */; };
 		2A5C14465C22C169110ADE8F /* FuelTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B06843CA8A7C09D2CF6E8B33 /* FuelTypes.swift */; };
 		2FB0038DE67AEF22644EBB45 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7898E3F37EC3036C8FD68E92 /* Assets.xcassets */; };
 		37AE7F8788395F56286AA5B5 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DE5294BDECED78127CEF1B3 /* RootView.swift */; };
@@ -21,21 +22,28 @@
 		49B913EE45B7A7FC18FC7E4C /* FuelCostCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99A3F8C6A03E027CD6E9700 /* FuelCostCalculator.swift */; };
 		4B6793CC999E2F48565819A0 /* DTODecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39D72CD0A4324420884D5936 /* DTODecodingTests.swift */; };
 		504F12856FA172FABCCD4FFC /* AmenitiesFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A958BB1CBD077001814397E4 /* AmenitiesFormatter.swift */; };
+		5E2151C96C81DB6227B467B6 /* NearbyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85F7A0CCB5B7A5994961C93C /* NearbyViewModel.swift */; };
+		62108BE2D0183495BBDD67CB /* AppAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50C82551799419E764CB389A /* AppAnalytics.swift */; };
 		65B3334613162999BA551F44 /* GoogleMaps in Frameworks */ = {isa = PBXBuildFile; productRef = 5098F7B1E07B3B90AC7B2274 /* GoogleMaps */; };
 		6BFEA0C130CEE2E79E6E9D0B /* PushTokenProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C6BFE3F5F5E5E838CF7B19B /* PushTokenProvider.swift */; };
 		6F699105069E4AB11D46B416 /* FuelCostCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B63AF83E6E6156CE1B977B3 /* FuelCostCalculatorTests.swift */; };
+		761920A623D115613C9E216D /* DetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BFB672611E5491BC0B9601A /* DetailViewModel.swift */; };
+		780BFD4C6A1E2D1CC86FF17F /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2BC003592118816A4331969 /* LocationManager.swift */; };
 		8E6C2190AC13ED58353FCDB6 /* APIEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F0E084682F4D958FFF7ECC /* APIEndpoint.swift */; };
 		90C32F00A5713F86A3EF1556 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 510737701D84644C853C3131 /* GoogleSignIn */; };
 		90C871DD3DF7EC6E3B980C4F /* PricesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D279C9D6589B0C809B85F2EE /* PricesView.swift */; };
 		AB53C78F7A82FA9C46E80C04 /* FuelRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DE7CBC4B3430E78BF39121F /* FuelRepository.swift */; };
+		ABBF4E5C47A3C632B3ABD10E /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41DBF56E22F4A12C2A0DECA0 /* DetailView.swift */; };
 		B9B53D7709219FA155A09BC5 /* FavouriteAndAlertDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4892DDE26B1C0AC28E82B9C6 /* FavouriteAndAlertDTOs.swift */; };
 		BA261E6F96512B3C6ED3405C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B14496D8AC2AFA53A0A331 /* SettingsView.swift */; };
 		C6CAB881E9EC5C78D4D8CC5F /* AuthError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153BAC309AF6650C0CFBEAB1 /* AuthError.swift */; };
 		E330C9A3365AD1EBF8776B9E /* FavouritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 813E621897DE404192DB412E /* FavouritesView.swift */; };
 		E625C9992184D039AA1ED603 /* StationDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AAD55E85CFCCC66C91445A2 /* StationDTOs.swift */; };
 		E767F58CA0F6432F9A04B24E /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D8FF2E1E9BE97A4DA15CDF /* AppContainer.swift */; };
+		E870D73ECE42C2BA993AECD7 /* OpeningHoursTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0915A796F986476B981A0C37 /* OpeningHoursTableView.swift */; };
 		F2CEDA9D07D8CCDEE09943B9 /* FuelPricesAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3458D5975C955DA191E9FCA8 /* FuelPricesAPI.swift */; };
 		F4DF075A45602EF0167B0D5E /* NearbyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BE1075432AD2E4C56B5D7B7 /* NearbyView.swift */; };
+		F51EA92612A1D15D2AECA6BD /* FuelMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F66A025FA31DDD6482CEC58 /* FuelMapView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +57,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0915A796F986476B981A0C37 /* OpeningHoursTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpeningHoursTableView.swift; sourceTree = "<group>"; };
 		0C6BFE3F5F5E5E838CF7B19B /* PushTokenProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushTokenProvider.swift; sourceTree = "<group>"; };
 		0DE7CBC4B3430E78BF39121F /* FuelRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelRepository.swift; sourceTree = "<group>"; };
 		153BAC309AF6650C0CFBEAB1 /* AuthError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthError.swift; sourceTree = "<group>"; };
@@ -57,16 +66,21 @@
 		3458D5975C955DA191E9FCA8 /* FuelPricesAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelPricesAPI.swift; sourceTree = "<group>"; };
 		39D72CD0A4324420884D5936 /* DTODecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DTODecodingTests.swift; sourceTree = "<group>"; };
 		3B63AF83E6E6156CE1B977B3 /* FuelCostCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelCostCalculatorTests.swift; sourceTree = "<group>"; };
+		41DBF56E22F4A12C2A0DECA0 /* DetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailView.swift; sourceTree = "<group>"; };
 		4892DDE26B1C0AC28E82B9C6 /* FavouriteAndAlertDTOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavouriteAndAlertDTOs.swift; sourceTree = "<group>"; };
 		4A86CEDB3B3AB27F880FF146 /* FuelTracker.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FuelTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4B55220A8703E44AC8082908 /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
 		4BE1075432AD2E4C56B5D7B7 /* NearbyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyView.swift; sourceTree = "<group>"; };
+		50C82551799419E764CB389A /* AppAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAnalytics.swift; sourceTree = "<group>"; };
 		5A44E3BA842112F05DD868F5 /* AuthDTOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthDTOs.swift; sourceTree = "<group>"; };
+		5F66A025FA31DDD6482CEC58 /* FuelMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelMapView.swift; sourceTree = "<group>"; };
 		5F8824CEA02FEA8338D681F9 /* FuelTrackerTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FuelTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6D5037197EC2CF6CA2A1E50D /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		744158385E279DFA14EC64A3 /* FuelTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelTrackerApp.swift; sourceTree = "<group>"; };
 		7898E3F37EC3036C8FD68E92 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		813E621897DE404192DB412E /* FavouritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavouritesView.swift; sourceTree = "<group>"; };
+		85F7A0CCB5B7A5994961C93C /* NearbyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyViewModel.swift; sourceTree = "<group>"; };
+		8BFB672611E5491BC0B9601A /* DetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailViewModel.swift; sourceTree = "<group>"; };
 		918FEAC0E75319DCE561C1F2 /* TokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenStore.swift; sourceTree = "<group>"; };
 		9724E2CC34089EAEB03A705D /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
 		975BA00866541975CD74E4D3 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
@@ -74,6 +88,8 @@
 		A4F0E084682F4D958FFF7ECC /* APIEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIEndpoint.swift; sourceTree = "<group>"; };
 		A958BB1CBD077001814397E4 /* AmenitiesFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmenitiesFormatter.swift; sourceTree = "<group>"; };
 		B06843CA8A7C09D2CF6E8B33 /* FuelTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelTypes.swift; sourceTree = "<group>"; };
+		B3BF373821F6CA70597AE426 /* PriceLineChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceLineChart.swift; sourceTree = "<group>"; };
+		C2BC003592118816A4331969 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		C99A3F8C6A03E027CD6E9700 /* FuelCostCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelCostCalculator.swift; sourceTree = "<group>"; };
 		C9D8FF2E1E9BE97A4DA15CDF /* AppContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContainer.swift; sourceTree = "<group>"; };
 		D279C9D6589B0C809B85F2EE /* PricesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PricesView.swift; sourceTree = "<group>"; };
@@ -128,9 +144,12 @@
 			isa = PBXGroup;
 			children = (
 				744158385E279DFA14EC64A3 /* FuelTrackerApp.swift */,
+				5367D57B1470CD36CDBE3D28 /* Analytics */,
 				514DE1CACD93646735D8E391 /* App */,
+				779C13BCBC0B2BA54177AE09 /* Components */,
 				176DC592F96E7E3461608FFE /* Domain */,
 				8163F392FE9BB2641702DE3A /* Features */,
+				CE751E09DBD08BAF415C8A3D /* Location */,
 				AAA1FF3C54774AE09DA50AB8 /* Networking */,
 				6C0A537740CCE53CD8CE921B /* Persistence */,
 				F77E8EA40BCCCE2EB0AE48AA /* Push */,
@@ -152,6 +171,7 @@
 			isa = PBXGroup;
 			children = (
 				4BE1075432AD2E4C56B5D7B7 /* NearbyView.swift */,
+				85F7A0CCB5B7A5994961C93C /* NearbyViewModel.swift */,
 			);
 			path = Nearby;
 			sourceTree = "<group>";
@@ -175,6 +195,14 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		5367D57B1470CD36CDBE3D28 /* Analytics */ = {
+			isa = PBXGroup;
+			children = (
+				50C82551799419E764CB389A /* AppAnalytics.swift */,
+			);
+			path = Analytics;
+			sourceTree = "<group>";
+		};
 		5499A8B400E6E41D18D24127 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
@@ -193,10 +221,20 @@
 			path = Persistence;
 			sourceTree = "<group>";
 		};
+		779C13BCBC0B2BA54177AE09 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				5F66A025FA31DDD6482CEC58 /* FuelMapView.swift */,
+				B3BF373821F6CA70597AE426 /* PriceLineChart.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
 		8163F392FE9BB2641702DE3A /* Features */ = {
 			isa = PBXGroup;
 			children = (
 				229189EAE9FDC7DD93EB6624 /* Auth */,
+				E7F575C57E600C02DF428824 /* Detail */,
 				42437E5DD2C15B6C61F791EB /* Favourites */,
 				4381A910AE3026BFD321C510 /* Nearby */,
 				CE548E8E0E55C1BA619812EB /* Prices */,
@@ -250,6 +288,14 @@
 			path = Prices;
 			sourceTree = "<group>";
 		};
+		CE751E09DBD08BAF415C8A3D /* Location */ = {
+			isa = PBXGroup;
+			children = (
+				C2BC003592118816A4331969 /* LocationManager.swift */,
+			);
+			path = Location;
+			sourceTree = "<group>";
+		};
 		CF1EB6B23C18D93938081020 /* DTOs */ = {
 			isa = PBXGroup;
 			children = (
@@ -266,6 +312,16 @@
 				F1B14496D8AC2AFA53A0A331 /* SettingsView.swift */,
 			);
 			path = Settings;
+			sourceTree = "<group>";
+		};
+		E7F575C57E600C02DF428824 /* Detail */ = {
+			isa = PBXGroup;
+			children = (
+				41DBF56E22F4A12C2A0DECA0 /* DetailView.swift */,
+				8BFB672611E5491BC0B9601A /* DetailViewModel.swift */,
+				0915A796F986476B981A0C37 /* OpeningHoursTableView.swift */,
+			);
+			path = Detail;
 			sourceTree = "<group>";
 		};
 		F77E8EA40BCCCE2EB0AE48AA /* Push */ = {
@@ -379,6 +435,7 @@
 			files = (
 				8E6C2190AC13ED58353FCDB6 /* APIEndpoint.swift in Sources */,
 				504F12856FA172FABCCD4FFC /* AmenitiesFormatter.swift in Sources */,
+				62108BE2D0183495BBDD67CB /* AppAnalytics.swift in Sources */,
 				39051261F8DFF2CC5F6B28B9 /* AppConfig.swift in Sources */,
 				E767F58CA0F6432F9A04B24E /* AppContainer.swift in Sources */,
 				156FEDF491D165280A68E5F8 /* AuthDTOs.swift in Sources */,
@@ -386,14 +443,21 @@
 				1F65F367869C32089D7C3BCF /* AuthView.swift in Sources */,
 				0B003EF3FC197F0FD2EFAA55 /* AuthViewModel.swift in Sources */,
 				18CA9A7884F527DAF99297AB /* CachedStation.swift in Sources */,
+				ABBF4E5C47A3C632B3ABD10E /* DetailView.swift in Sources */,
+				761920A623D115613C9E216D /* DetailViewModel.swift in Sources */,
 				B9B53D7709219FA155A09BC5 /* FavouriteAndAlertDTOs.swift in Sources */,
 				E330C9A3365AD1EBF8776B9E /* FavouritesView.swift in Sources */,
 				49B913EE45B7A7FC18FC7E4C /* FuelCostCalculator.swift in Sources */,
+				F51EA92612A1D15D2AECA6BD /* FuelMapView.swift in Sources */,
 				F2CEDA9D07D8CCDEE09943B9 /* FuelPricesAPI.swift in Sources */,
 				AB53C78F7A82FA9C46E80C04 /* FuelRepository.swift in Sources */,
 				17235223E4E762F13C2C1376 /* FuelTrackerApp.swift in Sources */,
 				2A5C14465C22C169110ADE8F /* FuelTypes.swift in Sources */,
+				780BFD4C6A1E2D1CC86FF17F /* LocationManager.swift in Sources */,
 				F4DF075A45602EF0167B0D5E /* NearbyView.swift in Sources */,
+				5E2151C96C81DB6227B467B6 /* NearbyViewModel.swift in Sources */,
+				E870D73ECE42C2BA993AECD7 /* OpeningHoursTableView.swift in Sources */,
+				2150CE5AC7919E32E28B1F4C /* PriceLineChart.swift in Sources */,
 				90C871DD3DF7EC6E3B980C4F /* PricesView.swift in Sources */,
 				6BFEA0C130CEE2E79E6E9D0B /* PushTokenProvider.swift in Sources */,
 				37AE7F8788395F56286AA5B5 /* RootView.swift in Sources */,

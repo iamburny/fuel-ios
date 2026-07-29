@@ -370,3 +370,10 @@ struct PriceHistoryResponse: Decodable, Sendable {
         case history
     }
 }
+
+extension StationDTO {
+    /// The cheapest reported price for `fuelType` at this station, if any.
+    func cheapestPrice(for fuelType: String) -> PriceDTO? {
+        prices.filter { $0.fuelType == fuelType }.min { $0.pricePence < $1.pricePence }
+    }
+}
