@@ -45,13 +45,15 @@ final class NearbyViewModel {
     private var searchTask: Task<Void, Never>?
     private var boundsTask: Task<Void, Never>?
     private var locationUpdatesTask: Task<Void, Never>?
+    private var bootstrapTask: Task<Void, Never>?
+    private var permissionListenerTask: Task<Void, Never>?
 
     init(repository: FuelRepository, locationManager: LocationManager, preferencesStore: UserPreferencesStore, analytics: AppAnalytics) {
         self.repository = repository
         self.locationManager = locationManager
         self.preferencesStore = preferencesStore
         self.analytics = analytics
-        Task { await bootstrap() }
+        bootstrapTask = Task { [weak self] in await self?.bootstrap() }
     }
 
     private func bootstrap() async {
@@ -78,10 +80,19 @@ final class NearbyViewModel {
         startLocationUpdates()
 
         // Keep listening in case permission lands after our short wait above (e.g. the dialog
-        // took longer than 3s to answer, or it's granted later via Settings).
-        for await _ in locationManager.permissionGranted {
-            await loadNearby()
-            startLocationUpdates()
+        // took longer than 3s to answer, or it's granted later via Settings). Split into its own
+        // task (rather than continuing this same async function) so `[weak self]` can be
+        // re-checked on EVERY iteration of this effectively-infinite loop — a single `guard let
+        // self` at the top of one long-lived function would re-capture `self` strongly for the
+        // rest of its execution, silently defeating the weak capture and leaking this view model
+        // for the app's lifetime.
+        permissionListenerTask = Task { [weak self] in
+            guard let stream = self?.locationManager.permissionGranted else { return }
+            for await _ in stream {
+                guard let self else { return }
+                await self.loadNearby()
+                self.startLocationUpdates()
+            }
         }
     }
 
