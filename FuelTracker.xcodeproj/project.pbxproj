@@ -34,6 +34,7 @@
 		6F699105069E4AB11D46B416 /* FuelCostCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B63AF83E6E6156CE1B977B3 /* FuelCostCalculatorTests.swift */; };
 		761920A623D115613C9E216D /* DetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BFB672611E5491BC0B9601A /* DetailViewModel.swift */; };
 		780BFD4C6A1E2D1CC86FF17F /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2BC003592118816A4331969 /* LocationManager.swift */; };
+		8738F2AA67954B81C01F716A /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A5B20BB98CBD24B95D78FC /* SettingsViewModel.swift */; };
 		8E6C2190AC13ED58353FCDB6 /* APIEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F0E084682F4D958FFF7ECC /* APIEndpoint.swift */; };
 		90C32F00A5713F86A3EF1556 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 510737701D84644C853C3131 /* GoogleSignIn */; };
 		90C871DD3DF7EC6E3B980C4F /* PricesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D279C9D6589B0C809B85F2EE /* PricesView.swift */; };
@@ -85,6 +86,7 @@
 		5A44E3BA842112F05DD868F5 /* AuthDTOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthDTOs.swift; sourceTree = "<group>"; };
 		5F66A025FA31DDD6482CEC58 /* FuelMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelMapView.swift; sourceTree = "<group>"; };
 		5F8824CEA02FEA8338D681F9 /* FuelTrackerTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FuelTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		66A5B20BB98CBD24B95D78FC /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
 		6D5037197EC2CF6CA2A1E50D /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		744158385E279DFA14EC64A3 /* FuelTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelTrackerApp.swift; sourceTree = "<group>"; };
 		75FB4099851DFCA3A333C428 /* PricesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PricesViewModel.swift; sourceTree = "<group>"; };
@@ -339,6 +341,7 @@
 			isa = PBXGroup;
 			children = (
 				F1B14496D8AC2AFA53A0A331 /* SettingsView.swift */,
+				66A5B20BB98CBD24B95D78FC /* SettingsViewModel.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -497,6 +500,7 @@
 				6BFEA0C130CEE2E79E6E9D0B /* PushTokenProvider.swift in Sources */,
 				37AE7F8788395F56286AA5B5 /* RootView.swift in Sources */,
 				BA261E6F96512B3C6ED3405C /* SettingsView.swift in Sources */,
+				8738F2AA67954B81C01F716A /* SettingsViewModel.swift in Sources */,
 				E625C9992184D039AA1ED603 /* StationDTOs.swift in Sources */,
 				02D03A92641D654F05EE7128 /* TokenStore.swift in Sources */,
 				1C8AFF31C60E93B02A659BF2 /* UserPreferencesStore.swift in Sources */,
