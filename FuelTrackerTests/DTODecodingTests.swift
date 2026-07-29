@@ -37,6 +37,24 @@ struct DTODecodingTests {
         #expect(!display.contains("LPG"))
     }
 
+    @Test func amenitiesObjectDecodeSkipsOnlyBadKeysNotWholeObject() throws {
+        // A stray non-boolean value for one amenity key must not blank out the others — the
+        // backend's amenities JSON has no fixed schema, so this needs to degrade per-key.
+        let json = """
+        {
+          "id": 1, "gov_id": "x", "name": "Test", "latitude": 0, "longitude": 0,
+          "amenities": {"car_wash": true, "lpg_pumps": "unexpected_string_value", "customer_toilets": false},
+          "prices": []
+        }
+        """.data(using: .utf8)!
+
+        let station = try JSONDecoder().decode(StationDTO.self, from: json)
+        let display = AmenitiesFormatter.displayList(for: station.amenities)
+        #expect(display.contains("Car Wash"))
+        #expect(!display.contains("Toilets"))
+        #expect(display.count == 1)
+    }
+
     @Test func decodesTokenResponseWithRole() throws {
         let json = """
         {"access_token": "abc.def.ghi", "token_type": "bearer", "role": "user"}

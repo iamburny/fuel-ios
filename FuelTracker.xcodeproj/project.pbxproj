@@ -25,6 +25,7 @@
 		AB53C78F7A82FA9C46E80C04 /* FuelRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DE7CBC4B3430E78BF39121F /* FuelRepository.swift */; };
 		B9B53D7709219FA155A09BC5 /* FavouriteAndAlertDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4892DDE26B1C0AC28E82B9C6 /* FavouriteAndAlertDTOs.swift */; };
 		BA261E6F96512B3C6ED3405C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B14496D8AC2AFA53A0A331 /* SettingsView.swift */; };
+		C6CAB881E9EC5C78D4D8CC5F /* AuthError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153BAC309AF6650C0CFBEAB1 /* AuthError.swift */; };
 		E330C9A3365AD1EBF8776B9E /* FavouritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 813E621897DE404192DB412E /* FavouritesView.swift */; };
 		E625C9992184D039AA1ED603 /* StationDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AAD55E85CFCCC66C91445A2 /* StationDTOs.swift */; };
 		E767F58CA0F6432F9A04B24E /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D8FF2E1E9BE97A4DA15CDF /* AppContainer.swift */; };
@@ -44,6 +45,7 @@
 
 /* Begin PBXFileReference section */
 		0DE7CBC4B3430E78BF39121F /* FuelRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelRepository.swift; sourceTree = "<group>"; };
+		153BAC309AF6650C0CFBEAB1 /* AuthError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthError.swift; sourceTree = "<group>"; };
 		1DE5294BDECED78127CEF1B3 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		31EB626E9B81C5478B568DF1 /* UserPreferencesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPreferencesStore.swift; sourceTree = "<group>"; };
 		3458D5975C955DA191E9FCA8 /* FuelPricesAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelPricesAPI.swift; sourceTree = "<group>"; };
@@ -127,6 +129,7 @@
 		4E462A4BEE94E14A5EADAD4D /* Repository */ = {
 			isa = PBXGroup;
 			children = (
+				153BAC309AF6650C0CFBEAB1 /* AuthError.swift */,
 				0DE7CBC4B3430E78BF39121F /* FuelRepository.swift */,
 			);
 			path = Repository;
@@ -333,6 +336,7 @@
 				39051261F8DFF2CC5F6B28B9 /* AppConfig.swift in Sources */,
 				E767F58CA0F6432F9A04B24E /* AppContainer.swift in Sources */,
 				156FEDF491D165280A68E5F8 /* AuthDTOs.swift in Sources */,
+				C6CAB881E9EC5C78D4D8CC5F /* AuthError.swift in Sources */,
 				18CA9A7884F527DAF99297AB /* CachedStation.swift in Sources */,
 				B9B53D7709219FA155A09BC5 /* FavouriteAndAlertDTOs.swift in Sources */,
 				E330C9A3365AD1EBF8776B9E /* FavouritesView.swift in Sources */,

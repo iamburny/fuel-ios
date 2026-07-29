@@ -9,12 +9,12 @@ struct DiscrepancyReportUrlResponse: Decodable, Sendable {
 /// interface. Trailing slashes on favourites/alerts/discrepancy paths are intentional, matching
 /// the Android client exactly (the backend's Express routes are mounted with them).
 protocol FuelPricesAPI: Sendable {
-    func getNearbyStations(lat: Double, lng: Double, radiusMiles: Double) async throws -> StationListResponse
-    func getStationsInBounds(minLat: Double, maxLat: Double, minLng: Double, maxLng: Double) async throws -> StationListResponse
+    func getNearbyStations(lat: Double, lng: Double, radiusMiles: Double, limit: Int) async throws -> StationListResponse
+    func getStationsInBounds(minLat: Double, maxLat: Double, minLng: Double, maxLng: Double, limit: Int) async throws -> StationListResponse
     func getStation(id: Int) async throws -> StationDTO
-    func searchStations(query: String) async throws -> StationListResponse
+    func searchStations(query: String, limit: Int) async throws -> StationListResponse
 
-    func getCheapest(fuelType: String, lat: Double?, lng: Double?, radiusMiles: Double) async throws -> CheapestResponse
+    func getCheapest(fuelType: String, lat: Double?, lng: Double?, radiusMiles: Double, limit: Int) async throws -> CheapestResponse
     func getNationalAverages() async throws -> AveragesResponse
     func getHeatmap(fuelType: String) async throws -> HeatmapResponse
     func getPriceHistory(stationId: Int, fuelType: String, days: Int) async throws -> PriceHistoryResponse
@@ -49,25 +49,30 @@ final class FuelPricesAPIClient: FuelPricesAPI {
 
     // MARK: - Stations
 
-    func getNearbyStations(lat: Double, lng: Double, radiusMiles: Double) async throws -> StationListResponse {
+    func getNearbyStations(lat: Double, lng: Double, radiusMiles: Double, limit: Int) async throws -> StationListResponse {
         try await client.request(APIEndpoint(
             path: "api/stations/nearby", method: .get,
             queryItems: [
                 .init(name: "lat", value: "\(lat)"),
                 .init(name: "lng", value: "\(lng)"),
-                .init(name: "radius_miles", value: "\(radiusMiles)"),
+                .init(name: "radius", value: "\(radiusMiles)"),
+                .init(name: "limit", value: "\(limit)"),
             ]
         ))
     }
 
-    func getStationsInBounds(minLat: Double, maxLat: Double, minLng: Double, maxLng: Double) async throws -> StationListResponse {
+    // Query param names are camelCase here (minLat/maxLat/minLng/maxLng), unlike every other
+    // endpoint's snake_case — matches the backend's actual route (fuel-api's stations.ts) exactly,
+    // confirmed against both the server and FuelPricesApi.kt's @Query annotations.
+    func getStationsInBounds(minLat: Double, maxLat: Double, minLng: Double, maxLng: Double, limit: Int) async throws -> StationListResponse {
         try await client.request(APIEndpoint(
             path: "api/stations/bounds", method: .get,
             queryItems: [
-                .init(name: "min_lat", value: "\(minLat)"),
-                .init(name: "max_lat", value: "\(maxLat)"),
-                .init(name: "min_lng", value: "\(minLng)"),
-                .init(name: "max_lng", value: "\(maxLng)"),
+                .init(name: "minLat", value: "\(minLat)"),
+                .init(name: "maxLat", value: "\(maxLat)"),
+                .init(name: "minLng", value: "\(minLng)"),
+                .init(name: "maxLng", value: "\(maxLng)"),
+                .init(name: "limit", value: "\(limit)"),
             ]
         ))
     }
@@ -76,17 +81,21 @@ final class FuelPricesAPIClient: FuelPricesAPI {
         try await client.request(APIEndpoint(path: "api/stations/\(id)", method: .get))
     }
 
-    func searchStations(query: String) async throws -> StationListResponse {
+    func searchStations(query: String, limit: Int) async throws -> StationListResponse {
         try await client.request(APIEndpoint(
             path: "api/stations/search/", method: .get,
-            queryItems: [.init(name: "q", value: query)]
+            queryItems: [.init(name: "q", value: query), .init(name: "limit", value: "\(limit)")]
         ))
     }
 
     // MARK: - Prices
 
-    func getCheapest(fuelType: String, lat: Double?, lng: Double?, radiusMiles: Double) async throws -> CheapestResponse {
-        var items = [URLQueryItem(name: "fuel_type", value: fuelType), .init(name: "radius_miles", value: "\(radiusMiles)")]
+    func getCheapest(fuelType: String, lat: Double?, lng: Double?, radiusMiles: Double, limit: Int) async throws -> CheapestResponse {
+        var items = [
+            URLQueryItem(name: "fuel_type", value: fuelType),
+            .init(name: "radius", value: "\(radiusMiles)"),
+            .init(name: "limit", value: "\(limit)"),
+        ]
         if let lat { items.append(.init(name: "lat", value: "\(lat)")) }
         if let lng { items.append(.init(name: "lng", value: "\(lng)")) }
         return try await client.request(APIEndpoint(path: "api/prices/cheapest", method: .get, queryItems: items))

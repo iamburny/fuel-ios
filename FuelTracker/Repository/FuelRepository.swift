@@ -56,7 +56,7 @@ final class FuelRepository {
             // No fuel_type filter — the backend restricts the prices array to just that fuel type
             // when one's given, which would make the cache incomplete for every other fuel type
             // filter. Fetching everything once lets the cache serve all of them.
-            let response = try await api.getNearbyStations(lat: lat, lng: lng, radiusMiles: radiusMiles)
+            let response = try await api.getNearbyStations(lat: lat, lng: lng, radiusMiles: radiusMiles, limit: 20)
             recordSuccess()
             cacheStations(response.stations)
             return response
@@ -86,7 +86,7 @@ final class FuelRepository {
         }
 
         do {
-            let response = try await api.getStationsInBounds(minLat: minLat, maxLat: maxLat, minLng: minLng, maxLng: maxLng)
+            let response = try await api.getStationsInBounds(minLat: minLat, maxLat: maxLat, minLng: minLng, maxLng: maxLng, limit: 100)
             recordSuccess()
             cacheStations(response.stations)
             return response
@@ -117,7 +117,7 @@ final class FuelRepository {
     /// Network-first, cache fallback (name/brand/postcode substring match) on failure.
     func searchStations(query: String) async throws -> StationListResponse {
         do {
-            return try await api.searchStations(query: query)
+            return try await api.searchStations(query: query, limit: 20)
         } catch {
             let cached = searchCachedStations(query: query).map { $0.toDTO(originLat: nil, originLng: nil) }
             return StationListResponse(count: cached.count, stations: cached)
@@ -128,7 +128,7 @@ final class FuelRepository {
     // with stale numbers — a Fair Use Policy compliance concern, not just a UX one.
 
     func getCheapest(fuelType: String = FuelType.default.rawValue, lat: Double? = nil, lng: Double? = nil, radiusMiles: Double = 10.0) async throws -> CheapestResponse {
-        try await api.getCheapest(fuelType: fuelType, lat: lat, lng: lng, radiusMiles: radiusMiles)
+        try await api.getCheapest(fuelType: fuelType, lat: lat, lng: lng, radiusMiles: radiusMiles, limit: 10)
     }
 
     func getNationalAverages() async throws -> AveragesResponse {
@@ -150,39 +150,59 @@ final class FuelRepository {
     // MARK: - Auth
 
     func login(email: String, password: String) async throws -> TokenResponse {
-        let response = try await api.login(email: email, password: password)
-        tokenStore.token = response.accessToken
-        tokenStore.email = email
-        return response
+        do {
+            let response = try await api.login(email: email, password: password)
+            tokenStore.token = response.accessToken
+            tokenStore.email = email
+            return response
+        } catch let error as APIError {
+            throw AuthError.from(error)
+        }
     }
 
     func register(email: String, password: String) async throws -> UserResponse {
-        try await api.register(RegisterRequest(email: email, password: password))
+        do {
+            return try await api.register(RegisterRequest(email: email, password: password))
+        } catch let error as APIError {
+            throw AuthError.from(error)
+        }
     }
 
     /// Exchange a Google ID token for the app JWT; `email` is stored for display (the backend
     /// response carries only the token).
     func loginWithGoogle(idToken: String, email: String) async throws -> TokenResponse {
-        let response = try await api.googleLogin(GoogleLoginRequest(idToken: idToken))
-        tokenStore.token = response.accessToken
-        tokenStore.email = email
-        return response
+        do {
+            let response = try await api.googleLogin(GoogleLoginRequest(idToken: idToken))
+            tokenStore.token = response.accessToken
+            tokenStore.email = email
+            return response
+        } catch let error as APIError {
+            throw AuthError.from(error)
+        }
     }
 
     /// Exchange an Apple identity token for the app JWT. Apple only sends `email`/`name` on the
     /// user's very first authorization — pass them through then, `nil` on subsequent sign-ins.
     func loginWithApple(idToken: String, email: String?, name: String?) async throws -> TokenResponse {
-        let response = try await api.appleLogin(AppleLoginRequest(idToken: idToken, email: email, name: name))
-        tokenStore.token = response.accessToken
-        if let email { tokenStore.email = email }
-        return response
+        do {
+            let response = try await api.appleLogin(AppleLoginRequest(idToken: idToken, email: email, name: name))
+            tokenStore.token = response.accessToken
+            if let email { tokenStore.email = email }
+            return response
+        } catch let error as APIError {
+            throw AuthError.from(error)
+        }
     }
 
     /// Ask the backend to email a password-reset link. The endpoint always succeeds (it never
     /// reveals whether the address is registered); the actual reset happens on the web page the
     /// email links to — there is deliberately no in-app "enter new password" screen.
     func forgotPassword(email: String) async throws {
-        try await api.forgotPassword(ForgotPasswordRequest(email: email))
+        do {
+            try await api.forgotPassword(ForgotPasswordRequest(email: email))
+        } catch let error as APIError {
+            throw AuthError.from(error)
+        }
     }
 
     /// Register this device's FCM token against the logged-in user (call after login).
@@ -230,12 +250,15 @@ final class FuelRepository {
             .map { $0.toDTO(originLat: lat, originLng: lng) }
     }
 
+    /// Matches Room's `getFreshStationsNear(..., limit = 100)` — used both for the primary
+    /// cache-hit path and the bounds-endpoint stale fallback.
     private func fetchCachedStations(minLat: Double, maxLat: Double, minLng: Double, maxLng: Double, freshAfter: Date) -> [CachedStation] {
-        let descriptor = FetchDescriptor<CachedStation>(predicate: #Predicate { station in
+        var descriptor = FetchDescriptor<CachedStation>(predicate: #Predicate { station in
             station.lastFetchedAt >= freshAfter &&
             station.latitude >= minLat && station.latitude <= maxLat &&
             station.longitude >= minLng && station.longitude <= maxLng
         })
+        descriptor.fetchLimit = 100
         return (try? modelContext.fetch(descriptor)) ?? []
     }
 
@@ -244,16 +267,26 @@ final class FuelRepository {
         return (try? modelContext.fetch(descriptor))?.first
     }
 
+    /// Matches Room's `getAllStations(limit = 100)` ordered by name — used only as the
+    /// `getNearbyStations` stale-network-failure fallback.
     private func allCachedStations() -> [CachedStation] {
-        (try? modelContext.fetch(FetchDescriptor<CachedStation>())) ?? []
+        var descriptor = FetchDescriptor<CachedStation>(sortBy: [SortDescriptor(\.name)])
+        descriptor.fetchLimit = 100
+        return (try? modelContext.fetch(descriptor)) ?? []
     }
 
+    /// Matches Room's `searchStations(query, limit = 20)`. Filtered in-memory rather than via
+    /// `#Predicate` (optional-string `Contains` support is finicky pre-iOS 17.4) — the cached
+    /// station count is small enough (UK-wide dataset, thousands not millions) that a full-table
+    /// scan on this rarely-hit offline-fallback path is fine.
     private func searchCachedStations(query: String) -> [CachedStation] {
-        allCachedStations().filter {
+        let all = (try? modelContext.fetch(FetchDescriptor<CachedStation>())) ?? []
+        let matches = all.filter {
             $0.name.localizedCaseInsensitiveContains(query) ||
             ($0.brand?.localizedCaseInsensitiveContains(query) ?? false) ||
             ($0.postcode?.localizedCaseInsensitiveContains(query) ?? false)
         }
+        return Array(matches.prefix(20))
     }
 
     private func cacheStations(_ stations: [StationDTO]) {

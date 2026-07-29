@@ -4,20 +4,37 @@ import Foundation
 // sometimes a flat array of enabled amenity keys (["adblue_packaged", "car_wash"]), sometimes an
 // object of key -> boolean. It's never guaranteed to match a fixed schema, so this decodes either
 // shape rather than assuming one. Mirrors `JsonElement?.toAmenitiesDisplayList()` in Models.kt.
+private struct AmenitiesCodingKey: CodingKey {
+    let stringValue: String
+    init?(stringValue: String) { self.stringValue = stringValue }
+    var intValue: Int? { nil }
+    init?(intValue: Int) { nil }
+}
+
 enum AmenitiesValue: Codable, Sendable {
     case array([String])
     case object([String: Bool])
     case none
 
     init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        if let array = try? container.decode([String].self) {
+        if let container = try? decoder.singleValueContainer(), let array = try? container.decode([String].self) {
             self = .array(array)
-        } else if let object = try? container.decode([String: Bool].self) {
-            self = .object(object)
-        } else {
-            self = .none
+            return
         }
+        // Decoded key-by-key (not as a single `[String: Bool]`) so a stray non-boolean value only
+        // drops that one key, matching Kotlin's per-entry filter
+        // (`(v as? JsonPrimitive)?.booleanOrNull == true`) instead of failing the whole object.
+        if let keyed = try? decoder.container(keyedBy: AmenitiesCodingKey.self) {
+            var result: [String: Bool] = [:]
+            for key in keyed.allKeys {
+                if let value = try? keyed.decode(Bool.self, forKey: key) {
+                    result[key.stringValue] = value
+                }
+            }
+            self = .object(result)
+            return
+        }
+        self = .none
     }
 
     func encode(to encoder: Encoder) throws {
