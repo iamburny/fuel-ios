@@ -28,7 +28,10 @@ struct AuthView: View {
                 }
             }
         }
-        .task {
+        // `.onAppear` runs synchronously before the first frame is presented, unlike `.task`
+        // (which schedules onto the cooperative thread pool and guarantees a one-frame flash of
+        // the loading `ProgressView()` even for this synchronous, non-`await` initializer).
+        .onAppear {
             if viewModel == nil {
                 viewModel = AuthViewModel(repository: repository, pushTokenProvider: NoOpPushTokenProvider())
             }
@@ -156,6 +159,10 @@ struct AuthView: View {
         }
 
         SignInWithAppleButton(.signIn) { request in
+            // Mirrors Android's `signInWithGoogle` clearing `error`/setting `loading` before the
+            // native picker launches, so a stale error banner doesn't linger under the sheet.
+            viewModel.errorMessage = nil
+            viewModel.loading = true
             request.requestedScopes = [.fullName, .email]
         } onCompletion: { result in
             handleAppleSignInResult(result, viewModel: viewModel)
@@ -179,6 +186,7 @@ struct AuthView: View {
             guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
                   let tokenData = credential.identityToken,
                   let idToken = String(data: tokenData, encoding: .utf8) else {
+                viewModel.loading = false
                 viewModel.errorMessage = "Apple sign-in failed. Please try again."
                 return
             }
@@ -197,6 +205,7 @@ struct AuthView: View {
                 // Android's silent handling of GetCredentialCancellationException.
                 viewModel.cancelSignIn()
             } else {
+                viewModel.loading = false
                 viewModel.errorMessage = "Apple sign-in failed. Please try again."
             }
         }

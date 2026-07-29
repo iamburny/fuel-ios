@@ -26,10 +26,19 @@ final class FuelRepository {
     /// threshold, rather than silently showing an empty/stale list.
     private(set) var apiFailureCount = 0
 
+    /// Explicit `@Observable` stored properties, not computed pass-throughs to `TokenStore` (which
+    /// isn't itself `@Observable` — it's a plain Keychain wrapper). Views can read
+    /// `repository.isLoggedIn`/`.currentEmail` directly and get correct SwiftUI observation
+    /// tracking with no manual re-render workaround needed.
+    private(set) var isLoggedIn: Bool
+    private(set) var currentEmail: String?
+
     init(api: FuelPricesAPI, modelContext: ModelContext, tokenStore: TokenStore) {
         self.api = api
         self.modelContext = modelContext
         self.tokenStore = tokenStore
+        self.isLoggedIn = tokenStore.isSignedIn
+        self.currentEmail = tokenStore.email
     }
 
     private func recordSuccess() { apiFailureCount = 0 }
@@ -149,11 +158,19 @@ final class FuelRepository {
 
     // MARK: - Auth
 
+    /// Persists the token/email to Keychain via `TokenStore` AND republishes the `@Observable`
+    /// `isLoggedIn`/`currentEmail` properties so SwiftUI views update automatically.
+    private func setSignedIn(token: String, email: String) {
+        tokenStore.token = token
+        tokenStore.email = email
+        isLoggedIn = true
+        currentEmail = email
+    }
+
     func login(email: String, password: String) async throws -> TokenResponse {
         do {
             let response = try await api.login(email: email, password: password)
-            tokenStore.token = response.accessToken
-            tokenStore.email = email
+            setSignedIn(token: response.accessToken, email: email)
             return response
         } catch let error as APIError {
             throw AuthError.from(error)
@@ -173,8 +190,7 @@ final class FuelRepository {
     func loginWithGoogle(idToken: String, email: String) async throws -> TokenResponse {
         do {
             let response = try await api.googleLogin(GoogleLoginRequest(idToken: idToken))
-            tokenStore.token = response.accessToken
-            tokenStore.email = email
+            setSignedIn(token: response.accessToken, email: email)
             return response
         } catch let error as APIError {
             throw AuthError.from(error)
@@ -187,7 +203,11 @@ final class FuelRepository {
         do {
             let response = try await api.appleLogin(AppleLoginRequest(idToken: idToken, email: email, name: name))
             tokenStore.token = response.accessToken
-            if let email { tokenStore.email = email }
+            isLoggedIn = true
+            if let email {
+                tokenStore.email = email
+                currentEmail = email
+            }
             return response
         } catch let error as APIError {
             throw AuthError.from(error)
@@ -210,9 +230,11 @@ final class FuelRepository {
         try await api.updateFcmToken(token)
     }
 
-    func logout() { tokenStore.clear() }
-    var isLoggedIn: Bool { tokenStore.isSignedIn }
-    var currentEmail: String? { tokenStore.email }
+    func logout() {
+        tokenStore.clear()
+        isLoggedIn = false
+        currentEmail = nil
+    }
 
     // MARK: - Favourites
 

@@ -56,7 +56,10 @@ final class AuthViewModel {
     /// Returns `true` on success.
     @discardableResult
     func submit() async -> Bool {
-        guard !email.isEmpty, !password.isEmpty else {
+        // Matches Android's `isBlank()` guard — whitespace-only input is rejected too, not just
+        // zero-length strings.
+        guard !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !password.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             errorMessage = "Email and password are required"
             return false
         }

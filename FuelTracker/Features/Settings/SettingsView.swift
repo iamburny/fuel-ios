@@ -7,7 +7,6 @@ import SwiftData
 struct SettingsView: View {
     @Environment(FuelRepository.self) private var repository
     @State private var showingAuth = false
-    @State private var refreshToken = 0
 
     var body: some View {
         NavigationStack {
@@ -17,7 +16,6 @@ struct SettingsView: View {
                         LabeledContent("Signed in as", value: repository.currentEmail ?? "—")
                         Button("Sign out", role: .destructive) {
                             repository.logout()
-                            refreshToken += 1
                         }
                     } else {
                         Button("Sign in") { showingAuth = true }
@@ -29,13 +27,9 @@ struct SettingsView: View {
                         .listRowInsets(EdgeInsets())
                 }
             }
-            .id(refreshToken)
             .navigationTitle("Settings")
             .sheet(isPresented: $showingAuth) {
-                AuthView(onAuthed: {
-                    showingAuth = false
-                    refreshToken += 1
-                })
+                AuthView(onAuthed: { showingAuth = false })
             }
         }
     }
