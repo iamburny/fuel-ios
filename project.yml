@@ -19,6 +19,11 @@ configs:
   Debug: debug
   Release: release
 
+packages:
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    from: 7.1.0
+
 targets:
   FuelTracker:
     type: application
@@ -39,6 +44,9 @@ targets:
     configFiles:
       Debug: Config/Debug.xcconfig
       Release: Config/Release.xcconfig
+    dependencies:
+      - package: GoogleSignIn
+        product: GoogleSignIn
 
   FuelTrackerTests:
     type: bundle.unit-test

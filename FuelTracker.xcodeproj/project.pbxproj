@@ -24,6 +24,7 @@
 		6BFEA0C130CEE2E79E6E9D0B /* PushTokenProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C6BFE3F5F5E5E838CF7B19B /* PushTokenProvider.swift */; };
 		6F699105069E4AB11D46B416 /* FuelCostCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B63AF83E6E6156CE1B977B3 /* FuelCostCalculatorTests.swift */; };
 		8E6C2190AC13ED58353FCDB6 /* APIEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F0E084682F4D958FFF7ECC /* APIEndpoint.swift */; };
+		90C32F00A5713F86A3EF1556 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 510737701D84644C853C3131 /* GoogleSignIn */; };
 		90C871DD3DF7EC6E3B980C4F /* PricesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D279C9D6589B0C809B85F2EE /* PricesView.swift */; };
 		AB53C78F7A82FA9C46E80C04 /* FuelRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DE7CBC4B3430E78BF39121F /* FuelRepository.swift */; };
 		B9B53D7709219FA155A09BC5 /* FavouriteAndAlertDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4892DDE26B1C0AC28E82B9C6 /* FavouriteAndAlertDTOs.swift */; };
@@ -79,6 +80,17 @@
 		EE2681B5EF62475C88251122 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		F1B14496D8AC2AFA53A0A331 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CFCED790A6ED1614173C8E54 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				90C32F00A5713F86A3EF1556 /* GoogleSignIn in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		176DC592F96E7E3461608FFE /* Domain */ = {
@@ -271,6 +283,7 @@
 			buildPhases = (
 				499684F0301944C69899EF2E /* Sources */,
 				54C225A442DFEE472B1D8D72 /* Resources */,
+				CFCED790A6ED1614173C8E54 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -278,6 +291,7 @@
 			);
 			name = FuelTracker;
 			packageProductDependencies = (
+				510737701D84644C853C3131 /* GoogleSignIn */,
 			);
 			productName = FuelTracker;
 			productReference = 4A86CEDB3B3AB27F880FF146 /* FuelTracker.app */;
@@ -329,6 +343,9 @@
 			);
 			mainGroup = 17B1ACE1B51493A614F47A80;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E8A2D8BD258A717E91B61559 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C3BEA5FF893F1559366939E1 /* Products */;
 			projectDirPath = "";
@@ -637,6 +654,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E8A2D8BD258A717E91B61559 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 7.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		510737701D84644C853C3131 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E8A2D8BD258A717E91B61559 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 3D8D3AD98CA0FD58A11256CB /* Project object */;
 }

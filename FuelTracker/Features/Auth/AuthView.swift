@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import AuthenticationServices
+import GoogleSignIn
 
 /// Direct port of fuel-android's `AuthScreen.kt`. Presented as a sheet (Android pushes it as a
 /// destination reached from Preferences' Account card or Favourites' logged-out prompt).
@@ -211,11 +212,50 @@ struct AuthView: View {
         }
     }
 
+    /// Mirrors Android's `signInWithGoogle`: guard on the client ID being configured (matches
+    /// `serverClientId.isBlank()`), launch the native account picker, exchange the resulting
+    /// Google ID token for the app JWT.
     private func handleGoogleSignIn(viewModel: AuthViewModel) {
-        // GoogleSignIn-iOS SDK integration is deferred until a real GOOGLE_CLIENT_ID is supplied
-        // (see AppConfig.googleClientID) — until then this mirrors Android's
-        // `serverClientId.isBlank()` guard exactly, always showing the "not configured" message.
-        viewModel.errorMessage = "Google sign-in isn't configured yet."
+        guard AppConfig.googleClientID != nil else {
+            viewModel.errorMessage = "Google sign-in isn't configured yet."
+            return
+        }
+        guard let presenting = topViewController() else {
+            viewModel.errorMessage = "Google sign-in failed. Please try again."
+            return
+        }
+        viewModel.errorMessage = nil
+        viewModel.loading = true
+        Task {
+            do {
+                let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: presenting)
+                guard let idToken = result.user.idToken?.tokenString else {
+                    viewModel.loading = false
+                    viewModel.errorMessage = "Unexpected sign-in response. Please try again."
+                    return
+                }
+                if await viewModel.signInWithGoogle(idToken: idToken, email: result.user.profile?.email ?? "") {
+                    onAuthed()
+                }
+            } catch let error as GIDSignInError where error.code == .canceled {
+                // User dismissed the account picker — not an error worth surfacing, matches
+                // Android's silent handling of GetCredentialCancellationException.
+                viewModel.cancelSignIn()
+            } catch {
+                viewModel.loading = false
+                viewModel.errorMessage = "Google sign-in failed. Please try again."
+            }
+        }
+    }
+
+    /// The Google Sign-In SDK needs a `UIViewController` to present its account-picker sheet from
+    /// — there's no SwiftUI-native equivalent of Android's Activity-scoped Credential Manager call.
+    private func topViewController() -> UIViewController? {
+        guard let scene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,
+              let window = scene.windows.first(where: \.isKeyWindow) ?? scene.windows.first,
+              var top = window.rootViewController else { return nil }
+        while let presented = top.presentedViewController { top = presented }
+        return top
     }
 }
 

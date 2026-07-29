@@ -1,8 +1,11 @@
+// Optional include — real secrets (Google client ID, Maps API key) live in Secrets.xcconfig,
+// which is gitignored. `?` makes this a no-op if the file doesn't exist yet.
+#include? "Secrets.xcconfig"
+
 // Release build configuration — mirrors fuel-android's release BuildConfig.API_BASE_URL.
 // NOTE: xcconfig treats `//` as a comment start, so `$()` (empty macro expansion) is inserted to
 // break up the sequence without changing the substituted value — a standard xcconfig workaround.
 API_BASE_URL = https:/$()/api.fueltracker.uk
 
-// Google Sign-In web/server client ID — left blank until a real one is supplied via
-// Config/Secrets.xcconfig (gitignored).
-GOOGLE_CLIENT_ID =
+// Google Sign-In web/server client ID and Maps API key come from the Secrets.xcconfig include
+// above when present.
