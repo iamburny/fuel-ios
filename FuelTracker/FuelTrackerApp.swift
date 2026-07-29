@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import GoogleSignIn
+import GoogleMaps
 
 @main
 struct FuelTrackerApp: App {
@@ -9,6 +10,9 @@ struct FuelTrackerApp: App {
     init() {
         if let clientID = AppConfig.googleClientID {
             GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+        }
+        if let mapsKey = AppConfig.googleMapsAPIKey {
+            GMSServices.provideAPIKey(mapsKey)
         }
     }
 

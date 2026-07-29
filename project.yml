@@ -23,6 +23,9 @@ packages:
   GoogleSignIn:
     url: https://github.com/google/GoogleSignIn-iOS
     from: 7.1.0
+  GoogleMaps:
+    url: https://github.com/googlemaps/ios-maps-sdk
+    from: 9.0.0
 
 targets:
   FuelTracker:
@@ -47,6 +50,8 @@ targets:
     dependencies:
       - package: GoogleSignIn
         product: GoogleSignIn
+      - package: GoogleMaps
+        product: GoogleMaps
 
   FuelTrackerTests:
     type: bundle.unit-test

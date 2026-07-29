@@ -21,6 +21,7 @@
 		49B913EE45B7A7FC18FC7E4C /* FuelCostCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99A3F8C6A03E027CD6E9700 /* FuelCostCalculator.swift */; };
 		4B6793CC999E2F48565819A0 /* DTODecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39D72CD0A4324420884D5936 /* DTODecodingTests.swift */; };
 		504F12856FA172FABCCD4FFC /* AmenitiesFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A958BB1CBD077001814397E4 /* AmenitiesFormatter.swift */; };
+		65B3334613162999BA551F44 /* GoogleMaps in Frameworks */ = {isa = PBXBuildFile; productRef = 5098F7B1E07B3B90AC7B2274 /* GoogleMaps */; };
 		6BFEA0C130CEE2E79E6E9D0B /* PushTokenProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C6BFE3F5F5E5E838CF7B19B /* PushTokenProvider.swift */; };
 		6F699105069E4AB11D46B416 /* FuelCostCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B63AF83E6E6156CE1B977B3 /* FuelCostCalculatorTests.swift */; };
 		8E6C2190AC13ED58353FCDB6 /* APIEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F0E084682F4D958FFF7ECC /* APIEndpoint.swift */; };
@@ -87,6 +88,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				90C32F00A5713F86A3EF1556 /* GoogleSignIn in Frameworks */,
+				65B3334613162999BA551F44 /* GoogleMaps in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -292,6 +294,7 @@
 			name = FuelTracker;
 			packageProductDependencies = (
 				510737701D84644C853C3131 /* GoogleSignIn */,
+				5098F7B1E07B3B90AC7B2274 /* GoogleMaps */,
 			);
 			productName = FuelTracker;
 			productReference = 4A86CEDB3B3AB27F880FF146 /* FuelTracker.app */;
@@ -344,6 +347,7 @@
 			mainGroup = 17B1ACE1B51493A614F47A80;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				AAB416F5C669AA7D4E255C6A /* XCRemoteSwiftPackageReference "ios-maps-sdk" */,
 				E8A2D8BD258A717E91B61559 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -656,6 +660,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		AAB416F5C669AA7D4E255C6A /* XCRemoteSwiftPackageReference "ios-maps-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googlemaps/ios-maps-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.0;
+			};
+		};
 		E8A2D8BD258A717E91B61559 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
@@ -667,6 +679,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		5098F7B1E07B3B90AC7B2274 /* GoogleMaps */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AAB416F5C669AA7D4E255C6A /* XCRemoteSwiftPackageReference "ios-maps-sdk" */;
+			productName = GoogleMaps;
+		};
 		510737701D84644C853C3131 /* GoogleSignIn */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = E8A2D8BD258A717E91B61559 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;

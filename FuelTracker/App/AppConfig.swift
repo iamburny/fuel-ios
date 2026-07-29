@@ -22,4 +22,14 @@ enum AppConfig {
         }
         return raw
     }
+
+    /// Google Maps iOS SDK key. Also non-fatal when absent — `FuelMapView` shows a "Maps not
+    /// configured" placeholder rather than crashing the whole app (map screens are important but
+    /// shouldn't take down Prices/Favourites/Settings if a fresh checkout has no Secrets.xcconfig).
+    static var googleMapsAPIKey: String? {
+        guard let raw = Bundle.main.object(forInfoDictionaryKey: "GoogleMapsAPIKey") as? String, !raw.isEmpty else {
+            return nil
+        }
+        return raw
+    }
 }

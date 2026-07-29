@@ -7,5 +7,6 @@
 // break up the sequence without changing the substituted value — a standard xcconfig workaround.
 API_BASE_URL = https:/$()/api.fueltracker.uk
 
-// Google Sign-In web/server client ID and Maps API key come from the Secrets.xcconfig include
-// above when present.
+// Google Sign-In web/server client ID comes from the Secrets.xcconfig include above when present.
+
+GOOGLE_MAPS_API_KEY = $(GOOGLE_MAPS_API_KEY_RELEASE)
