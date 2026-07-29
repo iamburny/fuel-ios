@@ -41,6 +41,7 @@
 		ABBF4E5C47A3C632B3ABD10E /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41DBF56E22F4A12C2A0DECA0 /* DetailView.swift */; };
 		B9B53D7709219FA155A09BC5 /* FavouriteAndAlertDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4892DDE26B1C0AC28E82B9C6 /* FavouriteAndAlertDTOs.swift */; };
 		BA261E6F96512B3C6ED3405C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B14496D8AC2AFA53A0A331 /* SettingsView.swift */; };
+		C0397FCCAB491510AE5EBE16 /* HeatmapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AF276F8D403CEF92636C33 /* HeatmapTests.swift */; };
 		C6CAB881E9EC5C78D4D8CC5F /* AuthError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153BAC309AF6650C0CFBEAB1 /* AuthError.swift */; };
 		E330C9A3365AD1EBF8776B9E /* FavouritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 813E621897DE404192DB412E /* FavouritesView.swift */; };
 		E625C9992184D039AA1ED603 /* StationDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AAD55E85CFCCC66C91445A2 /* StationDTOs.swift */; };
@@ -68,6 +69,7 @@
 		153BAC309AF6650C0CFBEAB1 /* AuthError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthError.swift; sourceTree = "<group>"; };
 		18D4C70E576CCB8F6CD3271D /* HeatColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatColor.swift; sourceTree = "<group>"; };
 		1DE5294BDECED78127CEF1B3 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		23AF276F8D403CEF92636C33 /* HeatmapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapTests.swift; sourceTree = "<group>"; };
 		31EB626E9B81C5478B568DF1 /* UserPreferencesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPreferencesStore.swift; sourceTree = "<group>"; };
 		3458D5975C955DA191E9FCA8 /* FuelPricesAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelPricesAPI.swift; sourceTree = "<group>"; };
 		39D72CD0A4324420884D5936 /* DTODecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DTODecodingTests.swift; sourceTree = "<group>"; };
@@ -270,6 +272,7 @@
 			children = (
 				39D72CD0A4324420884D5936 /* DTODecodingTests.swift */,
 				3B63AF83E6E6156CE1B977B3 /* FuelCostCalculatorTests.swift */,
+				23AF276F8D403CEF92636C33 /* HeatmapTests.swift */,
 			);
 			path = FuelTrackerTests;
 			sourceTree = "<group>";
@@ -502,6 +505,7 @@
 			files = (
 				4B6793CC999E2F48565819A0 /* DTODecodingTests.swift in Sources */,
 				6F699105069E4AB11D46B416 /* FuelCostCalculatorTests.swift in Sources */,
+				C0397FCCAB491510AE5EBE16 /* HeatmapTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

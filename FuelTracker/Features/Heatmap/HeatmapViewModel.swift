@@ -43,8 +43,10 @@ final class HeatmapViewModel {
     }
 
     /// Saturate the scale at the 90th-percentile deviation so a couple of outliers don't wash out
-    /// the rest; floor at 3p so a flat market still shows contrast.
-    private static func computeMaxAbs(_ cells: [HeatmapCell]) -> Double {
+    /// the rest; floor at 3p so a flat market still shows contrast. Internal (not private) and
+    /// `nonisolated` (it's a pure function touching no actor-isolated state) so it's directly
+    /// unit-testable via `@testable import` without needing `@MainActor`.
+    nonisolated static func computeMaxAbs(_ cells: [HeatmapCell]) -> Double {
         guard !cells.isEmpty else { return 3.0 }
         let sorted = cells.map { abs($0.deltaPence) }.sorted()
         let p90Index = min(Int(Double(sorted.count) * 0.9), sorted.count - 1)
