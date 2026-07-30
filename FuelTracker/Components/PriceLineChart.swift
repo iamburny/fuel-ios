@@ -49,6 +49,11 @@ struct PriceLineChart: View {
                 }
                 .chartYScale(domain: yDomain)
                 .frame(height: 200)
+                // AreaMark's fill shape isn't clipped to the chart's own frame by default — with a
+                // non-zero-floored yDomain (see below) its rendered extent can spill past the 200pt
+                // frame into whatever content sits below it. Clip explicitly rather than relying on
+                // Charts' own (apparently frame-unaware) bounds.
+                .clipped()
 
                 HStack(spacing: 24) {
                     Text("Low: \(String(format: "%.1fp", values.min() ?? 0))")
