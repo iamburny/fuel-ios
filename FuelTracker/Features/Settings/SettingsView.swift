@@ -35,10 +35,12 @@ struct SettingsView: View {
     @ViewBuilder
     private func content(_ viewModel: SettingsViewModel) -> some View {
         Form {
-            // Mirrors PreferencesScreen.kt's flag-gated cards — shared.buy-me-a-coffee (default
-            // true, preserves existing behaviour if Unleash is unreachable) and an iOS-specific
-            // fuel-ios.also-available-on-web (Android's own flag is fuel-android.also-available-on-web).
-            if featureFlags.isEnabled("shared.buy-me-a-coffee", default: true) {
+            // Mirrors PreferencesScreen.kt's flag-gated cards — shared.buy-me-a-coffee and an
+            // iOS-specific fuel-ios.also-available-on-web (Android's own flag is
+            // fuel-android.also-available-on-web). Both default to false: Unleash's Frontend API
+            // only ever returns currently-enabled flags, so a real "off" toggle is indistinguishable
+            // from "unknown" — a `true` default would make these impossible to ever disable remotely.
+            if featureFlags.isEnabled("shared.buy-me-a-coffee", default: false) {
                 Section {
                     Button {
                         openURL(URL(string: "https://buymeacoffee.com/iamburny")!)
@@ -57,7 +59,7 @@ struct SettingsView: View {
                 }
             }
 
-            if featureFlags.isEnabled("fuel-ios.also-available-on-web", default: true) {
+            if featureFlags.isEnabled("fuel-ios.also-available-on-web", default: false) {
                 Section {
                     Button {
                         openURL(URL(string: "https://fueltracker.uk")!)

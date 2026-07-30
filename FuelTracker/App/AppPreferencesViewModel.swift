@@ -34,9 +34,13 @@ final class AppPreferencesViewModel {
         currentOpenCount = count
         let pausedUntil = store.preferences.coffeePromptPausedUntilOpen
         let cadenceDue = (count - 1) % Self.promptEvery == 0 && count >= pausedUntil
-        // shared.buy-me-a-coffee (default true — preserves existing behaviour if Unleash is
-        // unreachable/unconfigured) gates the whole prompt, not just its cadence.
-        if cadenceDue && featureFlags.isEnabled("shared.buy-me-a-coffee", default: true) {
+        // shared.buy-me-a-coffee gates the whole prompt, not just its cadence. Default MUST be
+        // false: Unleash's Frontend API (what this client polls) only ever returns flags that are
+        // currently enabled — a flag deliberately toggled off is indistinguishable from one that's
+        // unknown/not-yet-fetched, both are just absent from the response. A `default: true` here
+        // would make it impossible to ever actually turn this off remotely, since a real "off"
+        // toggle would silently keep falling back to true forever.
+        if cadenceDue && featureFlags.isEnabled("shared.buy-me-a-coffee", default: false) {
             showCoffeePrompt = true
         }
     }
