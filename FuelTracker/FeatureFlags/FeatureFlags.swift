@@ -43,10 +43,15 @@ final class FeatureFlags {
     private let baseURL: URL?
     private let clientKey: String?
     private var pollTask: Task<Void, Never>?
-    /// Just the very first fetch, tracked separately from the recurring poll loop so a caller that
-    /// needs a flag's *real* value (not just whatever default it'll fall back to pre-fetch) can
-    /// await it via `waitForInitialLoad`. `nil` when unconfigured — there's nothing to ever wait for.
-    private var initialLoadTask: Task<Void, Never>?
+    /// Whether the first fetch is configured to ever happen at all — `false` when unconfigured
+    /// (no `baseURL`/`clientKey`), so `waitForInitialLoad` knows there's nothing to wait for.
+    private var isPolling = false
+    /// Set once the first fetch (success or failure) completes. Plain flag rather than awaiting
+    /// the fetch `Task`'s `.value` directly: `withTaskGroup`/cancellation can't actually bound an
+    /// await on a `Task.value` (cancelling it doesn't unblock it, it just marks it cancelled while
+    /// the underlying await keeps running) — `waitForInitialLoad`'s polling loop below only ever
+    /// reads this flag, so it's genuinely decoupled from how long the network call takes.
+    private var hasCompletedInitialLoad = false
 
     init(url: String?, clientKey: String?) {
         if let url, !url.isEmpty, let base = URL(string: url.trimmingCharacters(in: .whitespacesAndNewlines)) {
@@ -71,26 +76,24 @@ final class FeatureFlags {
     /// Waits (up to `timeout`) for the first poll to land, so a one-shot flag check (e.g. deciding
     /// whether to show a prompt once at cold launch) sees the real server value rather than racing
     /// it and silently falling back to `isEnabled`'s default. Returns immediately if unconfigured
-    /// (nothing will ever arrive) or once the first poll has already completed.
+    /// (nothing will ever arrive) or once the first poll has already completed. A polling loop
+    /// against a wall-clock deadline, not a `Task`-cancellation race — the latter can't actually
+    /// bound how long this waits, since cancelling a task awaiting another task's `.value` doesn't
+    /// unblock it; the underlying network call keeps running regardless (see `hasCompletedInitialLoad`).
     func waitForInitialLoad(timeout: Duration = .seconds(2)) async {
-        guard let initialLoadTask else { return }
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask { await initialLoadTask.value }
-            group.addTask { try? await Task.sleep(for: timeout) }
-            await group.next()
-            group.cancelAll()
+        guard isPolling else { return }
+        let deadline = ContinuousClock.now.advanced(by: timeout)
+        while !hasCompletedInitialLoad && ContinuousClock.now < deadline {
+            try? await Task.sleep(for: .milliseconds(50))
         }
     }
 
     private func startPolling() {
         guard let baseURL, let clientKey else { return }
-        let initial = Task { [weak self] in
-            guard let self else { return }
-            await self.refresh(baseURL: baseURL, clientKey: clientKey)
-        }
-        initialLoadTask = initial
+        isPolling = true
         pollTask = Task { [weak self] in
-            await initial.value
+            await self?.refresh(baseURL: baseURL, clientKey: clientKey)
+            self?.hasCompletedInitialLoad = true
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(60))
                 await self?.refresh(baseURL: baseURL, clientKey: clientKey)

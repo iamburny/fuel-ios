@@ -47,7 +47,9 @@ struct CoffeeSupportPrompt: View {
                     }
                     .foregroundStyle(.black)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 50)
+                    // Vertical padding rather than a fixed height, so the button grows instead of
+                    // clipping its label at larger Dynamic Type accessibility sizes.
+                    .padding(.vertical, 14)
                     .background(Capsule().fill(Self.brandYellow))
                 }
 
