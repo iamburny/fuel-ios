@@ -9,7 +9,8 @@ import FirebaseMessaging
 /// and runs — push notifications just stay inert (same pattern as the Maps/Sign-In keys).
 final class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
-        if Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil {
+        let hasGoogleServiceInfo = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil
+        if hasGoogleServiceInfo {
             FirebaseApp.configure()
         }
         PushNotificationManager.shared.configure()

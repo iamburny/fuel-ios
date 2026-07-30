@@ -12,7 +12,10 @@ struct FuelTrackerApp: App {
 
     init() {
         if let clientID = AppConfig.googleClientID {
-            GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+            GIDSignIn.sharedInstance.configuration = GIDConfiguration(
+                clientID: clientID,
+                serverClientID: AppConfig.googleServerClientID
+            )
         }
         if let mapsKey = AppConfig.googleMapsAPIKey {
             GMSServices.provideAPIKey(mapsKey)

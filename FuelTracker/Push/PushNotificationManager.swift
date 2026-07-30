@@ -39,13 +39,26 @@ final class PushNotificationManager: NSObject {
         UNUserNotificationCenter.current().delegate = self
     }
 
+    // Requests permission only the first time (authorizationStatus == .notDetermined), but must
+    // call registerForRemoteNotifications() on EVERY launch when already authorized — Apple's own
+    // guidance, since the APNs device token isn't persisted across launches on the Messaging side.
+    // Skipping it once permission is already granted was a real bug here: Messaging.token() then
+    // throws "No APNS token specified before fetching FCM Token" on every launch after the first.
     func requestAuthorizationIfNeeded() async {
         guard FirebaseApp.app() != nil else { return }
         let center = UNUserNotificationCenter.current()
         let settings = await center.notificationSettings()
-        guard settings.authorizationStatus == .notDetermined else { return }
-        _ = try? await center.requestAuthorization(options: [.alert, .sound, .badge])
-        UIApplication.shared.registerForRemoteNotifications()
+        switch settings.authorizationStatus {
+        case .notDetermined:
+            _ = try? await center.requestAuthorization(options: [.alert, .sound, .badge])
+            UIApplication.shared.registerForRemoteNotifications()
+        case .authorized, .provisional, .ephemeral:
+            UIApplication.shared.registerForRemoteNotifications()
+        case .denied:
+            break
+        @unknown default:
+            break
+        }
     }
 }
 
@@ -53,9 +66,21 @@ extension PushNotificationManager: PushTokenProvider {
     func currentToken() async -> String? {
         guard FirebaseApp.app() != nil else { return nil }
         await requestAuthorizationIfNeeded()
-        let token = try? await Messaging.messaging().token()
-        if let token { latestToken = token }
-        return token
+        // registerForRemoteNotifications() (just called above) delivers the APNs token to
+        // Messaging asynchronously via didRegisterForRemoteNotificationsWithDeviceToken — calling
+        // Messaging.token() before that lands throws "No APNS token specified before fetching FCM
+        // Token". Poll the synchronous apnsToken property briefly rather than assuming it's already
+        // set.
+        for _ in 0..<10 where Messaging.messaging().apnsToken == nil {
+            try? await Task.sleep(for: .milliseconds(300))
+        }
+        do {
+            let token = try await Messaging.messaging().token()
+            latestToken = token
+            return token
+        } catch {
+            return nil
+        }
     }
 }
 

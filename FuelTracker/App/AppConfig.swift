@@ -12,12 +12,28 @@ enum AppConfig {
         return url
     }
 
-    /// Google Sign-In web/server client ID. Unlike `apiBaseURL`, absence here isn't fatal — it
-    /// mirrors Android's `BuildConfig.GOOGLE_WEB_CLIENT_ID.isBlank()` guard: the "Continue with
-    /// Google" button degrades to a friendly "not configured yet" message instead of crashing
-    /// when no real OAuth client ID has been supplied via `Config/Secrets.xcconfig`.
+    /// Google Sign-In native iOS-type OAuth client ID, passed as `GIDConfiguration`'s `clientID`.
+    /// Must be an iOS-type client, not the Web-type one — Google rejects the custom-URL-scheme
+    /// redirect for a Web-type client ("Custom scheme URIs are not allowed for 'WEB' client
+    /// type."). Unlike `apiBaseURL`, absence here isn't fatal — it mirrors Android's
+    /// `BuildConfig.GOOGLE_WEB_CLIENT_ID.isBlank()` guard: the "Continue with Google" button
+    /// degrades to a friendly "not configured yet" message instead of crashing when no real OAuth
+    /// client ID has been supplied via `Config/Secrets.xcconfig`.
     static var googleClientID: String? {
         guard let raw = Bundle.main.object(forInfoDictionaryKey: "GoogleClientID") as? String, !raw.isEmpty else {
+            return nil
+        }
+        return raw
+    }
+
+    /// Google Sign-In Web/server client ID, passed as `GIDConfiguration`'s `serverClientID` so the
+    /// returned ID token's `aud` claim matches what `fuel-api` verifies against (same client ID
+    /// Android passes as `serverClientId`). Optional — when absent, `GIDConfiguration` is built
+    /// with just `googleClientID` and the ID token's audience is the iOS client instead (which
+    /// would fail backend verification, but sign-in itself still degrades gracefully rather than
+    /// crashing).
+    static var googleServerClientID: String? {
+        guard let raw = Bundle.main.object(forInfoDictionaryKey: "GoogleServerClientID") as? String, !raw.isEmpty else {
             return nil
         }
         return raw

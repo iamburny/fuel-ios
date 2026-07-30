@@ -32,7 +32,10 @@ struct NearbyView: View {
                             viewModel.refresh()
                         } label: {
                             if viewModel.isLoading {
+                                // Matches Android's compact in-bar CircularProgressIndicator
+                                // (20dp, 2dp stroke) rather than SwiftUI's larger default size.
                                 ProgressView()
+                                    .controlSize(.mini)
                             } else {
                                 Image(systemName: "arrow.clockwise")
                             }

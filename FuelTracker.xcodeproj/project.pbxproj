@@ -36,6 +36,7 @@
 		6830C2EEC51B16C952D4B69F /* PricesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75FB4099851DFCA3A333C428 /* PricesViewModel.swift */; };
 		6BFEA0C130CEE2E79E6E9D0B /* PushTokenProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C6BFE3F5F5E5E838CF7B19B /* PushTokenProvider.swift */; };
 		6F699105069E4AB11D46B416 /* FuelCostCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B63AF83E6E6156CE1B977B3 /* FuelCostCalculatorTests.swift */; };
+		70C02AA8092E840F6A312B3A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 673B91613E35CCBDFDEF69E5 /* GoogleService-Info.plist */; };
 		761920A623D115613C9E216D /* DetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BFB672611E5491BC0B9601A /* DetailViewModel.swift */; };
 		780BFD4C6A1E2D1CC86FF17F /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2BC003592118816A4331969 /* LocationManager.swift */; };
 		8738F2AA67954B81C01F716A /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A5B20BB98CBD24B95D78FC /* SettingsViewModel.swift */; };
@@ -90,7 +91,7 @@
 		41DBF56E22F4A12C2A0DECA0 /* DetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailView.swift; sourceTree = "<group>"; };
 		4892854F73F51276DAE84AE2 /* HeatmapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapViewModel.swift; sourceTree = "<group>"; };
 		4892DDE26B1C0AC28E82B9C6 /* FavouriteAndAlertDTOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavouriteAndAlertDTOs.swift; sourceTree = "<group>"; };
-		4A86CEDB3B3AB27F880FF146 /* FuelTracker.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FuelTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4A86CEDB3B3AB27F880FF146 /* FuelTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FuelTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4B55220A8703E44AC8082908 /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
 		4BE1075432AD2E4C56B5D7B7 /* NearbyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyView.swift; sourceTree = "<group>"; };
 		50C82551799419E764CB389A /* AppAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAnalytics.swift; sourceTree = "<group>"; };
@@ -98,8 +99,9 @@
 		5A44E3BA842112F05DD868F5 /* AuthDTOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthDTOs.swift; sourceTree = "<group>"; };
 		5AD68D7BAE42C50239AFC612 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		5F66A025FA31DDD6482CEC58 /* FuelMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelMapView.swift; sourceTree = "<group>"; };
-		5F8824CEA02FEA8338D681F9 /* FuelTrackerTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FuelTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5F8824CEA02FEA8338D681F9 /* FuelTrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FuelTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		66A5B20BB98CBD24B95D78FC /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
+		673B91613E35CCBDFDEF69E5 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		6D5037197EC2CF6CA2A1E50D /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		744158385E279DFA14EC64A3 /* FuelTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelTrackerApp.swift; sourceTree = "<group>"; };
 		75FB4099851DFCA3A333C428 /* PricesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PricesViewModel.swift; sourceTree = "<group>"; };
@@ -246,6 +248,7 @@
 			isa = PBXGroup;
 			children = (
 				7898E3F37EC3036C8FD68E92 /* Assets.xcassets */,
+				673B91613E35CCBDFDEF69E5 /* GoogleService-Info.plist */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -448,7 +451,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 2660;
 				TargetAttributes = {
 					CF7773F7D4919BCA177573E5 = {
 						DevelopmentTeam = 9SJN3YX5DH;
@@ -491,6 +494,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2FB0038DE67AEF22644EBB45 /* Assets.xcassets in Resources */,
+				70C02AA8092E840F6A312B3A /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -592,6 +596,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -628,6 +633,7 @@
 				DEVELOPMENT_TEAM = 9SJN3YX5DH;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -649,6 +655,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -677,6 +684,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -713,6 +721,7 @@
 				DEVELOPMENT_TEAM = 9SJN3YX5DH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -727,6 +736,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
