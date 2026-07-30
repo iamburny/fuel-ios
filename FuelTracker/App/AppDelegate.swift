@@ -17,6 +17,12 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     }
 
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        // `Messaging.messaging()` is imported as non-optional but returns nil at the Objective-C
+        // level when Firebase isn't configured (FIRMessaging.m) — an implicit-unwrap crash risk.
+        // Not reachable today (registerForRemoteNotifications() is only ever called from the
+        // already-guarded requestAuthorizationIfNeeded()), but guard explicitly so this stays true
+        // if a future change adds another call path.
+        guard FirebaseApp.app() != nil else { return }
         Messaging.messaging().apnsToken = deviceToken
     }
 }

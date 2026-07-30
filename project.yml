@@ -1,6 +1,6 @@
 name: FuelTracker
 options:
-  bundleIdPrefix: uk.co.fuelprices
+  bundleIdPrefix: uk.fueltracker.app
   deploymentTarget:
     iOS: "17.0"
   createIntermediateGroups: true
@@ -41,7 +41,7 @@ targets:
           - FuelTracker.entitlements
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: uk.co.fuelprices
+        PRODUCT_BUNDLE_IDENTIFIER: uk.fueltracker.app
         INFOPLIST_FILE: FuelTracker/Info.plist
         GENERATE_INFOPLIST_FILE: false
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -65,7 +65,7 @@ targets:
       - path: FuelTrackerTests
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: uk.co.fuelprices.tests
+        PRODUCT_BUNDLE_IDENTIFIER: uk.fueltracker.app.tests
         GENERATE_INFOPLIST_FILE: true
     dependencies:
       - target: FuelTracker

@@ -31,7 +31,11 @@ struct RootView: View {
         }
         // Tapping a price-drop notification deep-links straight to that station's Detail screen,
         // matching Android's stationId-extra dispatch through MainActivity/Navigation.kt.
-        .onChange(of: pushManager.pendingDeepLinkStationId) { _, stationId in
+        // `initial: true` matters for a cold launch (app not running, user taps the notification):
+        // UIKit can deliver the tap to PushNotificationManager and set this property before
+        // RootView's first render, and a plain .onChange only fires on a subsequent *change* —
+        // it would silently miss a value that was already non-nil at first attachment.
+        .onChange(of: pushManager.pendingDeepLinkStationId, initial: true) { _, stationId in
             guard let stationId else { return }
             deepLinkStationId = stationId
             pushManager.pendingDeepLinkStationId = nil
