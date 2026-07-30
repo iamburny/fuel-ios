@@ -11,6 +11,13 @@ struct AuthView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(FuelRepository.self) private var repository
     @State private var viewModel: AuthViewModel?
+    /// Email/password is a secondary path behind a text link — Apple/Google are the primary,
+    /// one-tap CTAs. Once revealed there's no need to hide it again.
+    @State private var showEmailForm = false
+
+    /// Shared visual language for every full-width auth CTA (email submit, Apple, Google) so
+    /// they read as one consistent button group rather than three different shapes.
+    private static let buttonHeight: CGFloat = 50
 
     var body: some View {
         NavigationStack {
@@ -88,13 +95,18 @@ struct AuthView: View {
             Button {
                 Task { await viewModel.sendPasswordReset() }
             } label: {
-                if viewModel.loading {
-                    ProgressView().frame(maxWidth: .infinity)
-                } else {
-                    Text("Send reset link").frame(maxWidth: .infinity)
+                Group {
+                    if viewModel.loading {
+                        ProgressView()
+                    } else {
+                        Text("Send reset link")
+                    }
                 }
+                .frame(maxWidth: .infinity)
+                .frame(height: Self.buttonHeight)
             }
             .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.capsule)
             .disabled(viewModel.loading)
         }
 
@@ -109,56 +121,6 @@ struct AuthView: View {
             .font(.subheadline)
             .foregroundStyle(.secondary)
 
-        TextField("Email", text: Binding(
-            get: { viewModel.email },
-            set: { viewModel.setEmail($0) }
-        ))
-        .textFieldStyle(.roundedBorder)
-        .textContentType(.emailAddress)
-        .keyboardType(.emailAddress)
-        .autocapitalization(.none)
-
-        SecureField("Password", text: Binding(
-            get: { viewModel.password },
-            set: { viewModel.setPassword($0) }
-        ))
-        .textFieldStyle(.roundedBorder)
-        .textContentType(viewModel.isRegister ? .newPassword : .password)
-
-        if let error = viewModel.errorMessage {
-            Text(error).font(.footnote).foregroundStyle(.red)
-        }
-
-        Button {
-            Task {
-                if await viewModel.submit() { onAuthed() }
-            }
-        } label: {
-            if viewModel.loading {
-                ProgressView().frame(maxWidth: .infinity)
-            } else {
-                Text(viewModel.isRegister ? "Sign up" : "Log in").frame(maxWidth: .infinity)
-            }
-        }
-        .buttonStyle(.borderedProminent)
-        .disabled(viewModel.loading)
-
-        if !viewModel.isRegister {
-            Button("Forgot password?") { viewModel.showResetPassword() }
-                .frame(maxWidth: .infinity, alignment: .center)
-        }
-
-        Button(viewModel.isRegister ? "Already have an account? Log in" : "New here? Create an account") {
-            viewModel.toggleMode()
-        }
-        .frame(maxWidth: .infinity, alignment: .center)
-
-        HStack {
-            VStack { Divider() }
-            Text("or").font(.footnote).foregroundStyle(.secondary)
-            VStack { Divider() }
-        }
-
         SignInWithAppleButton(.signIn) { request in
             // Mirrors Android's `signInWithGoogle` clearing `error`/setting `loading` before the
             // native picker launches, so a stale error banner doesn't linger under the sheet.
@@ -169,16 +131,91 @@ struct AuthView: View {
             handleAppleSignInResult(result, viewModel: viewModel)
         }
         .signInWithAppleButtonStyle(.black)
-        .frame(height: 44)
+        .frame(height: Self.buttonHeight)
+        .cornerRadius(Self.buttonHeight / 2)
         .disabled(viewModel.loading)
 
         Button {
             handleGoogleSignIn(viewModel: viewModel)
         } label: {
-            Text("Continue with Google").frame(maxWidth: .infinity)
+            HStack(spacing: 10) {
+                Image.googleLogo
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 20, height: 20)
+                Text("Continue with Google")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: Self.buttonHeight)
+            .background(Capsule().fill(Color(.secondarySystemBackground)))
+            .overlay(Capsule().strokeBorder(Color(.separator), lineWidth: 1))
         }
-        .buttonStyle(.bordered)
         .disabled(viewModel.loading)
+
+        if let error = viewModel.errorMessage {
+            Text(error).font(.footnote).foregroundStyle(.red)
+        }
+
+        if showEmailForm {
+            HStack {
+                VStack { Divider() }
+                Text("or").font(.footnote).foregroundStyle(.secondary)
+                VStack { Divider() }
+            }
+
+            TextField("Email", text: Binding(
+                get: { viewModel.email },
+                set: { viewModel.setEmail($0) }
+            ))
+            .textFieldStyle(.roundedBorder)
+            .textContentType(.emailAddress)
+            .keyboardType(.emailAddress)
+            .autocapitalization(.none)
+
+            SecureField("Password", text: Binding(
+                get: { viewModel.password },
+                set: { viewModel.setPassword($0) }
+            ))
+            .textFieldStyle(.roundedBorder)
+            .textContentType(viewModel.isRegister ? .newPassword : .password)
+
+            Button {
+                Task {
+                    if await viewModel.submit() { onAuthed() }
+                }
+            } label: {
+                Group {
+                    if viewModel.loading {
+                        ProgressView()
+                    } else {
+                        Text(viewModel.isRegister ? "Sign up" : "Log in")
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: Self.buttonHeight)
+            }
+            .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.capsule)
+            .disabled(viewModel.loading)
+
+            if !viewModel.isRegister {
+                Button("Forgot password?") { viewModel.showResetPassword() }
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
+
+            Button(viewModel.isRegister ? "Already have an account? Log in" : "New here? Create an account") {
+                viewModel.toggleMode()
+            }
+            .frame(maxWidth: .infinity, alignment: .center)
+        } else {
+            Button("Sign in with email") {
+                withAnimation { showEmailForm = true }
+            }
+            .font(.subheadline)
+            .frame(maxWidth: .infinity, alignment: .center)
+        }
     }
 
     private func handleAppleSignInResult(_ result: Result<ASAuthorization, Error>, viewModel: AuthViewModel) {
@@ -256,6 +293,23 @@ struct AuthView: View {
               var top = window.rootViewController else { return nil }
         while let presented = top.presentedViewController { top = presented }
         return top
+    }
+}
+
+/// Loads Google's own multicolor "G" mark straight out of the `GoogleSignIn` SPM package's
+/// bundled resources (`GoogleSignIn_GoogleSignIn.bundle/google.png`) — the same asset
+/// `GoogleSignInSwift`'s own `GoogleSignInButton` draws, just without pulling in that whole
+/// opinionated component (which hardcodes a 2pt corner radius, so it can't match this screen's
+/// capsule-shaped buttons). Reusing Google's official asset keeps this on-brand rather than
+/// hand-drawing a logo mark ourselves.
+private extension Image {
+    static var googleLogo: Image {
+        guard let bundlePath = Bundle(for: GIDSignIn.self).path(forResource: "GoogleSignIn_GoogleSignIn", ofType: "bundle"),
+              let url = Bundle(path: bundlePath)?.url(forResource: "google", withExtension: "png"),
+              let uiImage = UIImage(contentsOfFile: url.path) else {
+            return Image(systemName: "g.circle.fill")
+        }
+        return Image(uiImage: uiImage)
     }
 }
 
