@@ -26,6 +26,9 @@ packages:
   GoogleMaps:
     url: https://github.com/googlemaps/ios-maps-sdk
     from: 10.0.0
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: 11.0.0
 
 targets:
   FuelTracker:
@@ -52,6 +55,8 @@ targets:
         product: GoogleSignIn
       - package: GoogleMaps
         product: GoogleMaps
+      - package: Firebase
+        product: FirebaseMessaging
 
   FuelTrackerTests:
     type: bundle.unit-test

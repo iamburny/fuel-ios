@@ -34,7 +34,7 @@ struct AuthView: View {
         // the loading `ProgressView()` even for this synchronous, non-`await` initializer).
         .onAppear {
             if viewModel == nil {
-                viewModel = AuthViewModel(repository: repository, pushTokenProvider: NoOpPushTokenProvider())
+                viewModel = AuthViewModel(repository: repository, pushTokenProvider: PushNotificationManager.shared)
             }
         }
     }

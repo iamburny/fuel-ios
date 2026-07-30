@@ -10,6 +10,7 @@
 		01155E1646A7A3B901C1C24B /* HeatmapViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4892854F73F51276DAE84AE2 /* HeatmapViewModel.swift */; };
 		02D03A92641D654F05EE7128 /* TokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 918FEAC0E75319DCE561C1F2 /* TokenStore.swift */; };
 		05842D576D32D5F2AE428488 /* HeatColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18D4C70E576CCB8F6CD3271D /* HeatColor.swift */; };
+		06B7D92967D1AD1386003F8A /* PushNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22B28EF4A3B802ACA47ACF31 /* PushNotificationManager.swift */; };
 		0B003EF3FC197F0FD2EFAA55 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B55220A8703E44AC8082908 /* AuthViewModel.swift */; };
 		156FEDF491D165280A68E5F8 /* AuthDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A44E3BA842112F05DD868F5 /* AuthDTOs.swift */; };
 		17235223E4E762F13C2C1376 /* FuelTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 744158385E279DFA14EC64A3 /* FuelTrackerApp.swift */; };
@@ -38,6 +39,7 @@
 		8E6C2190AC13ED58353FCDB6 /* APIEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F0E084682F4D958FFF7ECC /* APIEndpoint.swift */; };
 		90C32F00A5713F86A3EF1556 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 510737701D84644C853C3131 /* GoogleSignIn */; };
 		90C871DD3DF7EC6E3B980C4F /* PricesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D279C9D6589B0C809B85F2EE /* PricesView.swift */; };
+		A53B4412CE69FF4B2C58CABD /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 47CC9E6F72940EEDBA3C68E1 /* FirebaseMessaging */; };
 		AB53C78F7A82FA9C46E80C04 /* FuelRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DE7CBC4B3430E78BF39121F /* FuelRepository.swift */; };
 		ABBF4E5C47A3C632B3ABD10E /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41DBF56E22F4A12C2A0DECA0 /* DetailView.swift */; };
 		B9B53D7709219FA155A09BC5 /* FavouriteAndAlertDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4892DDE26B1C0AC28E82B9C6 /* FavouriteAndAlertDTOs.swift */; };
@@ -45,6 +47,7 @@
 		C0397FCCAB491510AE5EBE16 /* HeatmapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AF276F8D403CEF92636C33 /* HeatmapTests.swift */; };
 		C6CAB881E9EC5C78D4D8CC5F /* AuthError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153BAC309AF6650C0CFBEAB1 /* AuthError.swift */; };
 		C889F6DACB809DB00405256B /* FavouritesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4938992849D7AC30456936C /* FavouritesViewModel.swift */; };
+		D8F80F9D5885878A59251E70 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD68D7BAE42C50239AFC612 /* AppDelegate.swift */; };
 		E330C9A3365AD1EBF8776B9E /* FavouritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 813E621897DE404192DB412E /* FavouritesView.swift */; };
 		E625C9992184D039AA1ED603 /* StationDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AAD55E85CFCCC66C91445A2 /* StationDTOs.swift */; };
 		E767F58CA0F6432F9A04B24E /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D8FF2E1E9BE97A4DA15CDF /* AppContainer.swift */; };
@@ -71,6 +74,7 @@
 		153BAC309AF6650C0CFBEAB1 /* AuthError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthError.swift; sourceTree = "<group>"; };
 		18D4C70E576CCB8F6CD3271D /* HeatColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatColor.swift; sourceTree = "<group>"; };
 		1DE5294BDECED78127CEF1B3 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		22B28EF4A3B802ACA47ACF31 /* PushNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationManager.swift; sourceTree = "<group>"; };
 		23AF276F8D403CEF92636C33 /* HeatmapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapTests.swift; sourceTree = "<group>"; };
 		31EB626E9B81C5478B568DF1 /* UserPreferencesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPreferencesStore.swift; sourceTree = "<group>"; };
 		3458D5975C955DA191E9FCA8 /* FuelPricesAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelPricesAPI.swift; sourceTree = "<group>"; };
@@ -84,6 +88,7 @@
 		4BE1075432AD2E4C56B5D7B7 /* NearbyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyView.swift; sourceTree = "<group>"; };
 		50C82551799419E764CB389A /* AppAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAnalytics.swift; sourceTree = "<group>"; };
 		5A44E3BA842112F05DD868F5 /* AuthDTOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthDTOs.swift; sourceTree = "<group>"; };
+		5AD68D7BAE42C50239AFC612 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		5F66A025FA31DDD6482CEC58 /* FuelMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelMapView.swift; sourceTree = "<group>"; };
 		5F8824CEA02FEA8338D681F9 /* FuelTrackerTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FuelTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		66A5B20BB98CBD24B95D78FC /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
@@ -121,6 +126,7 @@
 			files = (
 				90C32F00A5713F86A3EF1556 /* GoogleSignIn in Frameworks */,
 				65B3334613162999BA551F44 /* GoogleMaps in Frameworks */,
+				A53B4412CE69FF4B2C58CABD /* FirebaseMessaging in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -207,6 +213,7 @@
 			children = (
 				EE2681B5EF62475C88251122 /* AppConfig.swift */,
 				C9D8FF2E1E9BE97A4DA15CDF /* AppContainer.swift */,
+				5AD68D7BAE42C50239AFC612 /* AppDelegate.swift */,
 				1DE5294BDECED78127CEF1B3 /* RootView.swift */,
 			);
 			path = App;
@@ -359,6 +366,7 @@
 		F77E8EA40BCCCE2EB0AE48AA /* Push */ = {
 			isa = PBXGroup;
 			children = (
+				22B28EF4A3B802ACA47ACF31 /* PushNotificationManager.swift */,
 				0C6BFE3F5F5E5E838CF7B19B /* PushTokenProvider.swift */,
 			);
 			path = Push;
@@ -383,6 +391,7 @@
 			packageProductDependencies = (
 				510737701D84644C853C3131 /* GoogleSignIn */,
 				5098F7B1E07B3B90AC7B2274 /* GoogleMaps */,
+				47CC9E6F72940EEDBA3C68E1 /* FirebaseMessaging */,
 			);
 			productName = FuelTracker;
 			productReference = 4A86CEDB3B3AB27F880FF146 /* FuelTracker.app */;
@@ -435,6 +444,7 @@
 			mainGroup = 17B1ACE1B51493A614F47A80;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				4D1E5208CF5D083DF6546C83 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				AAB416F5C669AA7D4E255C6A /* XCRemoteSwiftPackageReference "ios-maps-sdk" */,
 				E8A2D8BD258A717E91B61559 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
@@ -470,6 +480,7 @@
 				62108BE2D0183495BBDD67CB /* AppAnalytics.swift in Sources */,
 				39051261F8DFF2CC5F6B28B9 /* AppConfig.swift in Sources */,
 				E767F58CA0F6432F9A04B24E /* AppContainer.swift in Sources */,
+				D8F80F9D5885878A59251E70 /* AppDelegate.swift in Sources */,
 				156FEDF491D165280A68E5F8 /* AuthDTOs.swift in Sources */,
 				C6CAB881E9EC5C78D4D8CC5F /* AuthError.swift in Sources */,
 				1F65F367869C32089D7C3BCF /* AuthView.swift in Sources */,
@@ -497,6 +508,7 @@
 				2150CE5AC7919E32E28B1F4C /* PriceLineChart.swift in Sources */,
 				90C871DD3DF7EC6E3B980C4F /* PricesView.swift in Sources */,
 				6830C2EEC51B16C952D4B69F /* PricesViewModel.swift in Sources */,
+				06B7D92967D1AD1386003F8A /* PushNotificationManager.swift in Sources */,
 				6BFEA0C130CEE2E79E6E9D0B /* PushTokenProvider.swift in Sources */,
 				37AE7F8788395F56286AA5B5 /* RootView.swift in Sources */,
 				BA261E6F96512B3C6ED3405C /* SettingsView.swift in Sources */,
@@ -764,6 +776,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		4D1E5208CF5D083DF6546C83 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.0.0;
+			};
+		};
 		AAB416F5C669AA7D4E255C6A /* XCRemoteSwiftPackageReference "ios-maps-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/googlemaps/ios-maps-sdk";
@@ -783,6 +803,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		47CC9E6F72940EEDBA3C68E1 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4D1E5208CF5D083DF6546C83 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
 		5098F7B1E07B3B90AC7B2274 /* GoogleMaps */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = AAB416F5C669AA7D4E255C6A /* XCRemoteSwiftPackageReference "ios-maps-sdk" */;
