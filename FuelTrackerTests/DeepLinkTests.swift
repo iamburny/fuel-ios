@@ -42,4 +42,9 @@ struct DeepLinkTests {
         let url = URL(string: "https://example.com/stations/431")!
         #expect(DeepLink.from(url: url) == nil)
     }
+
+    @Test func stationsPathWithNoIdReturnsNil() {
+        let url = URL(string: "https://fueltracker.uk/stations")!
+        #expect(DeepLink.from(url: url) == nil)
+    }
 }
