@@ -27,6 +27,7 @@ struct FuelTrackerApp: App {
                 .environment(container.userPreferencesStore)
                 .environment(\.appContainer, container)
                 .environment(PushNotificationManager.shared)
+                .preferredColorScheme(container.userPreferencesStore.preferences.themeMode.colorScheme)
                 .onOpenURL { url in
                     GIDSignIn.sharedInstance.handle(url)
                 }

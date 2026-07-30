@@ -30,6 +30,13 @@ final class FavouritesViewModel {
     func load() async {
         isLoading = true
         error = nil
+        // Android rebuilds the whole state object here, which implicitly resets creatingAlert/
+        // message to their defaults on every reload — do the same explicitly, since this method
+        // (unlike every other screen's load) is called unconditionally on every re-entry, so stale
+        // values could otherwise survive across a reload in a way Android's fresh-struct semantics
+        // never allow.
+        creatingAlert = false
+        message = nil
         guard repository.isLoggedIn else {
             isLoading = false
             isLoggedIn = false

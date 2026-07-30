@@ -1,10 +1,21 @@
 import Foundation
 import Observation
+import SwiftUI
 
 enum ThemeMode: String, CaseIterable, Sendable {
     case system = "SYSTEM"
     case light = "LIGHT"
     case dark = "DARK"
+
+    /// Maps to SwiftUI's `.preferredColorScheme(_:)` — `nil` means "follow the system", matching
+    /// Android's `MainActivity.kt` mapping `LIGHT`/`DARK`/else->`isSystemInDarkTheme()`.
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: nil
+        case .light: .light
+        case .dark: .dark
+        }
+    }
 }
 
 /// Snapshot of all non-secret user prefs — the iOS equivalent of Android's `UserPreferences` data
