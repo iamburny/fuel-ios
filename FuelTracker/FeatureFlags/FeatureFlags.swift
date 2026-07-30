@@ -43,6 +43,10 @@ final class FeatureFlags {
     private let baseURL: URL?
     private let clientKey: String?
     private var pollTask: Task<Void, Never>?
+    /// Just the very first fetch, tracked separately from the recurring poll loop so a caller that
+    /// needs a flag's *real* value (not just whatever default it'll fall back to pre-fetch) can
+    /// await it via `waitForInitialLoad`. `nil` when unconfigured — there's nothing to ever wait for.
+    private var initialLoadTask: Task<Void, Never>?
 
     init(url: String?, clientKey: String?) {
         if let url, !url.isEmpty, let base = URL(string: url.trimmingCharacters(in: .whitespacesAndNewlines)) {
@@ -64,12 +68,32 @@ final class FeatureFlags {
         return variant.payload?.value
     }
 
+    /// Waits (up to `timeout`) for the first poll to land, so a one-shot flag check (e.g. deciding
+    /// whether to show a prompt once at cold launch) sees the real server value rather than racing
+    /// it and silently falling back to `isEnabled`'s default. Returns immediately if unconfigured
+    /// (nothing will ever arrive) or once the first poll has already completed.
+    func waitForInitialLoad(timeout: Duration = .seconds(2)) async {
+        guard let initialLoadTask else { return }
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await initialLoadTask.value }
+            group.addTask { try? await Task.sleep(for: timeout) }
+            await group.next()
+            group.cancelAll()
+        }
+    }
+
     private func startPolling() {
         guard let baseURL, let clientKey else { return }
+        let initial = Task { [weak self] in
+            guard let self else { return }
+            await self.refresh(baseURL: baseURL, clientKey: clientKey)
+        }
+        initialLoadTask = initial
         pollTask = Task { [weak self] in
+            await initial.value
             while !Task.isCancelled {
-                await self?.refresh(baseURL: baseURL, clientKey: clientKey)
                 try? await Task.sleep(for: .seconds(60))
+                await self?.refresh(baseURL: baseURL, clientKey: clientKey)
             }
         }
     }

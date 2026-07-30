@@ -29,18 +29,23 @@ final class AppPreferencesViewModel {
     /// launch from `RootView.onAppear` (guarded there against re-firing on tab switches). Shows on
     /// the first launch and then every `promptEvery` opens (opens 1, 6, 11, …), unless suppressed
     /// until a later open by a previous CTA tap.
-    func onAppOpened() {
+    func onAppOpened() async {
         let count = store.incrementAppOpenCount()
         currentOpenCount = count
         let pausedUntil = store.preferences.coffeePromptPausedUntilOpen
         let cadenceDue = (count - 1) % Self.promptEvery == 0 && count >= pausedUntil
+        guard cadenceDue else { return }
+        // This is a one-shot check (unlike Settings' flag-gated cards, which re-render reactively
+        // whenever a poll lands), so it needs the real flag value now, not whatever it resolves to
+        // before the first poll completes — wait briefly for it rather than racing it.
+        await featureFlags.waitForInitialLoad()
         // shared.buy-me-a-coffee gates the whole prompt, not just its cadence. Default MUST be
         // false: Unleash's Frontend API (what this client polls) only ever returns flags that are
         // currently enabled — a flag deliberately toggled off is indistinguishable from one that's
         // unknown/not-yet-fetched, both are just absent from the response. A `default: true` here
         // would make it impossible to ever actually turn this off remotely, since a real "off"
         // toggle would silently keep falling back to true forever.
-        if cadenceDue && featureFlags.isEnabled("shared.buy-me-a-coffee", default: false) {
+        if featureFlags.isEnabled("shared.buy-me-a-coffee", default: false) {
             showCoffeePrompt = true
         }
     }

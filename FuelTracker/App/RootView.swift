@@ -74,17 +74,17 @@ struct RootView: View {
             }
         }
         // Ports AppPreferencesViewModel.kt's launch-cadence support prompt (Navigation.kt's
-        // CoffeeSupportDialog). `hasRecordedAppOpen` is the SwiftUI equivalent of Android's
-        // `savedInstanceState == null` check — `.onAppear` can otherwise refire on tab switches.
-        // The short delay avoids racing NearbyView's location-permission system dialog, which also
-        // fires on cold launch and can win the one modal-presentation slot iOS grants at a time,
-        // silently swallowing this .alert's presentation if both fire on the same frame.
+        // CoffeeSupportDialog), rendered via CoffeeSupportPrompt (a custom overlay, not .alert —
+        // see that type's doc comment for why). `hasRecordedAppOpen` is the SwiftUI equivalent of
+        // Android's `savedInstanceState == null` check — `.onAppear` can otherwise refire on tab
+        // switches. The short delay avoids visually colliding with NearbyView's location-permission
+        // system dialog, which also fires on cold launch.
         .onAppear {
             guard !hasRecordedAppOpen else { return }
             hasRecordedAppOpen = true
             Task {
                 try? await Task.sleep(for: .seconds(1))
-                appPreferences.onAppOpened()
+                await appPreferences.onAppOpened()
             }
             // An already-logged-in user relaunching the app (not going through AuthViewModel's
             // post-sign-in hook) still needs registerForRemoteNotifications() called every launch
@@ -93,23 +93,20 @@ struct RootView: View {
             guard repository.isLoggedIn else { return }
             Task { _ = await pushManager.currentToken() }
         }
-        .alert(
-            "Keep Fuel Tracker free?",
-            isPresented: Binding(
-                get: { appPreferences.showCoffeePrompt },
-                set: { if !$0 { appPreferences.onDismissCoffee() } }
-            )
-        ) {
-            Button("Buy me a coffee") {
-                appPreferences.onCoffeeClicked()
-                openURL(URL(string: "https://buymeacoffee.com/iamburny")!)
+        .overlay {
+            if appPreferences.showCoffeePrompt {
+                CoffeeSupportPrompt(
+                    onConfirm: {
+                        appPreferences.onCoffeeClicked()
+                        openURL(URL(string: "https://buymeacoffee.com/iamburny")!)
+                    },
+                    onDismiss: {
+                        appPreferences.onDismissCoffee()
+                    }
+                )
             }
-            Button("Maybe later", role: .cancel) {
-                appPreferences.onDismissCoffee()
-            }
-        } message: {
-            Text("I want to keep this app free. Apple charges to host apps on the App Store — has it saved you money? Buy me a coffee to help!")
         }
+        .animation(.default, value: appPreferences.showCoffeePrompt)
     }
 }
 
