@@ -151,6 +151,9 @@ struct AuthView: View {
             .frame(height: Self.buttonHeight)
             .background(Capsule().fill(Color(.secondarySystemBackground)))
             .overlay(Capsule().strokeBorder(Color(.separator), lineWidth: 1))
+            // Unlike the native Apple button/.borderedProminent, this button has no built-in
+            // disabled-state dimming — apply it explicitly so it doesn't look tappable mid-loading.
+            .opacity(viewModel.loading ? 0.5 : 1)
         }
         .disabled(viewModel.loading)
 
@@ -215,6 +218,7 @@ struct AuthView: View {
             }
             .font(.subheadline)
             .frame(maxWidth: .infinity, alignment: .center)
+            .disabled(viewModel.loading)
         }
     }
 
@@ -307,6 +311,11 @@ private extension Image {
         guard let bundlePath = Bundle(for: GIDSignIn.self).path(forResource: "GoogleSignIn_GoogleSignIn", ofType: "bundle"),
               let url = Bundle(path: bundlePath)?.url(forResource: "google", withExtension: "png"),
               let uiImage = UIImage(contentsOfFile: url.path) else {
+            // This resource path/name is an undocumented internal detail of the GoogleSignIn-iOS
+            // SPM package, not a public API — a future major version bump or a switch to CocoaPods
+            // integration could silently move it. Fail loudly in dev/debug builds rather than
+            // shipping a silently-degraded SF Symbol placeholder unnoticed.
+            assertionFailure("GoogleSignIn's bundled \"google\" logo image not found — falling back to a placeholder icon")
             return Image(systemName: "g.circle.fill")
         }
         return Image(uiImage: uiImage)
