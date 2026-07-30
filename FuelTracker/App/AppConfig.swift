@@ -32,4 +32,24 @@ enum AppConfig {
         }
         return raw
     }
+
+    /// Self-hosted Unleash Frontend API base URL. Non-secret — hardcoded to match Android's
+    /// `fuel-android/core/build.gradle.kts` value directly in the xcconfigs rather than routed
+    /// through `Secrets.xcconfig`.
+    static var unleashURL: String? {
+        guard let raw = Bundle.main.object(forInfoDictionaryKey: "UnleashURL") as? String, !raw.isEmpty else {
+            return nil
+        }
+        return raw
+    }
+
+    /// Unleash Frontend API client key. Secret — absence means `FeatureFlags` simply never polls
+    /// and every flag falls back to its call-site default, the same graceful-degradation pattern
+    /// as the other credentials above.
+    static var unleashClientKey: String? {
+        guard let raw = Bundle.main.object(forInfoDictionaryKey: "UnleashClientKey") as? String, !raw.isEmpty else {
+            return nil
+        }
+        return raw
+    }
 }

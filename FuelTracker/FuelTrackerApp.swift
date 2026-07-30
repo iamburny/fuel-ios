@@ -25,6 +25,8 @@ struct FuelTrackerApp: App {
                 .modelContainer(container.modelContainer)
                 .environment(container.repository)
                 .environment(container.userPreferencesStore)
+                .environment(container.featureFlags)
+                .environment(container.appPreferencesViewModel)
                 .environment(\.appContainer, container)
                 .environment(PushNotificationManager.shared)
                 .preferredColorScheme(container.userPreferencesStore.preferences.themeMode.colorScheme)

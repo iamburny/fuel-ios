@@ -10,8 +10,11 @@ enum AppTab: Hashable {
 struct RootView: View {
     @Environment(FuelRepository.self) private var repository
     @Environment(PushNotificationManager.self) private var pushManager
+    @Environment(AppPreferencesViewModel.self) private var appPreferences
+    @Environment(\.openURL) private var openURL
     @State private var deepLinkStationId: Int?
     @State private var selectedTab: AppTab = .nearby
+    @State private var hasRecordedAppOpen = false
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -69,6 +72,31 @@ struct RootView: View {
             if let stationId = deepLinkStationId {
                 NavigationStack { DetailView(stationId: stationId) }
             }
+        }
+        // Ports AppPreferencesViewModel.kt's launch-cadence support prompt (Navigation.kt's
+        // CoffeeSupportDialog). `hasRecordedAppOpen` is the SwiftUI equivalent of Android's
+        // `savedInstanceState == null` check — `.onAppear` can otherwise refire on tab switches.
+        .onAppear {
+            guard !hasRecordedAppOpen else { return }
+            hasRecordedAppOpen = true
+            appPreferences.onAppOpened()
+        }
+        .alert(
+            "Keep Fuel Tracker free?",
+            isPresented: Binding(
+                get: { appPreferences.showCoffeePrompt },
+                set: { if !$0 { appPreferences.onDismissCoffee() } }
+            )
+        ) {
+            Button("Buy me a coffee") {
+                appPreferences.onCoffeeClicked()
+                openURL(URL(string: "https://buymeacoffee.com/iamburny")!)
+            }
+            Button("Maybe later", role: .cancel) {
+                appPreferences.onDismissCoffee()
+            }
+        } message: {
+            Text("I want to keep this app free. Apple charges to host apps on the App Store — has it saved you money? Buy me a coffee to help!")
         }
     }
 }

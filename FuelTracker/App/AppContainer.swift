@@ -15,6 +15,8 @@ final class AppContainer {
     let repository: FuelRepository
     let locationManager: LocationManager
     let analytics: AppAnalytics
+    let featureFlags: FeatureFlags
+    let appPreferencesViewModel: AppPreferencesViewModel
 
     init() {
         let schema = Schema([CachedStation.self, CachedFuelPrice.self])
@@ -30,7 +32,9 @@ final class AppContainer {
         api = FuelPricesAPIClient(client: apiClient)
         repository = FuelRepository(api: api, modelContext: container.mainContext, tokenStore: tokenStore)
         locationManager = LocationManager()
-        analytics = NoOpAppAnalytics() // Phase 8 (Extras) swaps in a real Firebase-backed impl.
+        analytics = FirebaseAppAnalytics() // gated internally on FirebaseApp.app() != nil
+        featureFlags = FeatureFlags(url: AppConfig.unleashURL, clientKey: AppConfig.unleashClientKey)
+        appPreferencesViewModel = AppPreferencesViewModel(store: userPreferencesStore, featureFlags: featureFlags)
     }
 }
 

@@ -57,6 +57,8 @@ targets:
         product: GoogleMaps
       - package: Firebase
         product: FirebaseMessaging
+      - package: Firebase
+        product: FirebaseAnalytics
 
   FuelTrackerTests:
     type: bundle.unit-test

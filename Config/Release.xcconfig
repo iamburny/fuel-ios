@@ -10,3 +10,7 @@ API_BASE_URL = https:/$()/api.fueltracker.uk
 // Google Sign-In web/server client ID comes from the Secrets.xcconfig include above when present.
 
 GOOGLE_MAPS_API_KEY = $(GOOGLE_MAPS_API_KEY_RELEASE)
+
+// Unleash Frontend API — URL is non-secret and matches fuel-android's hardcoded value
+// (fuel-android/core/build.gradle.kts). Only the client key is a secret, from Secrets.xcconfig.
+UNLEASH_URL = https:/$()/flags.burny.uk

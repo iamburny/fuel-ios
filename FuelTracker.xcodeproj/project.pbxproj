@@ -7,11 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0034B9037268357145D73200 /* AnnouncementBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F08A330536516EB09899AD96 /* AnnouncementBanner.swift */; };
 		01155E1646A7A3B901C1C24B /* HeatmapViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4892854F73F51276DAE84AE2 /* HeatmapViewModel.swift */; };
 		02D03A92641D654F05EE7128 /* TokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 918FEAC0E75319DCE561C1F2 /* TokenStore.swift */; };
 		05842D576D32D5F2AE428488 /* HeatColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18D4C70E576CCB8F6CD3271D /* HeatColor.swift */; };
 		06B7D92967D1AD1386003F8A /* PushNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22B28EF4A3B802ACA47ACF31 /* PushNotificationManager.swift */; };
 		0B003EF3FC197F0FD2EFAA55 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B55220A8703E44AC8082908 /* AuthViewModel.swift */; };
+		0BC6ED5B7EA11DD522DC8903 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = A25D609AD6F91E912FFDFB9E /* FirebaseAnalytics */; };
 		156FEDF491D165280A68E5F8 /* AuthDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A44E3BA842112F05DD868F5 /* AuthDTOs.swift */; };
 		17235223E4E762F13C2C1376 /* FuelTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 744158385E279DFA14EC64A3 /* FuelTrackerApp.swift */; };
 		18CA9A7884F527DAF99297AB /* CachedStation.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFCE7D304FDB7E22B42CF25F /* CachedStation.swift */; };
@@ -41,6 +43,7 @@
 		90C32F00A5713F86A3EF1556 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 510737701D84644C853C3131 /* GoogleSignIn */; };
 		90C871DD3DF7EC6E3B980C4F /* PricesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D279C9D6589B0C809B85F2EE /* PricesView.swift */; };
 		A53B4412CE69FF4B2C58CABD /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 47CC9E6F72940EEDBA3C68E1 /* FirebaseMessaging */; };
+		A6704AD106D5B4919381E231 /* AppPreferencesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51E189AD5D1732AD7CBC48F7 /* AppPreferencesViewModel.swift */; };
 		AB53C78F7A82FA9C46E80C04 /* FuelRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DE7CBC4B3430E78BF39121F /* FuelRepository.swift */; };
 		ABBF4E5C47A3C632B3ABD10E /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41DBF56E22F4A12C2A0DECA0 /* DetailView.swift */; };
 		B9B53D7709219FA155A09BC5 /* FavouriteAndAlertDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4892DDE26B1C0AC28E82B9C6 /* FavouriteAndAlertDTOs.swift */; };
@@ -49,6 +52,7 @@
 		C6CAB881E9EC5C78D4D8CC5F /* AuthError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153BAC309AF6650C0CFBEAB1 /* AuthError.swift */; };
 		C83C0A43D848E00CA133EF2F /* DeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B73C80310EFB05E4C73FDB4 /* DeepLink.swift */; };
 		C889F6DACB809DB00405256B /* FavouritesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4938992849D7AC30456936C /* FavouritesViewModel.swift */; };
+		D8C86F2D24E4D75C31CD1594 /* FeatureFlags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 848F44BA192EDF4281220DE3 /* FeatureFlags.swift */; };
 		D8F80F9D5885878A59251E70 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD68D7BAE42C50239AFC612 /* AppDelegate.swift */; };
 		E330C9A3365AD1EBF8776B9E /* FavouritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 813E621897DE404192DB412E /* FavouritesView.swift */; };
 		E625C9992184D039AA1ED603 /* StationDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AAD55E85CFCCC66C91445A2 /* StationDTOs.swift */; };
@@ -90,6 +94,7 @@
 		4B55220A8703E44AC8082908 /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
 		4BE1075432AD2E4C56B5D7B7 /* NearbyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyView.swift; sourceTree = "<group>"; };
 		50C82551799419E764CB389A /* AppAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAnalytics.swift; sourceTree = "<group>"; };
+		51E189AD5D1732AD7CBC48F7 /* AppPreferencesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferencesViewModel.swift; sourceTree = "<group>"; };
 		5A44E3BA842112F05DD868F5 /* AuthDTOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthDTOs.swift; sourceTree = "<group>"; };
 		5AD68D7BAE42C50239AFC612 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		5F66A025FA31DDD6482CEC58 /* FuelMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelMapView.swift; sourceTree = "<group>"; };
@@ -101,6 +106,7 @@
 		7898E3F37EC3036C8FD68E92 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7F7722F19B93D8A598DA24B4 /* HeatmapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapView.swift; sourceTree = "<group>"; };
 		813E621897DE404192DB412E /* FavouritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavouritesView.swift; sourceTree = "<group>"; };
+		848F44BA192EDF4281220DE3 /* FeatureFlags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlags.swift; sourceTree = "<group>"; };
 		85F7A0CCB5B7A5994961C93C /* NearbyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyViewModel.swift; sourceTree = "<group>"; };
 		8BFB672611E5491BC0B9601A /* DetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailViewModel.swift; sourceTree = "<group>"; };
 		918FEAC0E75319DCE561C1F2 /* TokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenStore.swift; sourceTree = "<group>"; };
@@ -120,6 +126,7 @@
 		DFCE7D304FDB7E22B42CF25F /* CachedStation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedStation.swift; sourceTree = "<group>"; };
 		EE2681B5EF62475C88251122 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		EFAB747E97673DB1C7E395F4 /* HeatmapMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapMapView.swift; sourceTree = "<group>"; };
+		F08A330536516EB09899AD96 /* AnnouncementBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnouncementBanner.swift; sourceTree = "<group>"; };
 		F1B14496D8AC2AFA53A0A331 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -131,6 +138,7 @@
 				90C32F00A5713F86A3EF1556 /* GoogleSignIn in Frameworks */,
 				65B3334613162999BA551F44 /* GoogleMaps in Frameworks */,
 				A53B4412CE69FF4B2C58CABD /* FirebaseMessaging in Frameworks */,
+				0BC6ED5B7EA11DD522DC8903 /* FirebaseAnalytics in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -174,6 +182,7 @@
 				514DE1CACD93646735D8E391 /* App */,
 				779C13BCBC0B2BA54177AE09 /* Components */,
 				176DC592F96E7E3461608FFE /* Domain */,
+				B289E8BB190836CF6797456C /* FeatureFlags */,
 				8163F392FE9BB2641702DE3A /* Features */,
 				CE751E09DBD08BAF415C8A3D /* Location */,
 				AAA1FF3C54774AE09DA50AB8 /* Networking */,
@@ -218,6 +227,7 @@
 				EE2681B5EF62475C88251122 /* AppConfig.swift */,
 				C9D8FF2E1E9BE97A4DA15CDF /* AppContainer.swift */,
 				5AD68D7BAE42C50239AFC612 /* AppDelegate.swift */,
+				51E189AD5D1732AD7CBC48F7 /* AppPreferencesViewModel.swift */,
 				0B73C80310EFB05E4C73FDB4 /* DeepLink.swift */,
 				1DE5294BDECED78127CEF1B3 /* RootView.swift */,
 			);
@@ -264,6 +274,7 @@
 		779C13BCBC0B2BA54177AE09 /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				F08A330536516EB09899AD96 /* AnnouncementBanner.swift */,
 				5F66A025FA31DDD6482CEC58 /* FuelMapView.swift */,
 				B3BF373821F6CA70597AE426 /* PriceLineChart.swift */,
 			);
@@ -303,6 +314,14 @@
 				CF1EB6B23C18D93938081020 /* DTOs */,
 			);
 			path = Networking;
+			sourceTree = "<group>";
+		};
+		B289E8BB190836CF6797456C /* FeatureFlags */ = {
+			isa = PBXGroup;
+			children = (
+				848F44BA192EDF4281220DE3 /* FeatureFlags.swift */,
+			);
+			path = FeatureFlags;
 			sourceTree = "<group>";
 		};
 		B7AA3D9648AE69C3F8D35748 /* Config */ = {
@@ -398,6 +417,7 @@
 				510737701D84644C853C3131 /* GoogleSignIn */,
 				5098F7B1E07B3B90AC7B2274 /* GoogleMaps */,
 				47CC9E6F72940EEDBA3C68E1 /* FirebaseMessaging */,
+				A25D609AD6F91E912FFDFB9E /* FirebaseAnalytics */,
 			);
 			productName = FuelTracker;
 			productReference = 4A86CEDB3B3AB27F880FF146 /* FuelTracker.app */;
@@ -483,10 +503,12 @@
 			files = (
 				8E6C2190AC13ED58353FCDB6 /* APIEndpoint.swift in Sources */,
 				504F12856FA172FABCCD4FFC /* AmenitiesFormatter.swift in Sources */,
+				0034B9037268357145D73200 /* AnnouncementBanner.swift in Sources */,
 				62108BE2D0183495BBDD67CB /* AppAnalytics.swift in Sources */,
 				39051261F8DFF2CC5F6B28B9 /* AppConfig.swift in Sources */,
 				E767F58CA0F6432F9A04B24E /* AppContainer.swift in Sources */,
 				D8F80F9D5885878A59251E70 /* AppDelegate.swift in Sources */,
+				A6704AD106D5B4919381E231 /* AppPreferencesViewModel.swift in Sources */,
 				156FEDF491D165280A68E5F8 /* AuthDTOs.swift in Sources */,
 				C6CAB881E9EC5C78D4D8CC5F /* AuthError.swift in Sources */,
 				1F65F367869C32089D7C3BCF /* AuthView.swift in Sources */,
@@ -498,6 +520,7 @@
 				B9B53D7709219FA155A09BC5 /* FavouriteAndAlertDTOs.swift in Sources */,
 				E330C9A3365AD1EBF8776B9E /* FavouritesView.swift in Sources */,
 				C889F6DACB809DB00405256B /* FavouritesViewModel.swift in Sources */,
+				D8C86F2D24E4D75C31CD1594 /* FeatureFlags.swift in Sources */,
 				49B913EE45B7A7FC18FC7E4C /* FuelCostCalculator.swift in Sources */,
 				F51EA92612A1D15D2AECA6BD /* FuelMapView.swift in Sources */,
 				F2CEDA9D07D8CCDEE09943B9 /* FuelPricesAPI.swift in Sources */,
@@ -825,6 +848,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = E8A2D8BD258A717E91B61559 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
 			productName = GoogleSignIn;
+		};
+		A25D609AD6F91E912FFDFB9E /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4D1E5208CF5D083DF6546C83 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

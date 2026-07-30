@@ -1,12 +1,13 @@
 import SwiftUI
 import SwiftData
 
-/// Direct port of fuel-android's `PreferencesScreen.kt`. The "Buy me a coffee" and "Also available
-/// on the web" cards (Unleash-flag-gated on Android) are deliberately not ported here — they land
-/// in the Extras phase alongside the rest of the feature-flag wiring.
+/// Direct port of fuel-android's `PreferencesScreen.kt`, including the Unleash-flag-gated
+/// "Buy me a coffee" and "Also available on the web" cards.
 struct SettingsView: View {
     @Environment(FuelRepository.self) private var repository
     @Environment(UserPreferencesStore.self) private var preferencesStore
+    @Environment(FeatureFlags.self) private var featureFlags
+    @Environment(\.openURL) private var openURL
     @State private var viewModel: SettingsViewModel?
     @State private var showingAuth = false
 
@@ -34,6 +35,47 @@ struct SettingsView: View {
     @ViewBuilder
     private func content(_ viewModel: SettingsViewModel) -> some View {
         Form {
+            // Mirrors PreferencesScreen.kt's flag-gated cards — shared.buy-me-a-coffee (default
+            // true, preserves existing behaviour if Unleash is unreachable) and an iOS-specific
+            // fuel-ios.also-available-on-web (Android's own flag is fuel-android.also-available-on-web).
+            if featureFlags.isEnabled("shared.buy-me-a-coffee", default: true) {
+                Section {
+                    Button {
+                        openURL(URL(string: "https://buymeacoffee.com/iamburny")!)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "cup.and.saucer.fill")
+                                .foregroundStyle(Color(red: 1, green: 0.867, blue: 0))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Buy me a coffee").font(.headline).foregroundStyle(.primary)
+                                Text("Fuel Tracker UK is free and ad-free — support keeps it running")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+            }
+
+            if featureFlags.isEnabled("fuel-ios.also-available-on-web", default: true) {
+                Section {
+                    Button {
+                        openURL(URL(string: "https://fueltracker.uk")!)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "globe")
+                                .foregroundStyle(.tint)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Also available on the web").font(.headline).foregroundStyle(.primary)
+                                Text("fueltracker.uk — same account, same favourites")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+            }
+
             Section("Account") {
                 if repository.isLoggedIn {
                     HStack {
@@ -126,4 +168,5 @@ struct SettingsView: View {
     SettingsView()
         .environment(FuelRepository(api: FuelPricesAPIClient(client: APIClient(baseURL: AppConfig.apiBaseURL, tokenStore: TokenStore())), modelContext: try! ModelContainer(for: CachedStation.self, CachedFuelPrice.self).mainContext, tokenStore: TokenStore()))
         .environment(UserPreferencesStore())
+        .environment(FeatureFlags(url: nil, clientKey: nil))
 }

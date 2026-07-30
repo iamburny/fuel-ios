@@ -69,13 +69,16 @@ struct NearbyView: View {
 
     @ViewBuilder
     private func content(_ viewModel: NearbyViewModel) -> some View {
-        ZStack {
-            mapLayer(viewModel)
-            fuelTypePill(viewModel)
-            recenterButton(viewModel)
-            connectivityBanner(viewModel)
-            if showPanel {
-                searchPanel(viewModel)
+        VStack(spacing: 0) {
+            AnnouncementBanner()
+            ZStack {
+                mapLayer(viewModel)
+                fuelTypePill(viewModel)
+                recenterButton(viewModel)
+                connectivityBanner(viewModel)
+                if showPanel {
+                    searchPanel(viewModel)
+                }
             }
         }
     }
