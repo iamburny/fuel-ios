@@ -47,6 +47,7 @@ struct PriceLineChart: View {
                 .chartYAxis {
                     AxisMarks(position: .leading)
                 }
+                .chartYScale(domain: yDomain)
                 .frame(height: 200)
 
                 HStack(spacing: 24) {
@@ -60,6 +61,17 @@ struct PriceLineChart: View {
             .padding(8)
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(.quaternary))
         }
+    }
+
+    /// Without an explicit domain, Swift Charts anchors an AreaMark's baseline at 0 — for a
+    /// pence series that only ever moves within a ~10-20p band, that squashes the line flat near
+    /// the bottom. Mirrors Android's PriceLineChart.kt: pad the data's own min/max by 10% of its
+    /// range, floored at 0.5p so a flat/near-flat series still gets a visible span.
+    private var yDomain: ClosedRange<Double> {
+        let minV = values.min() ?? 0
+        let maxV = values.max() ?? 0
+        let pad = max((maxV - minV) * 0.1, 0.5)
+        return (minV - pad)...(maxV + pad)
     }
 
     private var xAxisIndices: [Int] {
