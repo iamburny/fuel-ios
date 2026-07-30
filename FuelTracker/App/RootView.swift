@@ -86,6 +86,12 @@ struct RootView: View {
                 try? await Task.sleep(for: .seconds(1))
                 appPreferences.onAppOpened()
             }
+            // An already-logged-in user relaunching the app (not going through AuthViewModel's
+            // post-sign-in hook) still needs registerForRemoteNotifications() called every launch
+            // and its FCM token kept fresh — currentToken() sets pushManager.latestToken on
+            // success, which the .onChange above then registers with the backend.
+            guard repository.isLoggedIn else { return }
+            Task { _ = await pushManager.currentToken() }
         }
         .alert(
             "Keep Fuel Tracker free?",

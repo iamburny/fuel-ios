@@ -44,20 +44,26 @@ final class PushNotificationManager: NSObject {
     // guidance, since the APNs device token isn't persisted across launches on the Messaging side.
     // Skipping it once permission is already granted was a real bug here: Messaging.token() then
     // throws "No APNS token specified before fetching FCM Token" on every launch after the first.
-    func requestAuthorizationIfNeeded() async {
-        guard FirebaseApp.app() != nil else { return }
+    // Returns whether registerForRemoteNotifications() was actually called, so currentToken() below
+    // knows whether waiting for an APNs token is worthwhile (e.g. .denied never registers, so
+    // there's nothing to poll for).
+    @discardableResult
+    func requestAuthorizationIfNeeded() async -> Bool {
+        guard FirebaseApp.app() != nil else { return false }
         let center = UNUserNotificationCenter.current()
         let settings = await center.notificationSettings()
         switch settings.authorizationStatus {
         case .notDetermined:
             _ = try? await center.requestAuthorization(options: [.alert, .sound, .badge])
             UIApplication.shared.registerForRemoteNotifications()
+            return true
         case .authorized, .provisional, .ephemeral:
             UIApplication.shared.registerForRemoteNotifications()
+            return true
         case .denied:
-            break
+            return false
         @unknown default:
-            break
+            return false
         }
     }
 }
@@ -65,7 +71,7 @@ final class PushNotificationManager: NSObject {
 extension PushNotificationManager: PushTokenProvider {
     func currentToken() async -> String? {
         guard FirebaseApp.app() != nil else { return nil }
-        await requestAuthorizationIfNeeded()
+        guard await requestAuthorizationIfNeeded() else { return nil }
         // registerForRemoteNotifications() (just called above) delivers the APNs token to
         // Messaging asynchronously via didRegisterForRemoteNotificationsWithDeviceToken — calling
         // Messaging.token() before that lands throws "No APNS token specified before fetching FCM
