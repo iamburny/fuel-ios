@@ -114,6 +114,22 @@ have tripped this up before:
   prompt (`AppPreferencesViewModel.onAppOpened`) firing on cold launch #1 and every 5th launch after
   — relaunch the app once (`simctl terminate` + `launch`) to land on a launch it won't show on.
 
+### TestFlight
+
+Same archive/upload flow as above — there's no separate "TestFlight build"; every processed upload
+becomes available for TestFlight automatically. Only what happens afterward differs:
+
+- Go to the **TestFlight** tab in App Store Connect (not "App Store" / "Prepare for Submission" —
+  that's the review-checklist tab), where the processed build appears on its own.
+- Fill in **Test Information** on the build (What to Test notes, beta description, contact email) —
+  required before external testers can install it.
+- **Internal testing**: anyone with a role on the App Store Connect team (Admin/App Manager/
+  Developer), up to 100 people. No Apple review — available within minutes of processing.
+- **External testing**: testers invited by email, up to 10,000, in named groups. The first build of
+  each version needs a quick **Beta App Review** (usually a few hours, well under 48h) before it
+  reaches external testers; later builds of the same version can skip re-review unless the change
+  is significant.
+
 ## Architecture
 
 Single Xcode app target (no local SwiftPM package split). Layout mirrors Android's module split:
