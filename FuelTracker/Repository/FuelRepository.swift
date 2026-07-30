@@ -236,6 +236,17 @@ final class FuelRepository {
         currentEmail = nil
     }
 
+    /// Permanently deletes the signed-in user's account server-side, then clears local state the
+    /// same way `logout()` does — there's nothing left to sign back into.
+    func deleteAccount() async throws {
+        do {
+            try await api.deleteAccount()
+        } catch let error as APIError {
+            throw AuthError.from(error)
+        }
+        logout()
+    }
+
     // MARK: - Favourites
 
     func getFavourites() async throws -> [FavouriteDTO] { try await api.getFavourites() }

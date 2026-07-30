@@ -26,6 +26,7 @@ protocol FuelPricesAPI: Sendable {
     func appleLogin(_ body: AppleLoginRequest) async throws -> TokenResponse
     func forgotPassword(_ body: ForgotPasswordRequest) async throws
     func updateFcmToken(_ token: String) async throws
+    func deleteAccount() async throws
 
     func getFavourites() async throws -> [FavouriteDTO]
     func addFavourite(_ body: FavouriteCreateRequest) async throws -> FavouriteDTO
@@ -157,6 +158,10 @@ final class FuelPricesAPIClient: FuelPricesAPI {
             queryItems: [.init(name: "fcm_token", value: token)],
             requiresAuth: true
         ))
+    }
+
+    func deleteAccount() async throws {
+        try await client.requestNoContent(APIEndpoint(path: "api/auth/me", method: .delete, requiresAuth: true))
     }
 
     // MARK: - Favourites

@@ -10,6 +10,9 @@ struct SettingsView: View {
     @Environment(\.openURL) private var openURL
     @State private var viewModel: SettingsViewModel?
     @State private var showingAuth = false
+    @State private var showingDeleteConfirm = false
+    @State private var isDeletingAccount = false
+    @State private var deleteAccountError: String?
 
     var body: some View {
         NavigationStack {
@@ -24,10 +27,36 @@ struct SettingsView: View {
             .sheet(isPresented: $showingAuth) {
                 AuthView(onAuthed: { showingAuth = false })
             }
+            .alert("Delete account?", isPresented: $showingDeleteConfirm) {
+                Button("Delete", role: .destructive) { deleteAccount() }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This permanently deletes your account, favourites, and alerts. This can't be undone.")
+            }
+            .alert("Couldn't delete account", isPresented: Binding(
+                get: { deleteAccountError != nil },
+                set: { if !$0 { deleteAccountError = nil } }
+            )) {
+                Button("OK") {}
+            } message: {
+                Text(deleteAccountError ?? "")
+            }
         }
         .onAppear {
             if viewModel == nil {
                 viewModel = SettingsViewModel(preferencesStore: preferencesStore)
+            }
+        }
+    }
+
+    private func deleteAccount() {
+        isDeletingAccount = true
+        Task {
+            defer { isDeletingAccount = false }
+            do {
+                try await repository.deleteAccount()
+            } catch {
+                deleteAccountError = (error as? AuthError)?.errorDescription ?? "Please try again."
             }
         }
     }
@@ -85,6 +114,16 @@ struct SettingsView: View {
                         Spacer()
                         Button("Sign out", role: .destructive) {
                             repository.logout()
+                        }
+                    }
+                    HStack {
+                        Button("Delete account", role: .destructive) {
+                            showingDeleteConfirm = true
+                        }
+                        .disabled(isDeletingAccount)
+                        if isDeletingAccount {
+                            Spacer()
+                            ProgressView()
                         }
                     }
                 } else {
