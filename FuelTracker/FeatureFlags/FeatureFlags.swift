@@ -82,7 +82,9 @@ final class FeatureFlags {
               let decoded = try? JSONDecoder().decode(UnleashResponse.self, from: data) else {
             return
         }
-        toggles = Dictionary(uniqueKeysWithValues: decoded.toggles.map { ($0.name, $0) })
+        // uniquingKeysWith rather than uniqueKeysWithValues: a server-side duplicate toggle name
+        // should never crash the app on every poll — keep whichever entry sorts last.
+        toggles = Dictionary(decoded.toggles.map { ($0.name, $0) }, uniquingKeysWith: { _, latest in latest })
         version += 1
     }
 }

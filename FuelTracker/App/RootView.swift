@@ -76,10 +76,16 @@ struct RootView: View {
         // Ports AppPreferencesViewModel.kt's launch-cadence support prompt (Navigation.kt's
         // CoffeeSupportDialog). `hasRecordedAppOpen` is the SwiftUI equivalent of Android's
         // `savedInstanceState == null` check — `.onAppear` can otherwise refire on tab switches.
+        // The short delay avoids racing NearbyView's location-permission system dialog, which also
+        // fires on cold launch and can win the one modal-presentation slot iOS grants at a time,
+        // silently swallowing this .alert's presentation if both fire on the same frame.
         .onAppear {
             guard !hasRecordedAppOpen else { return }
             hasRecordedAppOpen = true
-            appPreferences.onAppOpened()
+            Task {
+                try? await Task.sleep(for: .seconds(1))
+                appPreferences.onAppOpened()
+            }
         }
         .alert(
             "Keep Fuel Tracker free?",
