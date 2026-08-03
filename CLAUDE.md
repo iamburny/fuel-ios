@@ -64,6 +64,28 @@ when its secret is absent (see `AppConfig.swift`) — e.g. "Continue with Google
 pattern in any new integration; a fresh checkout with no `Secrets.xcconfig` should always build and
 run.
 
+### Xcode Cloud secrets
+
+Xcode Cloud clones straight from git, so the graceful-degradation story above only covers half of
+it: `Config/Secrets.xcconfig` missing is fine (optional `#include?`, builds with everything
+no-op'd), but `GoogleService-Info.plist` missing **hard-fails the archive** — it's wired into a
+real Copy Files build phase, which errors with "Build input file cannot be found" if the input
+doesn't exist, rather than skipping it. This surfaced as a Xcode Cloud "Run xcodebuild archive"
+failure (exit 65) with no useful detail in App Store Connect's web log — the actual `error:` line
+was 6000+ lines into the full log, only visible after downloading it from the build's Artifacts tab.
+
+Fixed via `ci_scripts/ci_post_clone.sh`, which reconstructs both files from Environment Variables
+before the build starts (the script itself has no secrets in it — just logic; it's fine to commit).
+To wire it up in App Store Connect → Xcode Cloud → the workflow → **Environment → Environment
+Variables**, add these as **Secret**:
+- `GOOGLE_SERVICE_INFO_PLIST_BASE64` — required, or the archive fails the same way again. Generate
+  with `base64 -i FuelTracker/Resources/GoogleService-Info.plist | tr -d '\n' | pbcopy`, paste the
+  clipboard as the value.
+- `SECRETS_XCCONFIG_BASE64` — optional (build succeeds either way), but without it the shipped
+  build has Google Sign-In/Maps/Unleash silently degraded to their no-op state, which defeats the
+  point of a TestFlight/App Store build. Generate with
+  `base64 -i Config/Secrets.xcconfig | tr -d '\n' | pbcopy`.
+
 ## App Store submission
 
 Archiving/uploading has to happen from Xcode on a Mac with a valid Apple Developer signing
