@@ -22,5 +22,10 @@ DerivedData/
 Config/Secrets.xcconfig
 GoogleService-Info.plist
 
+# Archive exports — one-off build artifacts from Xcode Organizer's "Export" flow
+# (Packaging.log/ExportOptions.plist/DistributionSummary.plist alongside the .ipa), never source
+*.ipa
+FuelTracker [0-9][0-9][0-9][0-9]-*/
+
 # macOS
 .DS_Store
