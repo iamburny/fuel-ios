@@ -2,6 +2,8 @@
 *.xcodeproj/*
 !*.xcodeproj/project.pbxproj
 !*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+*.xcodeproj/project.xcworkspace/xcuserdata/
 *.xcworkspace/*
 !*.xcworkspace/contents.xcworkspacedata
 xcuserdata/
@@ -9,10 +11,12 @@ DerivedData/
 *.moved-aside
 *.xcuserstate
 
-# Swift Package Manager
+# Swift Package Manager — Package.resolved is deliberately NOT ignored here: this is an app
+# target (not a library), so it must be committed for Xcode Cloud/CI to get reproducible package
+# versions instead of failing with "a resolved file is required when automatic dependency
+# resolution is disabled."
 .build/
 .swiftpm/
-Package.resolved
 
 # Secrets — never commit real keys (mirrors fuel-android's local.properties pattern)
 Config/Secrets.xcconfig
