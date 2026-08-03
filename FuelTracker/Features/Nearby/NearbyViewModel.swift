@@ -36,6 +36,10 @@ final class NearbyViewModel {
     var cameraRecenterToken = 0
     /// True once the user has dragged the map away from GPS-center — shows a recenter button.
     var isOffGpsCenter = false
+    /// True while a drag-triggered viewport fetch is in flight. Drives a thin top-of-map progress
+    /// bar — the old pins stay on screen throughout (viewportStations is only replaced once the
+    /// new response lands), so this is purely a "something's happening" signal, not a data swap.
+    var isLoadingViewport = false
 
     private let repository: FuelRepository
     private let locationManager: LocationManager
@@ -165,6 +169,8 @@ final class NearbyViewModel {
         boundsTask = Task { [weak self] in
             guard let self else { return }
             self.isOffGpsCenter = true
+            self.isLoadingViewport = true
+            defer { self.isLoadingViewport = false }
             do {
                 let response = try await self.repository.getStationsInBounds(
                     minLat: bounds.southWest.latitude, maxLat: bounds.northEast.latitude,
@@ -184,6 +190,7 @@ final class NearbyViewModel {
         boundsTask?.cancel()
         viewportStations = nil
         isOffGpsCenter = false
+        isLoadingViewport = false
         cameraRecenterToken += 1
     }
 

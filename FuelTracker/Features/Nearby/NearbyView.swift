@@ -79,6 +79,7 @@ struct NearbyView: View {
                 fuelTypePill(viewModel)
                 recenterButton(viewModel)
                 connectivityBanner(viewModel)
+                viewportLoadingBar(viewModel)
                 if showPanel {
                     searchPanel(viewModel)
                 }
@@ -171,6 +172,23 @@ struct NearbyView: View {
                     .padding(16)
                     Spacer()
                 }
+            }
+        }
+    }
+
+    /// Thin browser-style progress bar while a drag-triggered viewport reload is in flight — the
+    /// pins themselves don't disappear (old ones stay until the new response lands), so without
+    /// this the long pause after a drag reads as the app being stuck. Mirrors Android's top
+    /// `LinearProgressIndicator` and web's `.map-loading-bar`.
+    @ViewBuilder
+    private func viewportLoadingBar(_ viewModel: NearbyViewModel) -> some View {
+        if viewModel.isLoadingViewport {
+            VStack {
+                ProgressView()
+                    .progressViewStyle(.linear)
+                    .frame(height: 3)
+                    .tint(.accentColor)
+                Spacer()
             }
         }
     }
