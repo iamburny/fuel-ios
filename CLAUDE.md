@@ -64,6 +64,72 @@ when its secret is absent (see `AppConfig.swift`) — e.g. "Continue with Google
 pattern in any new integration; a fresh checkout with no `Secrets.xcconfig` should always build and
 run.
 
+## App Store submission
+
+Archiving/uploading has to happen from Xcode on a Mac with a valid Apple Developer signing
+identity — there's no `xcodebuild archive` shortcut documented here because the GUI flow is what's
+actually been used. Requires real `Config/Secrets.xcconfig` + `GoogleService-Info.plist` present
+(see Local secrets setup above) — a Release archive built without them still builds (by design) but
+ships with Google Sign-In etc. silently disabled for reviewers.
+
+**Archive and upload:**
+1. In Xcode, target `FuelTracker` → Signing & Capabilities: confirm the right Team is selected and
+   "Automatically manage signing" is checked.
+2. Destination picker (top toolbar) → **Any iOS Device (arm64)** or a connected device. Archiving is
+   disabled while a simulator destination is selected.
+3. **Product → Archive**. Builds Release configuration.
+4. Organizer opens automatically (or **Window → Organizer → Archives**). Select the new archive →
+   **Distribute App → App Store Connect → Upload**, then follow the signing prompts.
+5. Wait for Apple's processing email (~15 min–a few hours), then in App Store Connect, on the
+   version's "Prepare for Submission" page, **Build** section → **+** → select the processed build.
+
+**"Upload completed with warnings" about missing dSYMs (`FirebaseAnalytics`,
+`GoogleAppMeasurement`, `GoogleAppMeasurementIdentitySupport`, `GoogleAdsOnDeviceConversion`) are
+expected and safe to ignore.** These are precompiled binary frameworks pulled in transitively by
+Firebase Analytics via SPM; Xcode doesn't bundle their dSYMs into the archive. The upload still
+succeeds and the build is still submittable — the only effect is that a crash originating *inside*
+one of those four specific Google frameworks won't symbolicate in App Store Connect's crash
+reports. Not worth chasing before a submission.
+
+**"Add for Review" checklist** (App Store Connect, App Information / App Privacy tabs) — items that
+have tripped this up before:
+- **Content Rights Information**: answer yes / confirm rights — the fuel price data comes from UK
+  filling stations' government-mandated open price feeds, which exist specifically for this kind of
+  reuse.
+- **Privacy Policy URL**: `https://fueltracker.uk/privacy` (source: `fuel-web/app/privacy/page.tsx`
+  — check it still mentions iOS/Apple Sign-In, not just Android, before pointing reviewers at it).
+- **Primary category**: Utilities (Travel is a reasonable secondary).
+- **Age rating questionnaire**: answer "None"/"No" throughout — no mature content, no unrestricted
+  in-app web browsing (external links open in the system browser, not an embedded one), and the
+  discrepancy-report feature sends free text privately to admins rather than publishing it, so it
+  doesn't count as user-generated content either.
+- **13-inch iPad screenshot**: required because `TARGETED_DEVICE_FAMILY = "1,2"` in
+  `project.pbxproj` declares iPad support, even though the app has no iPad-specific layout (it's
+  portrait-only, `UIRequiresFullScreen = true`) — it just scales up fine. To generate one without a
+  fresh archive: boot an "iPad Pro 13-inch" simulator (`xcrun simctl list devices available`),
+  install + launch the already-built `.app` from
+  `~/Library/Developer/Xcode/DerivedData/.../Debug-iphonesimulator/FuelTracker.app` via
+  `xcrun simctl install`/`launch`, then `xcrun simctl io <UDID> screenshot out.png` — this produces
+  exactly the 2064×2752 resolution Apple requires. Watch out for the "Buy me a coffee" support
+  prompt (`AppPreferencesViewModel.onAppOpened`) firing on cold launch #1 and every 5th launch after
+  — relaunch the app once (`simctl terminate` + `launch`) to land on a launch it won't show on.
+
+### TestFlight
+
+Same archive/upload flow as above — there's no separate "TestFlight build"; every processed upload
+becomes available for TestFlight automatically. Only what happens afterward differs:
+
+- Go to the **TestFlight** tab in App Store Connect (not "App Store" / "Prepare for Submission" —
+  that's the review-checklist tab), where the processed build appears on its own.
+- Fill in **Test Information** on the build (What to Test notes, beta description, contact email) —
+  required before external testers can install it.
+- **Internal testing**: anyone with a role on the App Store Connect team (Admin/App Manager/
+  Developer), up to 100 people. No Apple review — available within minutes of processing.
+- **External testing**: testers invited by email, up to 10,000, in named groups. The first build of
+  each version needs a quick **Beta App Review** (usually a few hours, well under 48h) before it
+  reaches external testers; later builds of the same version can skip re-review unless the change
+  is significant.
+
 ## Architecture
 
 Single Xcode app target (no local SwiftPM package split). Layout mirrors Android's module split:
