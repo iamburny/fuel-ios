@@ -168,9 +168,13 @@ This is the single most important thing to understand before touching `Repositor
 
 - `getNearbyStations`: cache-first (24h TTL); on network failure, falls back to **any** cached
   station (unscoped) — better than nothing.
-- `getStationsInBounds`: cache-first; on network failure, falls back to cache **scoped to the same
-  bounding box** — an unrelated station from elsewhere in the country has no business appearing on
-  a dragged map viewport. Don't unify this with the rule above.
+- `getStationsInBounds`: **always network-first** (no cache-first short-circuit) — every call comes
+  from a genuine drag to a genuinely new box, and a drag's box nearly always overlaps stations
+  already cached from an earlier load elsewhere, so a naive "any fresh cache hit in this box" check
+  (the previous behaviour here) almost always skipped the network call and silently hid whatever
+  was newly visible at the box's edges. On network failure, falls back to cache **scoped to the
+  same bounding box** — an unrelated station from elsewhere in the country has no business
+  appearing on a dragged map viewport. Don't unify this with the rule above.
 - `getStation(id:)`: network-first, cache-fallback only on failure.
 - `searchStations`: network-first, in-memory substring-match fallback on failure.
 - `getCheapest` / `getNationalAverages` / `getHeatmap` / `getPriceHistory` / `getNationalTrends`:

@@ -79,21 +79,16 @@ final class FuelRepository {
         }
     }
 
-    /// Stations within an exact lat/lng box (a map viewport) — cache-first via the same bounding-
-    /// box query `getNearbyStations` uses internally, network fallback via the bounds endpoint.
-    /// Unlike `getNearbyStations`, a stale-cache fallback here stays scoped to the box (ignoring
-    /// freshness) rather than falling back to every cached station — an unrelated station from
-    /// elsewhere in the country has no business appearing on a dragged viewport.
-    func getStationsInBounds(minLat: Double, maxLat: Double, minLng: Double, maxLng: Double, forceRefresh: Bool = false) async throws -> StationListResponse {
-        let freshAfter = Date().addingTimeInterval(-cacheTTLSeconds)
-        if !forceRefresh {
-            let cached = fetchCachedStations(minLat: minLat, maxLat: maxLat, minLng: minLng, maxLng: maxLng, freshAfter: freshAfter)
-                .map { $0.toDTO(originLat: nil, originLng: nil) }
-            if !cached.isEmpty {
-                return StationListResponse(count: cached.count, stations: cached)
-            }
-        }
-
+    /// Stations within an exact lat/lng box (a map viewport) — always hits the network: every call
+    /// here comes from a genuine drag to a genuinely new box, so unlike `getNearbyStations` there's
+    /// no repeat-request case worth short-circuiting. (An earlier cache-first version checked for
+    /// *any* fresh cached station inside the new box before hitting the network — since a drag's
+    /// new box nearly always overlaps stations already cached from an earlier load elsewhere, that
+    /// almost always found a hit and skipped the network call entirely, silently hiding whatever
+    /// was newly visible at the box's edges.) Network failure still falls back to cache, scoped to
+    /// the box (ignoring freshness) rather than falling back to every cached station — an unrelated
+    /// station from elsewhere in the country has no business appearing on a dragged viewport.
+    func getStationsInBounds(minLat: Double, maxLat: Double, minLng: Double, maxLng: Double) async throws -> StationListResponse {
         do {
             let response = try await api.getStationsInBounds(minLat: minLat, maxLat: maxLat, minLng: minLng, maxLng: maxLng, limit: 100)
             recordSuccess()
