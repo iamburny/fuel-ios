@@ -73,21 +73,50 @@ struct FuelMapView: UIViewRepresentable {
         var onCameraIdle: ((GMSCoordinateBounds) -> Void)?
         var lastRecenterKey: Int?
         private var isDragInProgress = false
-        private var markerObjects: [GMSMarker] = []
+        // Keyed by station (falling back to a lat/lng key for the Detail screen's single
+        // stationId-less marker) rather than a flat array — lets applyMarkers below update an
+        // existing pin in place instead of removing and recreating every marker on every call.
+        private var markersByKey: [String: GMSMarker] = [:]
+
+        private func key(for item: MapMarkerItem) -> String {
+            if let stationId = item.stationId { return "s\(stationId)" }
+            return "\(item.lat)_\(item.lng)"
+        }
 
         func applyMarkers(_ items: [MapMarkerItem], to mapView: GMSMapView) {
-            // Full clear + reinsert on each update — simple and fine at this station-count scale
-            // (dozens, not thousands, of markers per viewport).
-            for marker in markerObjects { marker.map = nil }
-            markerObjects.removeAll()
+            // Diff against the existing markers rather than a full clear + reinsert: this view's
+            // `markers` param gets recomputed (a fresh array of new MapMarkerItem values) on every
+            // SwiftUI re-render that touches any @Observable property this screen reads — not just
+            // when the underlying station data actually changes (e.g. NearbyViewModel toggling
+            // isLoadingViewport around a viewport fetch) — so a naive clear + reinsert visibly
+            // flickered pins that hadn't actually changed. Only markers whose price/position
+            // genuinely changed get updated; only markers no longer present get removed.
+            var seenKeys = Set<String>()
             for item in items {
-                let marker = GMSMarker(position: CLLocationCoordinate2D(latitude: item.lat, longitude: item.lng))
-                marker.title = item.title
-                marker.snippet = item.snippet
-                marker.iconView = PriceChipView(text: item.snippet ?? "?", color: item.color ?? .systemBlue)
-                marker.userData = item.stationId as Any
-                marker.map = mapView
-                markerObjects.append(marker)
+                let itemKey = key(for: item)
+                seenKeys.insert(itemKey)
+                if let existing = markersByKey[itemKey] {
+                    if existing.position.latitude != item.lat || existing.position.longitude != item.lng {
+                        existing.position = CLLocationCoordinate2D(latitude: item.lat, longitude: item.lng)
+                    }
+                    if existing.snippet != item.snippet {
+                        existing.snippet = item.snippet
+                        existing.iconView = PriceChipView(text: item.snippet ?? "?", color: item.color ?? .systemBlue)
+                    }
+                    existing.title = item.title
+                } else {
+                    let marker = GMSMarker(position: CLLocationCoordinate2D(latitude: item.lat, longitude: item.lng))
+                    marker.title = item.title
+                    marker.snippet = item.snippet
+                    marker.iconView = PriceChipView(text: item.snippet ?? "?", color: item.color ?? .systemBlue)
+                    marker.userData = item.stationId as Any
+                    marker.map = mapView
+                    markersByKey[itemKey] = marker
+                }
+            }
+            for (itemKey, marker) in markersByKey where !seenKeys.contains(itemKey) {
+                marker.map = nil
+                markersByKey.removeValue(forKey: itemKey)
             }
         }
 
