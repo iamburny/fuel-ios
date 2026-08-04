@@ -4,7 +4,6 @@ import SwiftUI
 struct PricesView: View {
     @Environment(\.appContainer) private var appContainer
     @Environment(UserPreferencesStore.self) private var preferencesStore
-    @Environment(\.openURL) private var openURL
     @State private var viewModel: PricesViewModel?
 
     var body: some View {
@@ -45,7 +44,7 @@ struct PricesView: View {
                 .padding(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
 
                 if let selected = viewModel.averages.first(where: { $0.fuelType == viewModel.selectedFuelType }) {
-                    Text(FuelType.longLabel(forRaw: viewModel.selectedFuelType))
+                    Text(FuelType.label(forRaw: viewModel.selectedFuelType, useLongNames: preferencesStore.preferences.useLongFuelNames))
                         .font(.title3.bold())
                         .padding(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
 
@@ -107,24 +106,9 @@ struct PricesView: View {
 
                 Divider().padding(.top, 16)
 
-                // Compliance. Note: the backend's own discrepancyReportUrl value is the same
-                // /report-discrepancy path that 404s (confirmed both on Android and directly) —
-                // using the working base domain instead until there's a real report page to link
-                // to. Matches Android's hardcoded URL exactly.
-                Button {
-                    openURL(URL(string: "https://www.fuel-finder.service.gov.uk/")!)
-                } label: {
-                    Label("Report a price discrepancy", systemImage: "exclamationmark.triangle")
-                }
-                .padding(16)
-
-                Text(viewModel.dataNotice.isEmpty ?
-                    "Prices sourced from the UK Government's Fuel Finder scheme (gov.uk/government/collections/fuel-finder) under the Open Government Licence. Data is presented without modification. Fuel Tracker UK is an independent app and is not affiliated with or endorsed by HM Government." :
-                    viewModel.dataNotice
+                DataAttributionNotice(
+                    noticeText: viewModel.dataNotice.isEmpty ? DataAttributionNotice.defaultText : viewModel.dataNotice
                 )
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .padding(EdgeInsets(top: 0, leading: 16, bottom: 16, trailing: 16))
             }
         }
     }
@@ -166,7 +150,7 @@ struct PricesView: View {
     private func fuelTypeCard(_ avg: NationalAverageDTO, isSelected: Bool) -> some View {
         let color = FuelType.color(forRaw: avg.fuelType)
         VStack(alignment: .leading, spacing: 4) {
-            Text(FuelType.shortLabel(forRaw: avg.fuelType))
+            Text(FuelType.label(forRaw: avg.fuelType, useLongNames: preferencesStore.preferences.useLongFuelNames))
                 .font(.subheadline.bold())
                 .foregroundStyle(color)
             Text(String(format: "%.1fp", avg.avgPricePence)).font(.title3.bold())

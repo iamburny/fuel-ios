@@ -170,21 +170,7 @@ struct DetailView: View {
 
                 Divider()
 
-                // Compliance: discrepancy report link (required by Fair Use Policy). The specific
-                // /report-discrepancy path 404s (confirmed both on Android and as the backend's
-                // own configured default) — points at the working base domain until there's a
-                // real report page to link to. Matches Android's hardcoded URL exactly.
-                Button {
-                    openURL(URL(string: "https://www.fuel-finder.service.gov.uk/")!)
-                } label: {
-                    Label("Report a price discrepancy", systemImage: "exclamationmark.triangle")
-                }
-                .padding(16)
-
-                Text("Prices sourced from the UK Government's Fuel Finder scheme (gov.uk/government/collections/fuel-finder) under the Open Government Licence. Data is presented without modification. Fuel Tracker UK is an independent app and is not affiliated with or endorsed by HM Government.")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .padding(EdgeInsets(top: 0, leading: 16, bottom: 16, trailing: 16))
+                DataAttributionNotice()
             }
         }
     }

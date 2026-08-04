@@ -221,11 +221,24 @@ struct NearbyView: View {
         VStack {
             Spacer()
             VStack(spacing: 0) {
-                TextField("Search by name, postcode, or brand", text: Binding(
-                    get: { viewModel.searchQuery },
-                    set: { viewModel.setSearchQuery($0) }
-                ))
-                .textFieldStyle(.roundedBorder)
+                HStack(spacing: 4) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(.secondary)
+                    TextField("Search by name, postcode, or brand", text: Binding(
+                        get: { viewModel.searchQuery },
+                        set: { viewModel.setSearchQuery($0) }
+                    ))
+                    if !viewModel.searchQuery.isEmpty {
+                        Button {
+                            viewModel.setSearchQuery("")
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .padding(8)
+                .background(RoundedRectangle(cornerRadius: 8).strokeBorder(Color(.separator)))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 4)
 
@@ -266,9 +279,8 @@ struct NearbyView: View {
                         .frame(maxWidth: .infinity)
                 } else {
                     List {
-                        Text("Prices: UK Gov Fuel Finder scheme (gov.uk/government/collections/fuel-finder). Independent app, not government-affiliated. Tap ⚠ to report incorrect data.")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                        DataAttributionNotice()
+                            .listRowInsets(EdgeInsets())
 
                         ForEach(viewModel.stations, id: \.id) { station in
                             StationListRow(station: station, fuelType: viewModel.selectedFuelType, useLongNames: preferencesStore.preferences.useLongFuelNames) {
