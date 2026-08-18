@@ -2,7 +2,8 @@ import SwiftUI
 import SwiftData
 
 /// Direct port of fuel-android's `PreferencesScreen.kt`, including the Unleash-flag-gated
-/// "Buy me a coffee" and "Also available on the web" cards.
+/// "Also available on the web" card. Android's "Buy me a coffee" card is deliberately NOT
+/// ported — see the note below.
 struct SettingsView: View {
     @Environment(FuelRepository.self) private var repository
     @Environment(UserPreferencesStore.self) private var preferencesStore
@@ -64,30 +65,16 @@ struct SettingsView: View {
     @ViewBuilder
     private func content(_ viewModel: SettingsViewModel) -> some View {
         Form {
-            // Mirrors PreferencesScreen.kt's flag-gated cards — shared.buy-me-a-coffee and an
-            // iOS-specific fuel-ios.also-available-on-web (Android's own flag is
-            // fuel-android.also-available-on-web). Both default to false: Unleash's Frontend API
-            // only ever returns currently-enabled flags, so a real "off" toggle is indistinguishable
-            // from "unknown" — a `true` default would make these impossible to ever disable remotely.
-            if featureFlags.isEnabled("shared.buy-me-a-coffee", default: false) {
-                Section {
-                    Button {
-                        openURL(URL(string: "https://buymeacoffee.com/iamburny")!)
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "cup.and.saucer.fill")
-                                .foregroundStyle(Color(red: 1, green: 0.867, blue: 0))
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Buy me a coffee").font(.headline).foregroundStyle(.primary)
-                                Text("Fuel Tracker UK is free and ad-free — support keeps it running")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                }
-            }
-
+            // Mirrors PreferencesScreen.kt's flag-gated card — fuel-ios.also-available-on-web
+            // (Android's own flag is fuel-android.also-available-on-web). Defaults to false:
+            // Unleash's Frontend API only ever returns currently-enabled flags, so a real "off"
+            // toggle is indistinguishable from "unknown" — a `true` default would make this
+            // impossible to ever disable remotely.
+            //
+            // NOTE: Android also has a "Buy me a coffee" card here (shared.buy-me-a-coffee),
+            // deliberately NOT ported to iOS — Apple rejected submission 1.0 (1) under Guideline
+            // 3.1.1 for linking to an external (buymeacoffee.com) purchase mechanism from within
+            // the app. Do not re-add a donation/tip link on iOS without routing it through IAP.
             if featureFlags.isEnabled("fuel-ios.also-available-on-web", default: false) {
                 Section {
                     Button {

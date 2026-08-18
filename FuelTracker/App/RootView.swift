@@ -10,8 +10,6 @@ enum AppTab: Hashable {
 struct RootView: View {
     @Environment(FuelRepository.self) private var repository
     @Environment(PushNotificationManager.self) private var pushManager
-    @Environment(AppPreferencesViewModel.self) private var appPreferences
-    @Environment(\.openURL) private var openURL
     @State private var deepLinkStationId: Int?
     @State private var selectedTab: AppTab = .nearby
     @State private var hasRecordedAppOpen = false
@@ -73,19 +71,11 @@ struct RootView: View {
                 NavigationStack { DetailView(stationId: stationId) }
             }
         }
-        // Ports AppPreferencesViewModel.kt's launch-cadence support prompt (Navigation.kt's
-        // CoffeeSupportDialog), rendered via CoffeeSupportPrompt (a custom overlay, not .alert —
-        // see that type's doc comment for why). `hasRecordedAppOpen` is the SwiftUI equivalent of
-        // Android's `savedInstanceState == null` check — `.onAppear` can otherwise refire on tab
-        // switches. The short delay avoids visually colliding with NearbyView's location-permission
-        // system dialog, which also fires on cold launch.
+        // `hasRecordedAppOpen` is the SwiftUI equivalent of Android's `savedInstanceState == null`
+        // check — `.onAppear` can otherwise refire on tab switches.
         .onAppear {
             guard !hasRecordedAppOpen else { return }
             hasRecordedAppOpen = true
-            Task {
-                try? await Task.sleep(for: .seconds(1))
-                await appPreferences.onAppOpened()
-            }
             // An already-logged-in user relaunching the app (not going through AuthViewModel's
             // post-sign-in hook) still needs registerForRemoteNotifications() called every launch
             // and its FCM token kept fresh — currentToken() sets pushManager.latestToken on
@@ -93,20 +83,6 @@ struct RootView: View {
             guard repository.isLoggedIn else { return }
             Task { _ = await pushManager.currentToken() }
         }
-        .overlay {
-            if appPreferences.showCoffeePrompt {
-                CoffeeSupportPrompt(
-                    onConfirm: {
-                        appPreferences.onCoffeeClicked()
-                        openURL(URL(string: "https://buymeacoffee.com/iamburny")!)
-                    },
-                    onDismiss: {
-                        appPreferences.onDismissCoffee()
-                    }
-                )
-            }
-        }
-        .animation(.default, value: appPreferences.showCoffeePrompt)
     }
 }
 

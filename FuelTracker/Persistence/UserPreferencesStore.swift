@@ -26,8 +26,6 @@ struct UserPreferences: Sendable, Equatable {
     var tankCapacityLitres: Double?
     var useLongFuelNames: Bool = false
     var themeMode: ThemeMode = .system
-    var appOpenCount: Int = 0
-    var coffeePromptPausedUntilOpen: Int = 0
     var dismissedAnnouncementMessage: String?
 
     /// True once there's enough info to estimate a driving cost (see `FuelCostCalculator`).
@@ -47,8 +45,6 @@ final class UserPreferencesStore {
         static let tankCapacityLitres = "tank_capacity_litres"
         static let useLongFuelNames = "use_long_fuel_names"
         static let themeMode = "theme_mode"
-        static let appOpenCount = "app_open_count"
-        static let coffeePromptPausedUntil = "coffee_prompt_paused_until"
         static let dismissedAnnouncement = "dismissed_announcement_message"
     }
 
@@ -67,21 +63,6 @@ final class UserPreferencesStore {
         setOptionalDouble(tankCapacityLitres, forKey: Keys.tankCapacityLitres)
         defaults.set(useLongFuelNames, forKey: Keys.useLongFuelNames)
         defaults.set(themeMode.rawValue, forKey: Keys.themeMode)
-        reload()
-    }
-
-    /// Increment the cold-launch counter and return the new value.
-    @discardableResult
-    func incrementAppOpenCount() -> Int {
-        let newCount = defaults.integer(forKey: Keys.appOpenCount) + 1
-        defaults.set(newCount, forKey: Keys.appOpenCount)
-        reload()
-        return newCount
-    }
-
-    /// Suppress the support prompt until the app-open count reaches `untilOpen`.
-    func pauseCoffeePrompt(untilOpen: Int) {
-        defaults.set(untilOpen, forKey: Keys.coffeePromptPausedUntil)
         reload()
     }
 
@@ -111,8 +92,6 @@ final class UserPreferencesStore {
             tankCapacityLitres: optionalDouble(forKey: Keys.tankCapacityLitres),
             useLongFuelNames: defaults.bool(forKey: Keys.useLongFuelNames),
             themeMode: ThemeMode(rawValue: defaults.string(forKey: Keys.themeMode) ?? "") ?? .system,
-            appOpenCount: defaults.integer(forKey: Keys.appOpenCount),
-            coffeePromptPausedUntilOpen: defaults.integer(forKey: Keys.coffeePromptPausedUntil),
             dismissedAnnouncementMessage: defaults.string(forKey: Keys.dismissedAnnouncement)
         )
     }

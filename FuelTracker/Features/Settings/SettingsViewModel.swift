@@ -1,9 +1,10 @@
 import Foundation
 import Observation
 
-/// Direct port of fuel-android's `PreferencesViewModel.kt`. The "extras" pieces
-/// (`showBuyMeCoffee`/`showAlsoAvailableOnWeb`, Unleash-gated) are deliberately not ported here —
-/// they land in the Extras phase alongside the rest of the feature-flag/analytics wiring.
+/// Direct port of fuel-android's `PreferencesViewModel.kt`. The `showAlsoAvailableOnWeb`
+/// (Unleash-gated) "extras" piece is deliberately not ported here — it's read directly in
+/// `SettingsView` instead. `showBuyMeCoffee` has no iOS equivalent at all: Apple rejected
+/// submission 1.0 (1) under Guideline 3.1.1 for the external buymeacoffee.com link.
 @Observable
 @MainActor
 final class SettingsViewModel {

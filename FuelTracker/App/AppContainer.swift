@@ -16,7 +16,6 @@ final class AppContainer {
     let locationManager: LocationManager
     let analytics: AppAnalytics
     let featureFlags: FeatureFlags
-    let appPreferencesViewModel: AppPreferencesViewModel
 
     init() {
         let schema = Schema([CachedStation.self, CachedFuelPrice.self])
@@ -34,7 +33,6 @@ final class AppContainer {
         locationManager = LocationManager()
         analytics = FirebaseAppAnalytics() // gated internally on FirebaseApp.app() != nil
         featureFlags = FeatureFlags(url: AppConfig.unleashURL, clientKey: AppConfig.unleashClientKey)
-        appPreferencesViewModel = AppPreferencesViewModel(store: userPreferencesStore, featureFlags: featureFlags)
     }
 }
 

@@ -132,9 +132,7 @@ have tripped this up before:
   install + launch the already-built `.app` from
   `~/Library/Developer/Xcode/DerivedData/.../Debug-iphonesimulator/FuelTracker.app` via
   `xcrun simctl install`/`launch`, then `xcrun simctl io <UDID> screenshot out.png` — this produces
-  exactly the 2064×2752 resolution Apple requires. Watch out for the "Buy me a coffee" support
-  prompt (`AppPreferencesViewModel.onAppOpened`) firing on cold launch #1 and every 5th launch after
-  — relaunch the app once (`simctl terminate` + `launch`) to land on a launch it won't show on.
+  exactly the 2064×2752 resolution Apple requires.
 
 ### TestFlight
 
@@ -175,7 +173,7 @@ FuelTracker/
 
 `AppContainer` (`App/AppContainer.swift`) is a manual container built once in `FuelTrackerApp`,
 threaded through the view tree via SwiftUI `@Environment`. Individually-injected pieces
-(`FuelRepository`, `UserPreferencesStore`, `FeatureFlags`, `AppPreferencesViewModel`) are also
+(`FuelRepository`, `UserPreferencesStore`, `FeatureFlags`) are also
 exposed via a custom `\.appContainer` environment key as a whole, for ViewModels that need several
 dependencies at construction time. `PushNotificationManager` is a `.shared` singleton, *not* part of
 `AppContainer` — its `Messaging`/`UNUserNotificationCenter` delegates must be set from

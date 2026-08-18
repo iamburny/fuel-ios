@@ -10,8 +10,8 @@ import SwiftUI
 /// Demo of the shared.announcement-banner feature flag — proves the Unleash wiring end-to-end.
 /// Renders nothing when the flag's off, unconfigured, or its current message was already
 /// dismissed. Note the flag's `isEnabled` call here has NO explicit default (so it defaults to
-/// `false`/hidden when Unleash is unreachable) — unlike the coffee-prompt/web-card flags, this is
-/// new UI, not pre-existing behaviour to preserve, so hidden is the correct unconfigured fallback.
+/// `false`/hidden when Unleash is unreachable) — unlike the web-card flag, this is new UI, not
+/// pre-existing behaviour to preserve, so hidden is the correct unconfigured fallback.
 struct AnnouncementBanner: View {
     private static let flagName = "shared.announcement-banner"
 

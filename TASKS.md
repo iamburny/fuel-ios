@@ -5,11 +5,19 @@ SwiftUI port of it — check the Android Kotlin source directly before assuming 
 
 Reviewed 2026-08-04 against `fuel-android/FEATURES.md` + a full pass of both codebases. Result:
 **every phone-app feature is at parity** (forgot-password, heatmap, Unleash flags, Google/Apple
-sign-in, coffee-support prompt, "also on the web" link, GA4 analytics, FCM push, 6 fuel types,
-national trends, drive-cost/net-savings math, offline caching with the same per-endpoint rules,
-vs-national-average deltas). The gov.uk source-link App Store compliance gap that used to be
-Milestone 0 here is now **fixed** (`FuelTracker/Components/DataAttributionNotice.swift`,
-commit `026c386`). The one remaining real gap is the car experience — see below.
+sign-in, "also on the web" link, GA4 analytics, FCM push, 6 fuel types, national trends,
+drive-cost/net-savings math, offline caching with the same per-endpoint rules, vs-national-average
+deltas). The gov.uk source-link App Store compliance gap that used to be Milestone 0 here is now
+**fixed** (`FuelTracker/Components/DataAttributionNotice.swift`, commit `026c386`). The one
+remaining real gap is the car experience — see below.
+
+**2026-08-18 — Apple rejected the first App Store submission** (Guideline 3.1.1) over the
+"Buy me a coffee" card linking out to buymeacoffee.com — an external purchase mechanism, not
+allowed even for a voluntary tip/donation. Fixed by removing the feature entirely from iOS
+(`SettingsView`'s coffee card, the periodic `CoffeeSupportPrompt` dialog, and the now-dead
+`AppPreferencesViewModel`/app-open-count plumbing behind it). This is a deliberate, permanent
+**iOS-only divergence from Android** — `fuel-android` keeps its own equivalent (Google Play has no
+matching restriction on donation links) — not a parity gap to close later.
 
 ---
 
