@@ -10,9 +10,16 @@ enum AppTab: Hashable {
 struct RootView: View {
     @Environment(FuelRepository.self) private var repository
     @Environment(PushNotificationManager.self) private var pushManager
+    @Environment(FeatureFlags.self) private var featureFlags
+    @Environment(UserPreferencesStore.self) private var preferencesStore
     @State private var deepLinkStationId: Int?
     @State private var selectedTab: AppTab = .nearby
     @State private var hasRecordedAppOpen = false
+    @State private var releaseNotice: ReleaseNoticeContent?
+    // `.sheet(item:)` clears `releaseNotice` to nil itself before `onDismiss` fires (including on
+    // an interactive swipe-down), so the id to persist as dismissed is captured here at
+    // presentation time rather than read back out of `releaseNotice` inside `onDismiss`.
+    @State private var pendingReleaseNoticeKey: String?
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -71,6 +78,13 @@ struct RootView: View {
                 NavigationStack { DetailView(stationId: stationId) }
             }
         }
+        .sheet(item: $releaseNotice, onDismiss: {
+            if let pendingReleaseNoticeKey {
+                preferencesStore.dismissReleaseNotice(pendingReleaseNoticeKey)
+            }
+        }) { content in
+            ReleaseNoticeModal(content: content)
+        }
         // `hasRecordedAppOpen` is the SwiftUI equivalent of Android's `savedInstanceState == null`
         // check — `.onAppear` can otherwise refire on tab switches.
         .onAppear {
@@ -80,8 +94,17 @@ struct RootView: View {
             // post-sign-in hook) still needs registerForRemoteNotifications() called every launch
             // and its FCM token kept fresh — currentToken() sets pushManager.latestToken on
             // success, which the .onChange above then registers with the backend.
-            guard repository.isLoggedIn else { return }
-            Task { _ = await pushManager.currentToken() }
+            if repository.isLoggedIn {
+                Task { _ = await pushManager.currentToken() }
+            }
+            Task {
+                await featureFlags.waitForInitialLoad()
+                guard featureFlags.isEnabled(ReleaseNoticeContent.flagName, default: false) else { return }
+                let content = featureFlags.variantPayload(ReleaseNoticeContent.flagName, as: ReleaseNoticeContent.self) ?? ReleaseNoticeContent(text: nil, buttonText: nil, buttonUrl: nil)
+                guard content.id != preferencesStore.preferences.dismissedReleaseNoticeKey else { return }
+                pendingReleaseNoticeKey = content.id
+                releaseNotice = content
+            }
         }
     }
 }

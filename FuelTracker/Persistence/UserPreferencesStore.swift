@@ -27,6 +27,7 @@ struct UserPreferences: Sendable, Equatable {
     var useLongFuelNames: Bool = false
     var themeMode: ThemeMode = .system
     var dismissedAnnouncementMessage: String?
+    var dismissedReleaseNoticeKey: String?
 
     /// True once there's enough info to estimate a driving cost (see `FuelCostCalculator`).
     var canEstimateDriveCost: Bool { mpg != nil && tankCapacityLitres != nil }
@@ -46,6 +47,7 @@ final class UserPreferencesStore {
         static let useLongFuelNames = "use_long_fuel_names"
         static let themeMode = "theme_mode"
         static let dismissedAnnouncement = "dismissed_announcement_message"
+        static let dismissedReleaseNotice = "dismissed_release_notice_key"
     }
 
     private let defaults: UserDefaults
@@ -73,6 +75,13 @@ final class UserPreferencesStore {
         reload()
     }
 
+    /// Records `key` (a `ReleaseNoticeContent.id`) as dismissed — the release notice stays hidden
+    /// until the flag's variant content changes to something else.
+    func dismissReleaseNotice(_ key: String) {
+        defaults.set(key, forKey: Keys.dismissedReleaseNotice)
+        reload()
+    }
+
     private func setOptionalDouble(_ value: Double?, forKey key: String) {
         if let value {
             defaults.set(value, forKey: key)
@@ -92,7 +101,8 @@ final class UserPreferencesStore {
             tankCapacityLitres: optionalDouble(forKey: Keys.tankCapacityLitres),
             useLongFuelNames: defaults.bool(forKey: Keys.useLongFuelNames),
             themeMode: ThemeMode(rawValue: defaults.string(forKey: Keys.themeMode) ?? "") ?? .system,
-            dismissedAnnouncementMessage: defaults.string(forKey: Keys.dismissedAnnouncement)
+            dismissedAnnouncementMessage: defaults.string(forKey: Keys.dismissedAnnouncement),
+            dismissedReleaseNoticeKey: defaults.string(forKey: Keys.dismissedReleaseNotice)
         )
     }
 }

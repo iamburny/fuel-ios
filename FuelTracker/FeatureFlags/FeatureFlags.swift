@@ -73,6 +73,12 @@ final class FeatureFlags {
         return variant.payload?.value
     }
 
+    /// Decodes the active variant's payload as JSON, or `nil` when inactive/no payload/malformed.
+    func variantPayload<T: Decodable>(_ name: String, as type: T.Type) -> T? {
+        guard let text = variantText(name), let data = text.data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode(T.self, from: data)
+    }
+
     /// Waits (up to `timeout`) for the first poll to land, so a one-shot flag check (e.g. deciding
     /// whether to show a prompt once at cold launch) sees the real server value rather than racing
     /// it and silently falling back to `isEnabled`'s default. Returns immediately if unconfigured
