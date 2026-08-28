@@ -180,6 +180,16 @@ struct SettingsView: View {
                 ))
                 .keyboardType(.decimalPad)
                 .focused($focusedField, equals: .mpg)
+                .toolbar {
+                    // Attached per-field, not once on the containing Form: the keyboard-toolbar
+                    // preference key attached at the Form level was confirmed (on-device) to not
+                    // always propagate up through Form > NavigationStack > TabView. Per-field
+                    // attachment is the more reliable spot for this specific SwiftUI quirk.
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button("Done") { focusedField = nil }
+                    }
+                }
 
                 TextField("Tank capacity (litres)", text: Binding(
                     get: { viewModel.tankCapacityText },
@@ -187,6 +197,12 @@ struct SettingsView: View {
                 ))
                 .keyboardType(.decimalPad)
                 .focused($focusedField, equals: .tankCapacity)
+                .toolbar {
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button("Done") { focusedField = nil }
+                    }
+                }
 
                 if viewModel.justSaved {
                     Text("Saved").font(.footnote).foregroundStyle(.tint)
@@ -197,15 +213,13 @@ struct SettingsView: View {
                 Text("Used to estimate whether driving to a cheaper station is actually worth it, factoring in the fuel it takes to get there.")
             }
         }
-        .toolbar {
-            // The decimal pad has no Return/Done key of its own, so without this a user who taps
-            // into MPG/tank capacity has no way to dismiss the keyboard and gets stuck on this
-            // screen.
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Done") { focusedField = nil }
-            }
-        }
+        // A single ToolbarItemGroup(.keyboard) attached once at the Form level was confirmed
+        // on-device to not always render its accessory bar (Form > NavigationStack > TabView
+        // nesting appears to break preference-key propagation for this specific placement on some
+        // real devices/OS versions) — hence it's duplicated per-TextField above instead.
+        // `.scrollDismissesKeyboard` is a second, independent fallback that doesn't rely on that
+        // machinery at all: dragging the Form dismisses the keyboard unconditionally.
+        .scrollDismissesKeyboard(.immediately)
     }
 }
 
