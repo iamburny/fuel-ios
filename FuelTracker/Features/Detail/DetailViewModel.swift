@@ -14,6 +14,7 @@ final class DetailViewModel {
     var isLoading = true
     var station: StationDTO?
     var priceHistory: [PriceHistoryPoint] = []
+    var selectedFuelType: String = FuelType.default.rawValue
     var isFavourite = false
     var favouriteId: Int?
     var nationalAverages: [NationalAverageDTO] = []
@@ -39,7 +40,10 @@ final class DetailViewModel {
         isLoading = true
         do {
             let station = try await repository.getStation(id: stationId)
-            let fuelType = station.prices.first?.fuelType ?? FuelType.default.rawValue
+            let preferences = preferencesStore.preferences
+            let fuelType = station.prices.contains { $0.fuelType == preferences.fuelType }
+                ? preferences.fuelType
+                : (station.prices.first?.fuelType ?? preferences.fuelType)
 
             let history: [PriceHistoryPoint]
             do {
@@ -65,7 +69,6 @@ final class DetailViewModel {
                 averages = []
             }
 
-            let preferences = preferencesStore.preferences
             var distance: Double?
             var driveCost: Double?
             if preferences.canEstimateDriveCost {
@@ -84,6 +87,7 @@ final class DetailViewModel {
             self.isLoading = false
             self.station = station
             self.priceHistory = history
+            self.selectedFuelType = fuelType
             self.isFavourite = existingFavourite != nil
             self.favouriteId = existingFavourite?.id
             self.nationalAverages = averages
@@ -92,6 +96,16 @@ final class DetailViewModel {
         } catch {
             isLoading = false
             self.error = error.localizedDescription
+        }
+    }
+
+    func setFuelType(_ fuelType: String) async {
+        guard fuelType != selectedFuelType else { return }
+        selectedFuelType = fuelType
+        do {
+            priceHistory = try await repository.getPriceHistory(stationId: stationId, fuelType: fuelType).history
+        } catch {
+            priceHistory = []
         }
     }
 

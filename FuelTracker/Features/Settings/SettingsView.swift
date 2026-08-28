@@ -14,6 +14,12 @@ struct SettingsView: View {
     @State private var showingDeleteConfirm = false
     @State private var isDeletingAccount = false
     @State private var deleteAccountError: String?
+    @FocusState private var focusedField: Field?
+
+    private enum Field: Hashable {
+        case mpg
+        case tankCapacity
+    }
 
     var body: some View {
         NavigationStack {
@@ -173,12 +179,14 @@ struct SettingsView: View {
                     set: { viewModel.setMpgText($0) }
                 ))
                 .keyboardType(.decimalPad)
+                .focused($focusedField, equals: .mpg)
 
                 TextField("Tank capacity (litres)", text: Binding(
                     get: { viewModel.tankCapacityText },
                     set: { viewModel.setTankCapacityText($0) }
                 ))
                 .keyboardType(.decimalPad)
+                .focused($focusedField, equals: .tankCapacity)
 
                 if viewModel.justSaved {
                     Text("Saved").font(.footnote).foregroundStyle(.tint)
@@ -187,6 +195,15 @@ struct SettingsView: View {
                 Text("Your car")
             } footer: {
                 Text("Used to estimate whether driving to a cheaper station is actually worth it, factoring in the fuel it takes to get there.")
+            }
+        }
+        .toolbar {
+            // The decimal pad has no Return/Done key of its own, so without this a user who taps
+            // into MPG/tank capacity has no way to dismiss the keyboard and gets stuck on this
+            // screen.
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { focusedField = nil }
             }
         }
     }

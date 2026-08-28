@@ -156,16 +156,39 @@ struct DetailView: View {
                     Divider()
                 }
 
-                if !viewModel.priceHistory.isEmpty {
-                    let historyFuelType = station.prices.first?.fuelType ?? FuelType.default.rawValue
+                if !station.prices.isEmpty {
                     Text("Price History (30 days)").font(.title3.bold()).padding(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
-                    PriceLineChart(
-                        values: viewModel.priceHistory.map(\.pricePence),
-                        dates: viewModel.priceHistory.map(\.reportedAt),
-                        lineColor: FuelType.color(forRaw: historyFuelType)
-                    )
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
+
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(FuelType.allCases) { type in
+                                let selected = viewModel.selectedFuelType == type.rawValue
+                                Text(type.label(useLongNames: preferencesStore.preferences.useLongFuelNames))
+                                    .font(.caption.bold())
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .foregroundStyle(selected ? .white : .primary)
+                                    .background(Capsule().fill(selected ? type.color : Color.gray.opacity(0.15)))
+                                    .onTapGesture { Task { await viewModel.setFuelType(type.rawValue) } }
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                    }
+
+                    if !viewModel.priceHistory.isEmpty {
+                        PriceLineChart(
+                            values: viewModel.priceHistory.map(\.pricePence),
+                            dates: viewModel.priceHistory.map(\.reportedAt),
+                            lineColor: FuelType.color(forRaw: viewModel.selectedFuelType)
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                    } else {
+                        Text("No price history available for this fuel type.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .padding(16)
+                    }
                 }
 
                 Divider()
