@@ -51,7 +51,7 @@ struct SettingsView: View {
         }
         .onAppear {
             if viewModel == nil {
-                viewModel = SettingsViewModel(preferencesStore: preferencesStore)
+                viewModel = SettingsViewModel(preferencesStore: preferencesStore, repository: repository)
             }
         }
     }
