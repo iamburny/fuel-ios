@@ -101,14 +101,18 @@ struct FuelMapView: UIViewRepresentable {
                     }
                     if existing.snippet != item.snippet {
                         existing.snippet = item.snippet
-                        existing.iconView = PriceChipView(text: item.snippet ?? "?", color: item.color ?? .systemBlue)
+                        // No snippet (the Detail screen's single station-location marker, with no
+                        // price to show) falls back to Google Maps' own default pin rather than a
+                        // price chip with a placeholder "?" — that read as a data error, not "no
+                        // price to show here".
+                        existing.iconView = item.snippet.map { PriceChipView(text: $0, color: item.color ?? .systemBlue) }
                     }
                     existing.title = item.title
                 } else {
                     let marker = GMSMarker(position: CLLocationCoordinate2D(latitude: item.lat, longitude: item.lng))
                     marker.title = item.title
                     marker.snippet = item.snippet
-                    marker.iconView = PriceChipView(text: item.snippet ?? "?", color: item.color ?? .systemBlue)
+                    marker.iconView = item.snippet.map { PriceChipView(text: $0, color: item.color ?? .systemBlue) }
                     marker.userData = item.stationId as Any
                     marker.map = mapView
                     markersByKey[itemKey] = marker

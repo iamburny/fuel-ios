@@ -17,7 +17,12 @@ enum FuelType: String, Codable, CaseIterable, Identifiable, Sendable {
     static let `default`: FuelType = .e10
 
     /// Loosely follows real UK fuel pump nozzle colour conventions (green = unleaded,
-    /// black = diesel) so the in-app colour coding matches what's printed on the pump.
+    /// black = diesel) so the in-app colour coding matches what's printed on the pump. Used for
+    /// filled backgrounds (a selected chip's Capsule) where a fixed, contrasting foreground is
+    /// drawn on top — for that use, the near-black/dark-slate diesel values are fine in both
+    /// light and dark mode, since the fill's own contrast doesn't depend on the surrounding
+    /// screen background. Don't use this for text/icon/chart-mark colour drawn directly against
+    /// the screen background — use `displayColor` instead.
     var color: Color {
         switch self {
         case .e10: Color(red: 0x22 / 255, green: 0xC5 / 255, blue: 0x5E / 255)
@@ -26,6 +31,30 @@ enum FuelType: String, Codable, CaseIterable, Identifiable, Sendable {
         case .b7Premium: Color(red: 0x4B / 255, green: 0x55 / 255, blue: 0x63 / 255)
         case .b10: Color(red: 0xA8 / 255, green: 0x55 / 255, blue: 0xF7 / 255)
         case .hvo: Color(red: 0x14 / 255, green: 0xB8 / 255, blue: 0xA6 / 255)
+        }
+    }
+
+    /// `color`, lightened for the two near-neutral diesel shades when the system is in dark mode
+    /// — matches fuel-android's `DarkFuelColors` override in `FuelLabelStyle.kt` exactly (diesel
+    /// standard → 0xCBD5E1, diesel premium → 0x94A3B8). `color`'s near-black/dark-slate values
+    /// are unreadable as a price/chart-line/icon colour directly on the app's dark background;
+    /// the other four hues already have enough contrast in both themes and are left unchanged.
+    /// Backed by a dynamic `UIColor` so it resolves correctly wherever it's drawn, with no need
+    /// to thread `\.colorScheme` through every call site.
+    var displayColor: Color {
+        switch self {
+        case .b7Standard:
+            Color(uiColor: UIColor { $0.userInterfaceStyle == .dark
+                ? UIColor(red: 0xCB / 255, green: 0xD5 / 255, blue: 0xE1 / 255, alpha: 1)
+                : UIColor(red: 0x11 / 255, green: 0x18 / 255, blue: 0x27 / 255, alpha: 1)
+            })
+        case .b7Premium:
+            Color(uiColor: UIColor { $0.userInterfaceStyle == .dark
+                ? UIColor(red: 0x94 / 255, green: 0xA3 / 255, blue: 0xB8 / 255, alpha: 1)
+                : UIColor(red: 0x4B / 255, green: 0x55 / 255, blue: 0x63 / 255, alpha: 1)
+            })
+        default:
+            color
         }
     }
 
@@ -61,6 +90,10 @@ enum FuelType: String, Codable, CaseIterable, Identifiable, Sendable {
     /// with a backend-added 7th fuel type), mirrors `FuelTypes.color()`'s `?: Color(0xFF9CA3AF)`.
     static func color(forRaw raw: String) -> Color {
         FuelType(rawValue: raw)?.color ?? Color(red: 0x9C / 255, green: 0xA3 / 255, blue: 0xAF / 255)
+    }
+
+    static func displayColor(forRaw raw: String) -> Color {
+        FuelType(rawValue: raw)?.displayColor ?? color(forRaw: raw)
     }
 
     static func shortLabel(forRaw raw: String) -> String {

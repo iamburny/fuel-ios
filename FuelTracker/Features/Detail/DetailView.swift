@@ -161,7 +161,7 @@ struct DetailView: View {
 
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
-                            ForEach(FuelType.allCases) { type in
+                            ForEach(station.availableFuelTypes) { type in
                                 let selected = viewModel.selectedFuelType == type.rawValue
                                 Text(type.label(useLongNames: preferencesStore.preferences.useLongFuelNames))
                                     .font(.caption.bold())
@@ -179,7 +179,7 @@ struct DetailView: View {
                         PriceLineChart(
                             values: viewModel.priceHistory.map(\.pricePence),
                             dates: viewModel.priceHistory.map(\.reportedAt),
-                            lineColor: FuelType.color(forRaw: viewModel.selectedFuelType)
+                            lineColor: FuelType.displayColor(forRaw: viewModel.selectedFuelType)
                         )
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
@@ -239,7 +239,7 @@ struct DetailView: View {
             Spacer()
             Text(String(format: "%.1fp", price.pricePence))
                 .font(.title2.bold())
-                .foregroundStyle(FuelType.color(forRaw: price.fuelType))
+                .foregroundStyle(FuelType.displayColor(forRaw: price.fuelType))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)

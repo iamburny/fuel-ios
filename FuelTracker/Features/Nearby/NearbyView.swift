@@ -320,7 +320,7 @@ private struct StationListRow: View {
                 if let price = station.cheapestPrice(for: fuelType) {
                     Text(String(format: "%.1fp", price.pricePence))
                         .font(.title3.bold())
-                        .foregroundStyle(FuelType.color(forRaw: fuelType))
+                        .foregroundStyle(FuelType.displayColor(forRaw: fuelType))
                 }
             }
         }
