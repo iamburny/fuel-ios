@@ -180,16 +180,6 @@ struct SettingsView: View {
                 ))
                 .keyboardType(.decimalPad)
                 .focused($focusedField, equals: .mpg)
-                .toolbar {
-                    // Attached per-field, not once on the containing Form: the keyboard-toolbar
-                    // preference key attached at the Form level was confirmed (on-device) to not
-                    // always propagate up through Form > NavigationStack > TabView. Per-field
-                    // attachment is the more reliable spot for this specific SwiftUI quirk.
-                    ToolbarItemGroup(placement: .keyboard) {
-                        Spacer()
-                        Button("Done") { focusedField = nil }
-                    }
-                }
 
                 TextField("Tank capacity (litres)", text: Binding(
                     get: { viewModel.tankCapacityText },
@@ -197,12 +187,6 @@ struct SettingsView: View {
                 ))
                 .keyboardType(.decimalPad)
                 .focused($focusedField, equals: .tankCapacity)
-                .toolbar {
-                    ToolbarItemGroup(placement: .keyboard) {
-                        Spacer()
-                        Button("Done") { focusedField = nil }
-                    }
-                }
 
                 if viewModel.justSaved {
                     Text("Saved").font(.footnote).foregroundStyle(.tint)
@@ -213,12 +197,18 @@ struct SettingsView: View {
                 Text("Used to estimate whether driving to a cheaper station is actually worth it, factoring in the fuel it takes to get there.")
             }
         }
-        // A single ToolbarItemGroup(.keyboard) attached once at the Form level was confirmed
-        // on-device to not always render its accessory bar (Form > NavigationStack > TabView
-        // nesting appears to break preference-key propagation for this specific placement on some
-        // real devices/OS versions) — hence it's duplicated per-TextField above instead.
-        // `.scrollDismissesKeyboard` is a second, independent fallback that doesn't rely on that
-        // machinery at all: dragging the Form dismisses the keyboard unconditionally.
+        .toolbar {
+            // Attach exactly once, here — not per-TextField. Both decimal-pad fields share this
+            // one accessory bar; declaring a second ToolbarItemGroup(.keyboard) on the other field
+            // doesn't replace this one, it merges alongside it, rendering two "Done" buttons at
+            // once (this regressed here before — don't reintroduce a per-field toolbar).
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { focusedField = nil }
+            }
+        }
+        // Second, independent fallback: dragging the Form dismisses the keyboard unconditionally,
+        // no toolbar/focus machinery involved.
         .scrollDismissesKeyboard(.immediately)
     }
 }
