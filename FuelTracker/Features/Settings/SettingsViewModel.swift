@@ -55,6 +55,23 @@ final class SettingsViewModel {
         saveNow()
     }
 
+    /// Pulls this account's stored preferences and reconciles them with what's local, same as the
+    /// merge `AuthViewModel` runs right after sign-in — but that only ever runs once, at the
+    /// moment of an interactive login. A device that's already signed in (the common case: the
+    /// app was never logged out) would otherwise never learn about a change made on another
+    /// platform/device. The view calls this every time it (re)appears, same as the Favourites
+    /// screen re-fetching on every entry rather than only once.
+    func syncFromAccount() async {
+        guard let merged = await syncPreferencesBestEffort(repository: repository, preferencesStore: preferencesStore) else {
+            return
+        }
+        fuelType = merged.fuelType
+        mpgText = merged.mpg.map(Self.formatNumber) ?? ""
+        tankCapacityText = merged.tankCapacityLitres.map(Self.formatNumber) ?? ""
+        useLongFuelNames = merged.useLongFuelNames
+        themeMode = merged.themeMode
+    }
+
     // Discrete choices (chips, switch, segmented control) persist immediately.
     private func saveNow() {
         saveTask?.cancel()

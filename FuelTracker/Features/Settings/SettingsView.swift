@@ -53,6 +53,9 @@ struct SettingsView: View {
             if viewModel == nil {
                 viewModel = SettingsViewModel(preferencesStore: preferencesStore, repository: repository)
             }
+            // Re-pull account preferences on every appearance, not just when the view model is
+            // first created — see the doc comment on syncFromAccount().
+            Task { await viewModel?.syncFromAccount() }
         }
     }
 
