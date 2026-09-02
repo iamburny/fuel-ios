@@ -34,7 +34,9 @@ struct OpeningHoursTableView: View {
     private func hoursText(_ hours: DayHoursDTO?) -> String {
         guard let hours else { return "—" }
         if hours.is24Hours == true { return "24 hours" }
-        if let open = hours.open, let close = hours.close { return "\(open) – \(close)" }
+        if let open = hours.open, let close = hours.close {
+            return "\(OpeningHoursFormatter.format(open)) – \(OpeningHoursFormatter.format(close))"
+        }
         return "—"
     }
 }
