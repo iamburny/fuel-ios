@@ -18,10 +18,12 @@ final class AuthViewModel {
 
     private let repository: FuelRepository
     private let pushTokenProvider: PushTokenProvider
+    private let preferencesStore: UserPreferencesStore
 
-    init(repository: FuelRepository, pushTokenProvider: PushTokenProvider) {
+    init(repository: FuelRepository, pushTokenProvider: PushTokenProvider, preferencesStore: UserPreferencesStore) {
         self.repository = repository
         self.pushTokenProvider = pushTokenProvider
+        self.preferencesStore = preferencesStore
     }
 
     func setEmail(_ value: String) { email = value; errorMessage = nil }
@@ -72,6 +74,7 @@ final class AuthViewModel {
             }
             _ = try await repository.login(email: trimmedEmail, password: password)
             await registerFcmTokenBestEffort()
+            await syncPreferencesBestEffort()
             loading = false
             return true
         } catch {
@@ -90,6 +93,7 @@ final class AuthViewModel {
         do {
             _ = try await repository.loginWithGoogle(idToken: idToken, email: email)
             await registerFcmTokenBestEffort()
+            await syncPreferencesBestEffort()
             loading = false
             return true
         } catch {
@@ -108,6 +112,7 @@ final class AuthViewModel {
         do {
             _ = try await repository.loginWithApple(idToken: idToken, email: email, name: name)
             await registerFcmTokenBestEffort()
+            await syncPreferencesBestEffort()
             loading = false
             return true
         } catch {
@@ -130,6 +135,43 @@ final class AuthViewModel {
     private func registerFcmTokenBestEffort() async {
         guard let token = await pushTokenProvider.currentToken() else { return }
         try? await repository.registerFcmToken(token)
+    }
+
+    /// Reconciles this device's local preferences with the account's stored ones right after
+    /// login: a field the account has already set wins over the local value; a field the account
+    /// has never set (nil) adopts this device's local value instead, seeding the account on first
+    /// login. Best-effort — a failure here must not block sign-in, matching
+    /// `registerFcmTokenBestEffort()` above.
+    private func syncPreferencesBestEffort() async {
+        do {
+            let remote = try await repository.getPreferences()
+            let local = preferencesStore.preferences
+            let merged = UserPreferences(
+                fuelType: remote.fuelType ?? local.fuelType,
+                mpg: remote.mpg ?? local.mpg,
+                tankCapacityLitres: remote.tankCapacityLitres ?? local.tankCapacityLitres,
+                useLongFuelNames: remote.useLongFuelNames ?? local.useLongFuelNames,
+                themeMode: remote.themeMode.flatMap(ThemeMode.init(rawValue:)) ?? local.themeMode
+            )
+            preferencesStore.save(
+                fuelType: merged.fuelType,
+                mpg: merged.mpg,
+                tankCapacityLitres: merged.tankCapacityLitres,
+                useLongFuelNames: merged.useLongFuelNames,
+                themeMode: merged.themeMode
+            )
+            // Pushes the reconciled set back — the part of this account's fields that were nil
+            // (adopted from local just above) now get persisted server-side too.
+            _ = try? await repository.updatePreferences(PreferencesDTO(
+                fuelType: merged.fuelType,
+                mpg: merged.mpg,
+                tankCapacityLitres: merged.tankCapacityLitres,
+                useLongFuelNames: merged.useLongFuelNames,
+                themeMode: merged.themeMode.rawValue
+            ))
+        } catch {
+            // Best-effort — account preferences fetch failing must not block sign-in.
+        }
     }
 
     private func friendlyError(_ error: Error) -> String {

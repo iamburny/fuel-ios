@@ -98,7 +98,7 @@ struct PricesView: View {
                     PriceLineChart(
                         values: viewModel.trend.map(\.avgPricePence),
                         dates: viewModel.trend.map(\.date),
-                        lineColor: FuelType.color(forRaw: viewModel.selectedFuelType)
+                        lineColor: FuelType.displayColor(forRaw: viewModel.selectedFuelType)
                     )
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
@@ -148,7 +148,7 @@ struct PricesView: View {
 
     @ViewBuilder
     private func fuelTypeCard(_ avg: NationalAverageDTO, isSelected: Bool) -> some View {
-        let color = FuelType.color(forRaw: avg.fuelType)
+        let color = FuelType.displayColor(forRaw: avg.fuelType)
         VStack(alignment: .leading, spacing: 4) {
             Text(FuelType.label(forRaw: avg.fuelType, useLongNames: preferencesStore.preferences.useLongFuelNames))
                 .font(.subheadline.bold())

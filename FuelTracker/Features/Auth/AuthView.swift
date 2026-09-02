@@ -10,6 +10,7 @@ struct AuthView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(FuelRepository.self) private var repository
+    @Environment(UserPreferencesStore.self) private var preferencesStore
     @State private var viewModel: AuthViewModel?
     /// Email/password is a secondary path behind a text link — Apple/Google are the primary,
     /// one-tap CTAs. Once revealed there's no need to hide it again.
@@ -41,7 +42,7 @@ struct AuthView: View {
         // the loading `ProgressView()` even for this synchronous, non-`await` initializer).
         .onAppear {
             if viewModel == nil {
-                viewModel = AuthViewModel(repository: repository, pushTokenProvider: PushNotificationManager.shared)
+                viewModel = AuthViewModel(repository: repository, pushTokenProvider: PushNotificationManager.shared, preferencesStore: preferencesStore)
             }
         }
     }

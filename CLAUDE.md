@@ -150,6 +150,54 @@ becomes available for TestFlight automatically. Only what happens afterward diff
   reaches external testers; later builds of the same version can skip re-review unless the change
   is significant.
 
+### Xcode Cloud, branches, and version numbers
+
+Two Xcode Cloud workflows build this repo: **"Deploy"** on `main`, and **"Test Flight"** on a
+separate `testflight` branch. Merging a fix into `main` does **not** get it into a TestFlight
+build — `main` has to be merged into `testflight` (and pushed) separately, or Xcode Cloud will
+keep building the old commit on that branch. Easy to forget since both workflows archive the same
+scheme/target and look identical in the Builds list.
+
+Two distinct numbers matter for a release, and mixing them up produces confusing Apple rejections:
+
+- **`CURRENT_PROJECT_VERSION`** (`project.pbxproj` build setting) → `CFBundleVersion`, the build
+  number. This can be bumped freely between uploads of the *same* marketing version, and in
+  practice you may not even need to: the Xcode Cloud "Builds" list shows its own sequential
+  counter (e.g. 20, 21, 22...) **shared across every workflow** for the product, separate from
+  whatever's committed in git — it looked like this was already auto-incrementing builds
+  correctly across both `main` and `testflight` runs.
+- **`MARKETING_VERSION`** (`project.pbxproj` build setting) → `CFBundleShortVersionString`, the
+  user-facing version (`1.0`, `1.1`, ...). **Once a version has been approved/released on the App
+  Store, Apple permanently closes that version's "pre-release train" to new build submissions** —
+  including TestFlight-only uploads. Trying to upload another build still labeled `1.0` after `1.0`
+  shipped fails processing with:
+  ```
+  ITMS-90186: Invalid Pre-Release Train - The train version '1.0' is closed for new build submissions
+  ITMS-90062: This bundle is invalid - The value for key CFBundleShortVersionString [1.0] ... must
+  contain a higher version than that of the previously approved version [1.0]
+  ```
+  Fix: bump `MARKETING_VERSION` (e.g. `1.0` → `1.1`) even for what feels like "just another
+  TestFlight build" of an already-shipped app — a bumped build number alone is not enough once a
+  version has gone live.
+- **Both errors show up as an opaque Xcode Cloud failure with no useful detail** — "Archive - iOS"
+  fails at the generic "Prepare Build for App Store Connect" step, and every individual CI log line
+  (including the app-store export itself) shows green/Passed, because the rejection happens
+  server-side in Apple's post-upload validation, after the CI run already finished successfully.
+  Neither the Xcode Cloud web UI nor its notification email includes the real ITMS reason — **the
+  actual error only shows up in a separate "App Store Connect" rejection email** sent after
+  processing, or by downloading a build's Logs/XCResult zip artifacts from the build's Overview
+  page and grepping `IDEDistribution.critical.log` under the `app-store-export-archive-logs/`
+  folder specifically (the `ad-hoc`/`development` export logs won't show it, since only the
+  app-store export path calls App Store Connect for store configuration).
+- **`FuelTracker/Info.plist` has `GENERATE_INFOPLIST_FILE = NO`**, meaning it's used completely
+  verbatim — Xcode does not auto-generate or merge in `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION`
+  for you. `CFBundleVersion` is correctly wired as `$(CURRENT_PROJECT_VERSION)`, and
+  `CFBundleShortVersionString` is wired as `$(MARKETING_VERSION)` — if either ever gets replaced
+  with a hardcoded literal again (easy to do by accident when editing this file directly), bumping
+  the corresponding build setting in `project.pbxproj` will silently have **zero effect** on the
+  shipped binary, which is exactly what caused the ITMS rejection above to persist across a
+  `MARKETING_VERSION` bump until this was caught.
+
 ## Architecture
 
 Single Xcode app target (no local SwiftPM package split). Layout mirrors Android's module split:

@@ -376,4 +376,11 @@ extension StationDTO {
     func cheapestPrice(for fuelType: String) -> PriceDTO? {
         prices.filter { $0.fuelType == fuelType }.min { $0.pricePence < $1.pricePence }
     }
+
+    /// The fuel types this station actually has a reported price for, in `FuelType.allCases`
+    /// order — used to scope a fuel-type selector to what's actually available here, rather than
+    /// every fuel type the backend knows about.
+    var availableFuelTypes: [FuelType] {
+        FuelType.allCases.filter { type in prices.contains { $0.fuelType == type.rawValue } }
+    }
 }

@@ -242,6 +242,12 @@ final class FuelRepository {
         logout()
     }
 
+    // MARK: - Preferences
+
+    func getPreferences() async throws -> PreferencesDTO { try await api.getPreferences() }
+
+    func updatePreferences(_ body: PreferencesDTO) async throws -> PreferencesDTO { try await api.updatePreferences(body) }
+
     // MARK: - Favourites
 
     func getFavourites() async throws -> [FavouriteDTO] { try await api.getFavourites() }

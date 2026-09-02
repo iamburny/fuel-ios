@@ -147,7 +147,7 @@ struct FavouritesView: View {
 
         ForEach(viewModel.alerts, id: \.id) { alert in
             HStack {
-                Image(systemName: "bell.badge.fill").foregroundStyle(FuelType.color(forRaw: alert.fuelType))
+                Image(systemName: "bell.badge.fill").foregroundStyle(FuelType.displayColor(forRaw: alert.fuelType))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("\(FuelType.shortLabel(forRaw: alert.fuelType)) within \(Int(alert.radiusMiles)) mi")
                     Text(String(format: "%.3f, %.3f", alert.latitude, alert.longitude))
@@ -180,7 +180,7 @@ struct FavouritesView: View {
     @ViewBuilder
     private func favouriteRow(_ favourite: FavouriteDTO) -> some View {
         HStack {
-            Image(systemName: "heart.fill").foregroundStyle(FuelType.color(forRaw: favourite.fuelType))
+            Image(systemName: "heart.fill").foregroundStyle(FuelType.displayColor(forRaw: favourite.fuelType))
             VStack(alignment: .leading, spacing: 2) {
                 Text("Station #\(favourite.stationId)").fontWeight(.medium)
                 Text(FuelType.label(forRaw: favourite.fuelType, useLongNames: preferencesStore.preferences.useLongFuelNames))

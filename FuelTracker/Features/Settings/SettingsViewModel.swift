@@ -16,10 +16,12 @@ final class SettingsViewModel {
     var justSaved = false
 
     private let preferencesStore: UserPreferencesStore
+    private let repository: FuelRepository
     private var saveTask: Task<Void, Never>?
 
-    init(preferencesStore: UserPreferencesStore) {
+    init(preferencesStore: UserPreferencesStore, repository: FuelRepository) {
         self.preferencesStore = preferencesStore
+        self.repository = repository
         let prefs = preferencesStore.preferences
         fuelType = prefs.fuelType
         mpgText = prefs.mpg.map(Self.formatNumber) ?? ""
@@ -77,10 +79,25 @@ final class SettingsViewModel {
             useLongFuelNames: useLongFuelNames,
             themeMode: themeMode
         )
+        await pushPreferencesBestEffort()
         justSaved = true
         try? await Task.sleep(for: .seconds(1.5))
         guard !Task.isCancelled else { return }
         justSaved = false
+    }
+
+    /// Pushes the just-saved preferences to the account, best-effort — only meaningful while
+    /// signed in; a signed-out change stays purely local until the next login's merge picks it up.
+    private func pushPreferencesBestEffort() async {
+        guard repository.isLoggedIn else { return }
+        let prefs = preferencesStore.preferences
+        _ = try? await repository.updatePreferences(PreferencesDTO(
+            fuelType: prefs.fuelType,
+            mpg: prefs.mpg,
+            tankCapacityLitres: prefs.tankCapacityLitres,
+            useLongFuelNames: prefs.useLongFuelNames,
+            themeMode: prefs.themeMode.rawValue
+        ))
     }
 
     private static func formatNumber(_ value: Double) -> String {
