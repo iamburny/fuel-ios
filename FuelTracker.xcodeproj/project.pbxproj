@@ -48,18 +48,19 @@
 		AB53C78F7A82FA9C46E80C04 /* FuelRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DE7CBC4B3430E78BF39121F /* FuelRepository.swift */; };
 		ABBF4E5C47A3C632B3ABD10E /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41DBF56E22F4A12C2A0DECA0 /* DetailView.swift */; };
 		B9B53D7709219FA155A09BC5 /* FavouriteAndAlertDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4892DDE26B1C0AC28E82B9C6 /* FavouriteAndAlertDTOs.swift */; };
-		E815D259D79A41CB8900FEB7 /* PreferencesDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 818AEAA4BCE44C239797E044 /* PreferencesDTO.swift */; };
 		BA261E6F96512B3C6ED3405C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B14496D8AC2AFA53A0A331 /* SettingsView.swift */; };
 		C0397FCCAB491510AE5EBE16 /* HeatmapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AF276F8D403CEF92636C33 /* HeatmapTests.swift */; };
 		C6CAB881E9EC5C78D4D8CC5F /* AuthError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153BAC309AF6650C0CFBEAB1 /* AuthError.swift */; };
 		C83C0A43D848E00CA133EF2F /* DeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B73C80310EFB05E4C73FDB4 /* DeepLink.swift */; };
 		C889F6DACB809DB00405256B /* FavouritesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4938992849D7AC30456936C /* FavouritesViewModel.swift */; };
 		D64DA5A7A6564918BEB5FC01 /* ReleaseNoticeModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3DFC853AF3E44F1B47BCFED /* ReleaseNoticeModal.swift */; };
+		D65FE3C121DF4D2D98036275 /* PreferencesSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C178D1DF4FD4C57B066CF36 /* PreferencesSync.swift */; };
 		D8C86F2D24E4D75C31CD1594 /* FeatureFlags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 848F44BA192EDF4281220DE3 /* FeatureFlags.swift */; };
 		D8F80F9D5885878A59251E70 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD68D7BAE42C50239AFC612 /* AppDelegate.swift */; };
 		E330C9A3365AD1EBF8776B9E /* FavouritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 813E621897DE404192DB412E /* FavouritesView.swift */; };
 		E625C9992184D039AA1ED603 /* StationDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AAD55E85CFCCC66C91445A2 /* StationDTOs.swift */; };
 		E767F58CA0F6432F9A04B24E /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D8FF2E1E9BE97A4DA15CDF /* AppContainer.swift */; };
+		E815D259D79A41CB8900FEB7 /* PreferencesDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 818AEAA4BCE44C239797E044 /* PreferencesDTO.swift */; };
 		E870D73ECE42C2BA993AECD7 /* OpeningHoursTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0915A796F986476B981A0C37 /* OpeningHoursTableView.swift */; };
 		F2CEDA9D07D8CCDEE09943B9 /* FuelPricesAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3458D5975C955DA191E9FCA8 /* FuelPricesAPI.swift */; };
 		F4DF075A45602EF0167B0D5E /* NearbyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BE1075432AD2E4C56B5D7B7 /* NearbyView.swift */; };
@@ -94,7 +95,6 @@
 		41DBF56E22F4A12C2A0DECA0 /* DetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailView.swift; sourceTree = "<group>"; };
 		4892854F73F51276DAE84AE2 /* HeatmapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapViewModel.swift; sourceTree = "<group>"; };
 		4892DDE26B1C0AC28E82B9C6 /* FavouriteAndAlertDTOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavouriteAndAlertDTOs.swift; sourceTree = "<group>"; };
-		818AEAA4BCE44C239797E044 /* PreferencesDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesDTO.swift; sourceTree = "<group>"; };
 		4A86CEDB3B3AB27F880FF146 /* FuelTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FuelTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4B55220A8703E44AC8082908 /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
 		4BE1075432AD2E4C56B5D7B7 /* NearbyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyView.swift; sourceTree = "<group>"; };
@@ -111,6 +111,7 @@
 		7898E3F37EC3036C8FD68E92 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7F7722F19B93D8A598DA24B4 /* HeatmapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapView.swift; sourceTree = "<group>"; };
 		813E621897DE404192DB412E /* FavouritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavouritesView.swift; sourceTree = "<group>"; };
+		818AEAA4BCE44C239797E044 /* PreferencesDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesDTO.swift; sourceTree = "<group>"; };
 		848F44BA192EDF4281220DE3 /* FeatureFlags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlags.swift; sourceTree = "<group>"; };
 		85F7A0CCB5B7A5994961C93C /* NearbyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyViewModel.swift; sourceTree = "<group>"; };
 		8BFB672611E5491BC0B9601A /* DetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailViewModel.swift; sourceTree = "<group>"; };
@@ -119,6 +120,7 @@
 		975BA00866541975CD74E4D3 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		9A978447913DCB994EB44FC1 /* DeepLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLinkTests.swift; sourceTree = "<group>"; };
 		9AAD55E85CFCCC66C91445A2 /* StationDTOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationDTOs.swift; sourceTree = "<group>"; };
+		9C178D1DF4FD4C57B066CF36 /* PreferencesSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesSync.swift; sourceTree = "<group>"; };
 		A4F0E084682F4D958FFF7ECC /* APIEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIEndpoint.swift; sourceTree = "<group>"; };
 		A958BB1CBD077001814397E4 /* AmenitiesFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmenitiesFormatter.swift; sourceTree = "<group>"; };
 		B06843CA8A7C09D2CF6E8B33 /* FuelTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelTypes.swift; sourceTree = "<group>"; };
@@ -223,6 +225,7 @@
 			children = (
 				153BAC309AF6650C0CFBEAB1 /* AuthError.swift */,
 				0DE7CBC4B3430E78BF39121F /* FuelRepository.swift */,
+				9C178D1DF4FD4C57B066CF36 /* PreferencesSync.swift */,
 			);
 			path = Repository;
 			sourceTree = "<group>";
@@ -537,6 +540,7 @@
 				F51EA92612A1D15D2AECA6BD /* FuelMapView.swift in Sources */,
 				F2CEDA9D07D8CCDEE09943B9 /* FuelPricesAPI.swift in Sources */,
 				AB53C78F7A82FA9C46E80C04 /* FuelRepository.swift in Sources */,
+				D65FE3C121DF4D2D98036275 /* PreferencesSync.swift in Sources */,
 				17235223E4E762F13C2C1376 /* FuelTrackerApp.swift in Sources */,
 				2A5C14465C22C169110ADE8F /* FuelTypes.swift in Sources */,
 				05842D576D32D5F2AE428488 /* HeatColor.swift in Sources */,
@@ -657,7 +661,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.2.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -739,7 +743,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.2.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

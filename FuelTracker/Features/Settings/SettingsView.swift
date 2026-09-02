@@ -32,7 +32,15 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .sheet(isPresented: $showingAuth) {
-                AuthView(onAuthed: { showingAuth = false })
+                AuthView(onAuthed: {
+                    showingAuth = false
+                    // AuthViewModel's own post-login sync already reconciled the shared
+                    // UserPreferencesStore — but this screen's ViewModel snapshotted its displayed
+                    // fuelType/mpg/etc. once at init and won't pick that up on its own, so without
+                    // this the form would keep showing stale values until the user leaves and
+                    // re-enters the tab (which re-triggers `syncFromAccount` via `.onAppear`).
+                    Task { await viewModel?.syncFromAccount() }
+                })
             }
             .alert("Delete account?", isPresented: $showingDeleteConfirm) {
                 Button("Delete", role: .destructive) { deleteAccount() }
@@ -183,16 +191,6 @@ struct SettingsView: View {
                 ))
                 .keyboardType(.decimalPad)
                 .focused($focusedField, equals: .mpg)
-                .toolbar {
-                    // Attached per-field, not once on the containing Form: the keyboard-toolbar
-                    // preference key attached at the Form level was confirmed (on-device) to not
-                    // always propagate up through Form > NavigationStack > TabView. Per-field
-                    // attachment is the more reliable spot for this specific SwiftUI quirk.
-                    ToolbarItemGroup(placement: .keyboard) {
-                        Spacer()
-                        Button("Done") { focusedField = nil }
-                    }
-                }
 
                 TextField("Tank capacity (litres)", text: Binding(
                     get: { viewModel.tankCapacityText },
@@ -200,12 +198,6 @@ struct SettingsView: View {
                 ))
                 .keyboardType(.decimalPad)
                 .focused($focusedField, equals: .tankCapacity)
-                .toolbar {
-                    ToolbarItemGroup(placement: .keyboard) {
-                        Spacer()
-                        Button("Done") { focusedField = nil }
-                    }
-                }
 
                 if viewModel.justSaved {
                     Text("Saved").font(.footnote).foregroundStyle(.tint)
@@ -216,13 +208,31 @@ struct SettingsView: View {
                 Text("Used to estimate whether driving to a cheaper station is actually worth it, factoring in the fuel it takes to get there.")
             }
         }
-        // A single ToolbarItemGroup(.keyboard) attached once at the Form level was confirmed
-        // on-device to not always render its accessory bar (Form > NavigationStack > TabView
-        // nesting appears to break preference-key propagation for this specific placement on some
-        // real devices/OS versions) — hence it's duplicated per-TextField above instead.
-        // `.scrollDismissesKeyboard` is a second, independent fallback that doesn't rely on that
-        // machinery at all: dragging the Form dismisses the keyboard unconditionally.
+        // Dragging the Form dismisses the keyboard unconditionally — an independent fallback to
+        // the explicit Done button below, for anyone who doesn't notice it.
         .scrollDismissesKeyboard(.immediately)
+        // `ToolbarItemGroup(placement: .keyboard)` was tried three ways here (once on the whole
+        // Form, then once per TextField, then per-TextField gated on `focusedField`) and each
+        // failed differently on-device: not rendering at all, rendering both fields' buttons
+        // stacked together regardless of which was focused, and rendering neither — this specific
+        // Form > NavigationStack > TabView nesting fights the system keyboard-accessory mechanism.
+        // An inline button placed as ordinary Form content was tried next and *also* didn't
+        // appear: Form/List only auto-scrolls the actively-focused row above the keyboard, not a
+        // sibling row that pops in after it, so the button rendered but sat scrolled out of view,
+        // hidden behind the keyboard. `safeAreaInset` sidesteps both problems — it's pinned to the
+        // bottom of this view's own layout (adjusting for the keyboard's safe area automatically),
+        // not dependent on toolbar preference-key propagation or Form scroll position.
+        .safeAreaInset(edge: .bottom) {
+            if focusedField != nil {
+                HStack {
+                    Spacer()
+                    Button("Done") { focusedField = nil }
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .background(.bar)
+            }
+        }
     }
 }
 
