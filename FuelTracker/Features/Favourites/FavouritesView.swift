@@ -182,7 +182,7 @@ struct FavouritesView: View {
         HStack {
             Image(systemName: "heart.fill").foregroundStyle(FuelType.displayColor(forRaw: favourite.fuelType))
             VStack(alignment: .leading, spacing: 2) {
-                Text("Station #\(favourite.stationId)").fontWeight(.medium)
+                Text(favourite.station?.name ?? "Station #\(favourite.stationId)").fontWeight(.medium)
                 Text(FuelType.label(forRaw: favourite.fuelType, useLongNames: preferencesStore.preferences.useLongFuelNames))
                     .font(.caption)
                     .foregroundStyle(.secondary)
