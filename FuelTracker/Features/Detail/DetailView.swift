@@ -247,7 +247,9 @@ struct DetailView: View {
 
     private func bankHolidayHours(_ holiday: BankHolidayDTO) -> String {
         if holiday.is24Hours == true { return "24 hours" }
-        if let open = holiday.openTime, let close = holiday.closeTime { return "\(open) – \(close)" }
+        if let open = holiday.openTime, let close = holiday.closeTime {
+            return "\(OpeningHoursFormatter.format(open)) – \(OpeningHoursFormatter.format(close))"
+        }
         return "Closed"
     }
 }
