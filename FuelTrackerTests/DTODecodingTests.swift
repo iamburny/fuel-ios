@@ -62,6 +62,16 @@ struct DTODecodingTests {
         let token = try JSONDecoder().decode(TokenResponse.self, from: json)
         #expect(token.accessToken == "abc.def.ghi")
         #expect(token.role == "user")
+        #expect(token.refreshToken == nil)
+    }
+
+    @Test func decodesTokenResponseWithRefreshToken() throws {
+        let json = """
+        {"access_token": "abc.def.ghi", "refresh_token": "opaque-refresh-value", "token_type": "bearer", "role": "user"}
+        """.data(using: .utf8)!
+        let token = try JSONDecoder().decode(TokenResponse.self, from: json)
+        #expect(token.accessToken == "abc.def.ghi")
+        #expect(token.refreshToken == "opaque-refresh-value")
     }
 
     @Test func fuelTypeRawValuesStayExactCase() {
