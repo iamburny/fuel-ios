@@ -39,8 +39,21 @@ struct ForgotPasswordRequest: Encodable, Sendable {
     let email: String
 }
 
+/// Sent to `POST /api/auth/refresh` to silently mint a new access token once the old one expires
+/// — see `APIClient`'s refresh-and-retry logic in `APIEndpoint.swift`.
+struct RefreshRequest: Encodable, Sendable {
+    let refreshToken: String
+
+    enum CodingKeys: String, CodingKey {
+        case refreshToken = "refresh_token"
+    }
+}
+
 struct TokenResponse: Decodable, Sendable {
     let accessToken: String
+    /// Optional permanently, not just during rollout — costs nothing and is cheap insurance
+    /// against any future deploy-order mismatch with the backend.
+    let refreshToken: String?
     let tokenType: String
     /// The backend returns this (see fuel-api's login/register/google/apple handlers); not
     /// consumed anywhere yet, kept for a future admin-gated feature.
@@ -48,6 +61,7 @@ struct TokenResponse: Decodable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case accessToken = "access_token"
+        case refreshToken = "refresh_token"
         case tokenType = "token_type"
         case role
     }

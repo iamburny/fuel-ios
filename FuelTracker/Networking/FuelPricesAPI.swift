@@ -24,6 +24,10 @@ protocol FuelPricesAPI: Sendable {
     func register(_ body: RegisterRequest) async throws -> UserResponse
     func googleLogin(_ body: GoogleLoginRequest) async throws -> TokenResponse
     func appleLogin(_ body: AppleLoginRequest) async throws -> TokenResponse
+    // No refresh(_:) here: the refresh call is owned entirely by APIClient.performRefresh — it
+    // must bypass rawRequest's retry-on-401 logic, which only FuelPricesAPIClient's normal
+    // request path (backing every method below) goes through. A protocol method here would be
+    // dead code duplicating that same endpoint construction.
     func forgotPassword(_ body: ForgotPasswordRequest) async throws
     func updateFcmToken(_ token: String) async throws
     func deleteAccount() async throws

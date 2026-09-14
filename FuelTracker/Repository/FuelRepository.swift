@@ -155,8 +155,9 @@ final class FuelRepository {
 
     /// Persists the token/email to Keychain via `TokenStore` AND republishes the `@Observable`
     /// `isLoggedIn`/`currentEmail` properties so SwiftUI views update automatically.
-    private func setSignedIn(token: String, email: String) {
+    private func setSignedIn(token: String, refreshToken: String?, email: String) {
         tokenStore.token = token
+        tokenStore.refreshToken = refreshToken
         tokenStore.email = email
         isLoggedIn = true
         currentEmail = email
@@ -165,7 +166,7 @@ final class FuelRepository {
     func login(email: String, password: String) async throws -> TokenResponse {
         do {
             let response = try await api.login(email: email, password: password)
-            setSignedIn(token: response.accessToken, email: email)
+            setSignedIn(token: response.accessToken, refreshToken: response.refreshToken, email: email)
             return response
         } catch let error as APIError {
             throw AuthError.from(error)
@@ -185,7 +186,7 @@ final class FuelRepository {
     func loginWithGoogle(idToken: String, email: String) async throws -> TokenResponse {
         do {
             let response = try await api.googleLogin(GoogleLoginRequest(idToken: idToken))
-            setSignedIn(token: response.accessToken, email: email)
+            setSignedIn(token: response.accessToken, refreshToken: response.refreshToken, email: email)
             return response
         } catch let error as APIError {
             throw AuthError.from(error)
@@ -198,6 +199,7 @@ final class FuelRepository {
         do {
             let response = try await api.appleLogin(AppleLoginRequest(idToken: idToken, email: email, name: name))
             tokenStore.token = response.accessToken
+            tokenStore.refreshToken = response.refreshToken
             isLoggedIn = true
             if let email {
                 tokenStore.email = email

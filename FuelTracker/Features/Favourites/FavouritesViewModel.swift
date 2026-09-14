@@ -53,7 +53,17 @@ final class FavouritesViewModel {
             alerts = alertList
         } catch {
             isLoading = false
-            self.error = error.localizedDescription
+            // A 401 mid-call means APIClient already tried a silent refresh and it failed (the
+            // refresh token is itself invalid/expired/revoked), which flips repository.isLoggedIn
+            // to false — treat that as the normal signed-out state rather than showing the raw
+            // error, matching Android's FavouritesViewModel.
+            if !repository.isLoggedIn {
+                isLoggedIn = false
+                favourites = []
+                alerts = []
+            } else {
+                self.error = error.localizedDescription
+            }
         }
     }
 

@@ -29,8 +29,8 @@
 		39051261F8DFF2CC5F6B28B9 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE2681B5EF62475C88251122 /* AppConfig.swift */; };
 		49B913EE45B7A7FC18FC7E4C /* FuelCostCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99A3F8C6A03E027CD6E9700 /* FuelCostCalculator.swift */; };
 		4B6793CC999E2F48565819A0 /* DTODecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39D72CD0A4324420884D5936 /* DTODecodingTests.swift */; };
+		5FCB17402B91ADF346906AD2 /* APIClientRefreshTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CE2D84659A64D011C3D6254 /* APIClientRefreshTests.swift */; };
 		504F12856FA172FABCCD4FFC /* AmenitiesFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A958BB1CBD077001814397E4 /* AmenitiesFormatter.swift */; };
-		D357943D41E827EF59D1972E /* OpeningHoursFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68FE17957FF2D4AA375CD65 /* OpeningHoursFormatter.swift */; };
 		5E2151C96C81DB6227B467B6 /* NearbyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85F7A0CCB5B7A5994961C93C /* NearbyViewModel.swift */; };
 		62108BE2D0183495BBDD67CB /* AppAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50C82551799419E764CB389A /* AppAnalytics.swift */; };
 		65B3334613162999BA551F44 /* GoogleMaps in Frameworks */ = {isa = PBXBuildFile; productRef = 5098F7B1E07B3B90AC7B2274 /* GoogleMaps */; };
@@ -54,6 +54,7 @@
 		C6CAB881E9EC5C78D4D8CC5F /* AuthError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153BAC309AF6650C0CFBEAB1 /* AuthError.swift */; };
 		C83C0A43D848E00CA133EF2F /* DeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B73C80310EFB05E4C73FDB4 /* DeepLink.swift */; };
 		C889F6DACB809DB00405256B /* FavouritesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4938992849D7AC30456936C /* FavouritesViewModel.swift */; };
+		D357943D41E827EF59D1972E /* OpeningHoursFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68FE17957FF2D4AA375CD65 /* OpeningHoursFormatter.swift */; };
 		D64DA5A7A6564918BEB5FC01 /* ReleaseNoticeModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3DFC853AF3E44F1B47BCFED /* ReleaseNoticeModal.swift */; };
 		D65FE3C121DF4D2D98036275 /* PreferencesSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C178D1DF4FD4C57B066CF36 /* PreferencesSync.swift */; };
 		D8C86F2D24E4D75C31CD1594 /* FeatureFlags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 848F44BA192EDF4281220DE3 /* FeatureFlags.swift */; };
@@ -92,6 +93,7 @@
 		31EB626E9B81C5478B568DF1 /* UserPreferencesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPreferencesStore.swift; sourceTree = "<group>"; };
 		3458D5975C955DA191E9FCA8 /* FuelPricesAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelPricesAPI.swift; sourceTree = "<group>"; };
 		39D72CD0A4324420884D5936 /* DTODecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DTODecodingTests.swift; sourceTree = "<group>"; };
+		2CE2D84659A64D011C3D6254 /* APIClientRefreshTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientRefreshTests.swift; sourceTree = "<group>"; };
 		3B63AF83E6E6156CE1B977B3 /* FuelCostCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelCostCalculatorTests.swift; sourceTree = "<group>"; };
 		41DBF56E22F4A12C2A0DECA0 /* DetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailView.swift; sourceTree = "<group>"; };
 		4892854F73F51276DAE84AE2 /* HeatmapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapViewModel.swift; sourceTree = "<group>"; };
@@ -124,9 +126,9 @@
 		9C178D1DF4FD4C57B066CF36 /* PreferencesSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesSync.swift; sourceTree = "<group>"; };
 		A4F0E084682F4D958FFF7ECC /* APIEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIEndpoint.swift; sourceTree = "<group>"; };
 		A958BB1CBD077001814397E4 /* AmenitiesFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmenitiesFormatter.swift; sourceTree = "<group>"; };
-		B68FE17957FF2D4AA375CD65 /* OpeningHoursFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpeningHoursFormatter.swift; sourceTree = "<group>"; };
 		B06843CA8A7C09D2CF6E8B33 /* FuelTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelTypes.swift; sourceTree = "<group>"; };
 		B3BF373821F6CA70597AE426 /* PriceLineChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceLineChart.swift; sourceTree = "<group>"; };
+		B68FE17957FF2D4AA375CD65 /* OpeningHoursFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpeningHoursFormatter.swift; sourceTree = "<group>"; };
 		C2BC003592118816A4331969 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		C99A3F8C6A03E027CD6E9700 /* FuelCostCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelCostCalculator.swift; sourceTree = "<group>"; };
 		C9D8FF2E1E9BE97A4DA15CDF /* AppContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContainer.swift; sourceTree = "<group>"; };
@@ -316,6 +318,7 @@
 				39D72CD0A4324420884D5936 /* DTODecodingTests.swift */,
 				3B63AF83E6E6156CE1B977B3 /* FuelCostCalculatorTests.swift */,
 				23AF276F8D403CEF92636C33 /* HeatmapTests.swift */,
+				2CE2D84659A64D011C3D6254 /* APIClientRefreshTests.swift */,
 			);
 			path = FuelTrackerTests;
 			sourceTree = "<group>";
@@ -577,6 +580,7 @@
 				2B818BE3CF74F16C76497BF4 /* DeepLinkTests.swift in Sources */,
 				6F699105069E4AB11D46B416 /* FuelCostCalculatorTests.swift in Sources */,
 				C0397FCCAB491510AE5EBE16 /* HeatmapTests.swift in Sources */,
+				5FCB17402B91ADF346906AD2 /* APIClientRefreshTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

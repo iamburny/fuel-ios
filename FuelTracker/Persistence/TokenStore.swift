@@ -7,12 +7,20 @@ import Security
 final class TokenStore: @unchecked Sendable {
     private let service = "uk.co.fuelprices.auth"
     private let tokenAccount = "jwt_token"
+    private let refreshTokenAccount = "refresh_token"
     private let emailAccount = "user_email"
     private let lock = NSLock()
 
     var token: String? {
         get { lock.withLock { read(account: tokenAccount) } }
         set { lock.withLock { write(newValue, account: tokenAccount) } }
+    }
+
+    /// Long-lived opaque token used to silently mint a new `token` via `POST /api/auth/refresh`
+    /// once the access token expires — see `APIClient`'s refresh-and-retry logic.
+    var refreshToken: String? {
+        get { lock.withLock { read(account: refreshTokenAccount) } }
+        set { lock.withLock { write(newValue, account: refreshTokenAccount) } }
     }
 
     var email: String? {
@@ -25,6 +33,7 @@ final class TokenStore: @unchecked Sendable {
     func clear() {
         lock.withLock {
             write(nil, account: tokenAccount)
+            write(nil, account: refreshTokenAccount)
             write(nil, account: emailAccount)
         }
     }
