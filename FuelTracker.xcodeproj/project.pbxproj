@@ -29,9 +29,9 @@
 		39051261F8DFF2CC5F6B28B9 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE2681B5EF62475C88251122 /* AppConfig.swift */; };
 		49B913EE45B7A7FC18FC7E4C /* FuelCostCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99A3F8C6A03E027CD6E9700 /* FuelCostCalculator.swift */; };
 		4B6793CC999E2F48565819A0 /* DTODecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39D72CD0A4324420884D5936 /* DTODecodingTests.swift */; };
-		5FCB17402B91ADF346906AD2 /* APIClientRefreshTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CE2D84659A64D011C3D6254 /* APIClientRefreshTests.swift */; };
 		504F12856FA172FABCCD4FFC /* AmenitiesFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A958BB1CBD077001814397E4 /* AmenitiesFormatter.swift */; };
 		5E2151C96C81DB6227B467B6 /* NearbyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85F7A0CCB5B7A5994961C93C /* NearbyViewModel.swift */; };
+		5FCB17402B91ADF346906AD2 /* APIClientRefreshTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CE2D84659A64D011C3D6254 /* APIClientRefreshTests.swift */; };
 		62108BE2D0183495BBDD67CB /* AppAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50C82551799419E764CB389A /* AppAnalytics.swift */; };
 		65B3334613162999BA551F44 /* GoogleMaps in Frameworks */ = {isa = PBXBuildFile; productRef = 5098F7B1E07B3B90AC7B2274 /* GoogleMaps */; };
 		6830C2EEC51B16C952D4B69F /* PricesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75FB4099851DFCA3A333C428 /* PricesViewModel.swift */; };
@@ -90,10 +90,10 @@
 		1EB32268F27FB3AD1C3F2254 /* DataAttributionNotice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataAttributionNotice.swift; sourceTree = "<group>"; };
 		22B28EF4A3B802ACA47ACF31 /* PushNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationManager.swift; sourceTree = "<group>"; };
 		23AF276F8D403CEF92636C33 /* HeatmapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapTests.swift; sourceTree = "<group>"; };
+		2CE2D84659A64D011C3D6254 /* APIClientRefreshTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientRefreshTests.swift; sourceTree = "<group>"; };
 		31EB626E9B81C5478B568DF1 /* UserPreferencesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPreferencesStore.swift; sourceTree = "<group>"; };
 		3458D5975C955DA191E9FCA8 /* FuelPricesAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelPricesAPI.swift; sourceTree = "<group>"; };
 		39D72CD0A4324420884D5936 /* DTODecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DTODecodingTests.swift; sourceTree = "<group>"; };
-		2CE2D84659A64D011C3D6254 /* APIClientRefreshTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientRefreshTests.swift; sourceTree = "<group>"; };
 		3B63AF83E6E6156CE1B977B3 /* FuelCostCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelCostCalculatorTests.swift; sourceTree = "<group>"; };
 		41DBF56E22F4A12C2A0DECA0 /* DetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailView.swift; sourceTree = "<group>"; };
 		4892854F73F51276DAE84AE2 /* HeatmapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapViewModel.swift; sourceTree = "<group>"; };
