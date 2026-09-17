@@ -19,6 +19,14 @@ final class NearbyViewModel {
     var searchQuery = ""
     var userLat: Double?
     var userLng: Double?
+    /// True only once a *real* CoreLocation fix has arrived. `userLat`/`userLng` are NOT a
+    /// sufficient "do we know where the user is" signal on their own: `loadNearby()` falls back to
+    /// London when permission is denied and then writes that fallback into them, so a user who
+    /// denied location ends up with userLat == 51.5074 and no way to tell it from a real fix.
+    /// Search must omit lat/lng entirely in that case rather than rank a Glasgow user's results by
+    /// distance from London. Never downgraded once true. Mirrors Android's
+    /// `NearbyUiState.hasGpsFix` (same hazard, same fix).
+    private(set) var hasGpsFix = false
     var error: String?
     /// Stations for whatever map area the user last dragged to — nil until the first drag, at
     /// which point map pins switch to this instead of the GPS-anchored `stations`. The bottom
@@ -117,6 +125,7 @@ final class NearbyViewModel {
                 guard moved else { continue }
                 self.userLat = lat
                 self.userLng = lng
+                self.hasGpsFix = true
                 if !self.isOffGpsCenter {
                     self.cameraRecenterToken += 1
                 }
@@ -148,8 +157,22 @@ final class NearbyViewModel {
             let isFirstFix = userLat == nil
             isLoading = false
             stations = response.stations
-            userLat = lat
-            userLng = lng
+            // hasGpsFix is sticky, so userLat/userLng have to be too — otherwise the flag says
+            // "this is a real position" while the value underneath has been replaced by the
+            // London fallback. getCurrentLocation() returning nil after a good fix is routine
+            // (indoors, permission revoked mid-session, a CoreLocation timeout), so without this
+            // guard a pull-to-refresh or radius change silently re-ranks a Glasgow user's next
+            // search around London and labels every row with a ~400 mi distance.
+            if location != nil {
+                userLat = lat
+                userLng = lng
+                hasGpsFix = true
+            } else if !hasGpsFix {
+                // No real fix yet — hold the fallback purely so the camera has somewhere to go.
+                // hasGpsFix stays false, so search still omits lat/lng entirely.
+                userLat = lat
+                userLng = lng
+            }
             if isFirstFix { cameraRecenterToken += 1 }
         } catch {
             isLoading = false
@@ -216,7 +239,14 @@ final class NearbyViewModel {
             self.isLoading = true
             self.error = nil
             do {
-                let response = try await self.repository.searchStations(query: query)
+                // Gated on hasGpsFix, not on userLat being non-nil: after a loadNearby() with
+                // location permission denied, userLat holds the London fallback rather than nil,
+                // and sending it would rank a Glasgow user's results by distance from London and
+                // label every row with a bogus mileage. With no real fix both params are omitted
+                // and the backend ranks on relevance only.
+                let fixLat = self.hasGpsFix ? self.userLat : nil
+                let fixLng = self.hasGpsFix ? self.userLng : nil
+                let response = try await self.repository.searchStations(query: query, lat: fixLat, lng: fixLng)
                 if Task.isCancelled { return }
                 self.isLoading = false
                 self.stations = response.stations
