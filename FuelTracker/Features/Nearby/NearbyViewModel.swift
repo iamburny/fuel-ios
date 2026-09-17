@@ -3,11 +3,6 @@ import CoreLocation
 import GoogleMaps
 import Observation
 
-enum ListMode {
-    case nearby
-    case cheapest
-}
-
 /// Direct port of fuel-android's `NearbyViewModel.kt`. See its doc comments for the reasoning
 /// behind each piece of state — reproduced inline below rather than re-explained.
 ///
@@ -21,11 +16,9 @@ final class NearbyViewModel {
     var stations: [StationDTO] = []
     var selectedFuelType = FuelType.default.rawValue
     var radiusMiles = 10.0
-    var mode: ListMode = .nearby
     var searchQuery = ""
     var userLat: Double?
     var userLng: Double?
-    var discrepancyReportUrl = ""
     var error: String?
     /// Stations for whatever map area the user last dragged to — nil until the first drag, at
     /// which point map pins switch to this instead of the GPS-anchored `stations`. The bottom
@@ -40,6 +33,14 @@ final class NearbyViewModel {
     /// bar — the old pins stay on screen throughout (viewportStations is only replaced once the
     /// new response lands), so this is purely a "something's happening" signal, not a data swap.
     var isLoadingViewport = false
+
+    /// True while the Cheapest sheet is presented over the map.
+    var isCheapestSheetPresented = false
+
+    /// Non-nil while the map camera should be focused on a single station (from the Cheapest sheet)
+    /// instead of GPS/viewport-drag center. Cleared by `recenterOnGps()`.
+    var focusedStationLat: Double?
+    var focusedStationLng: Double?
 
     private let repository: FuelRepository
     private let locationManager: LocationManager
@@ -191,30 +192,18 @@ final class NearbyViewModel {
         viewportStations = nil
         isOffGpsCenter = false
         isLoadingViewport = false
+        focusedStationLat = nil
+        focusedStationLng = nil
         cameraRecenterToken += 1
     }
 
     func setFuelType(_ type: String) {
         analytics.trackEvent("select_fuel_type", params: ["fuel_type": type])
         selectedFuelType = type
-        // Nearby mode already has every fuel type's prices cached/loaded — just re-filter for
-        // display. Cheapest mode ranks server-side per fuel type, so that genuinely needs a fresh
-        // request.
-        if mode == .cheapest {
-            Task { await reload() }
-        }
     }
 
     func setRadius(_ miles: Double) {
         radiusMiles = miles
-        Task { await reload() }
-    }
-
-    func setMode(_ newMode: ListMode) {
-        analytics.trackEvent("select_mode", params: ["mode": newMode == .nearby ? "nearby" : "cheapest"])
-        mode = newMode
-        searchQuery = ""
-        searchTask?.cancel()
         Task { await reload() }
     }
 
@@ -255,48 +244,35 @@ final class NearbyViewModel {
         analytics.trackEvent("select_station", params: ["station_id": stationId, "fuel_type": selectedFuelType, "source": source])
     }
 
-    func loadCheapest() async {
-        isLoading = true
-        error = nil
-        do {
-            let response = try await repository.getCheapest(fuelType: selectedFuelType, lat: userLat, lng: userLng, radiusMiles: radiusMiles)
-            // /api/prices/cheapest's station objects carry no `prices` array — only a top-level
-            // price for the one matched fuel type — so StationListRow/the map markers'
-            // `station.prices` lookups would find nothing and render no price at all. Synthesize
-            // the single-entry list they expect. Also sorted client-side by price ascending — not
-            // just relying on the backend's order — so "Cheapest" always reads cheapest-first.
-            let fuelType = selectedFuelType
-            let sorted = response.results.sorted { $0.pricePence < $1.pricePence }
-            isLoading = false
-            stations = sorted.map { entry in
-                let s = entry.station
-                return StationDTO(
-                    id: s.id, govId: s.govId, name: s.name, brand: s.brand, operatorName: s.operatorName,
-                    phone: s.phone, addressLine1: s.addressLine1, addressLine2: s.addressLine2,
-                    town: s.town, county: s.county, postcode: s.postcode,
-                    latitude: s.latitude, longitude: s.longitude,
-                    temporaryClosure: s.temporaryClosure, isMotorway: s.isMotorway, isSupermarket: s.isSupermarket,
-                    amenities: s.amenities, openingHours: s.openingHours,
-                    distanceMiles: entry.distanceMiles,
-                    prices: [PriceDTO(fuelType: fuelType, pricePence: entry.pricePence, reportedAt: "")]
-                )
+    /// Client-side derived view of whatever's currently pinned on the map (viewportStations after a
+    /// drag, else the GPS-anchored `stations`), sorted ascending by price for `selectedFuelType` and
+    /// filtered to stations that have one. No network call — recomputed automatically by `@Observable`
+    /// whenever `stations`/`viewportStations`/`selectedFuelType` change, so it stays live while the
+    /// sheet is open (fuel-type changes re-sort for free).
+    var cheapestStations: [StationDTO] {
+        (viewportStations ?? stations)
+            .compactMap { station in
+                station.cheapestPrice(for: selectedFuelType).map { (station, $0.pricePence) }
             }
-            discrepancyReportUrl = response.discrepancyReportUrl
-        } catch {
-            isLoading = false
-            self.error = error.localizedDescription
-        }
+            .sorted { $0.1 < $1.1 }
+            .map(\.0)
+    }
+
+    func focusStation(_ station: StationDTO) {
+        isCheapestSheetPresented = false
+        focusedStationLat = station.latitude
+        focusedStationLng = station.longitude
+        isOffGpsCenter = true
+        cameraRecenterToken += 1
+        trackStationClick(station.id, source: "cheapest_sheet")
     }
 
     private func reload(forceRefresh: Bool = false) async {
         if searchQuery.count >= 2 {
-            // Search and cheapest hit no local cache, so forceRefresh is a no-op for them.
+            // Search hits no local cache, so forceRefresh is a no-op for it.
             setSearchQuery(searchQuery)
         } else {
-            switch mode {
-            case .nearby: await loadNearby(forceRefresh: forceRefresh)
-            case .cheapest: await loadCheapest()
-            }
+            await loadNearby(forceRefresh: forceRefresh)
         }
     }
 }

@@ -131,10 +131,6 @@ final class FuelRepository {
     // MARK: - Prices — never cached, no fallback. Errors must reach the UI, not be papered over
     // with stale numbers — a Fair Use Policy compliance concern, not just a UX one.
 
-    func getCheapest(fuelType: String = FuelType.default.rawValue, lat: Double? = nil, lng: Double? = nil, radiusMiles: Double = 10.0) async throws -> CheapestResponse {
-        try await api.getCheapest(fuelType: fuelType, lat: lat, lng: lng, radiusMiles: radiusMiles, limit: 10)
-    }
-
     func getNationalAverages() async throws -> AveragesResponse {
         try await api.getNationalAverages()
     }

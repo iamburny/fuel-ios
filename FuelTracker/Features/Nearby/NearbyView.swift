@@ -58,6 +58,14 @@ struct NearbyView: View {
                 DetailView(stationId: stationId)
             }
         }
+        .sheet(isPresented: Binding(
+            get: { viewModel?.isCheapestSheetPresented ?? false },
+            set: { viewModel?.isCheapestSheetPresented = $0 }
+        )) {
+            if let viewModel {
+                CheapestSheetView(viewModel: viewModel)
+            }
+        }
         .onAppear {
             if viewModel == nil, let appContainer {
                 viewModel = NearbyViewModel(
@@ -107,10 +115,15 @@ struct NearbyView: View {
         // Don't render the map until a location is resolved — showing it centered on a hardcoded
         // fallback first, then jumping once the real one arrives, reads as a flash.
         if let userLat = viewModel.userLat, let userLng = viewModel.userLng {
+            // Prefer a station focused from the Cheapest sheet (closer zoom, to clearly indicate
+            // the selection) over the GPS/viewport-drag center.
+            let centerLat = viewModel.focusedStationLat ?? userLat
+            let centerLng = viewModel.focusedStationLng ?? userLng
+            let zoom: Float = viewModel.focusedStationLat != nil ? 15 : 12
             FuelMapView(
-                centerLat: userLat,
-                centerLng: userLng,
-                zoomLevel: 12,
+                centerLat: centerLat,
+                centerLng: centerLng,
+                zoomLevel: zoom,
                 markers: mapMarkers,
                 onMarkerClick: { id in
                     viewModel.trackStationClick(id, source: "map")
@@ -243,33 +256,24 @@ struct NearbyView: View {
                 .padding(.vertical, 4)
 
                 if viewModel.searchQuery.count < 2 {
-                    Picker("Mode", selection: Binding(
-                        get: { viewModel.mode },
-                        set: { viewModel.setMode($0) }
-                    )) {
-                        Text("Nearby").tag(ListMode.nearby)
-                        Text("Cheapest").tag(ListMode.cheapest)
+                    HStack {
+                        Button {
+                            viewModel.isCheapestSheetPresented = true
+                        } label: {
+                            Label("Cheapest", systemImage: "arrow.up.arrow.down")
+                        }
+                        .buttonStyle(.bordered)
+                        Spacer()
                     }
-                    .pickerStyle(.segmented)
                     .padding(.horizontal, 12)
                     .padding(.bottom, 4)
                 }
 
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(FuelType.allCases) { fuelType in
-                            let selected = viewModel.selectedFuelType == fuelType.rawValue
-                            Text(fuelType.label(useLongNames: preferencesStore.preferences.useLongFuelNames))
-                                .font(.caption.bold())
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .foregroundStyle(selected ? .white : .primary)
-                                .background(Capsule().fill(selected ? fuelType.color : Color.gray.opacity(0.15)))
-                                .onTapGesture { viewModel.setFuelType(fuelType.rawValue) }
-                        }
-                    }
-                    .padding(.horizontal, 12)
-                }
+                FuelTypeChipRow(
+                    selectedFuelType: viewModel.selectedFuelType,
+                    useLongNames: preferencesStore.preferences.useLongFuelNames,
+                    onSelect: { viewModel.setFuelType($0) }
+                )
                 .padding(.bottom, 8)
 
                 if let error = viewModel.error {
@@ -296,35 +300,6 @@ struct NearbyView: View {
             .frame(height: UIScreen.main.bounds.height * 0.8)
         }
         .ignoresSafeArea(edges: .bottom)
-    }
-}
-
-private struct StationListRow: View {
-    let station: StationDTO
-    let fuelType: String
-    let useLongNames: Bool
-    let onTap: () -> Void
-
-    var body: some View {
-        Button(action: onTap) {
-            HStack {
-                Image(systemName: "fuelpump.fill").foregroundStyle(.secondary)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(station.name).fontWeight(.medium)
-                    Text([station.brand, station.distanceMiles.map { String(format: "%.1f mi", $0) }, station.postcode]
-                        .compactMap { $0 }.joined(separator: " · "))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                if let price = station.cheapestPrice(for: fuelType) {
-                    Text(String(format: "%.1fp", price.pricePence))
-                        .font(.title3.bold())
-                        .foregroundStyle(FuelType.displayColor(forRaw: fuelType))
-                }
-            }
-        }
-        .buttonStyle(.plain)
     }
 }
 

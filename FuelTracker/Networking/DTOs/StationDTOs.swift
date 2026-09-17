@@ -218,30 +218,6 @@ struct StationListResponse: Decodable, Sendable {
     let stations: [StationDTO]
 }
 
-struct CheapestEntry: Decodable, Sendable {
-    let station: StationDTO
-    let pricePence: Double
-    let distanceMiles: Double?
-
-    enum CodingKeys: String, CodingKey {
-        case station
-        case pricePence = "price_pence"
-        case distanceMiles = "distance_miles"
-    }
-}
-
-struct CheapestResponse: Decodable, Sendable {
-    let results: [CheapestEntry]
-    let discrepancyReportUrl: String
-    let dataNotice: String
-
-    enum CodingKeys: String, CodingKey {
-        case results
-        case discrepancyReportUrl = "discrepancy_report_url"
-        case dataNotice = "data_notice"
-    }
-}
-
 struct NationalAverageDTO: Decodable, Sendable {
     let fuelType: String
     let avgPricePence: Double
