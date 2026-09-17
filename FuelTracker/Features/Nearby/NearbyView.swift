@@ -342,7 +342,7 @@ struct NearbyView: View {
                 }
             }
             .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.background))
-            .frame(height: UIScreen.main.bounds.height * 0.8)
+            .frame(height: UIScreen.main.bounds.height * 0.67)
         }
         .ignoresSafeArea(edges: .bottom)
     }
