@@ -11,6 +11,7 @@ struct NearbyView: View {
     @State private var viewModel: NearbyViewModel?
     @State private var showPanel = false
     @State private var path: [Int] = []
+    @State private var showingAuth = false
 
     private let cheapestToggleTip = CheapestToggleTip()
     private let fuelTypePillTip = FuelTypePillTip()
@@ -99,6 +100,26 @@ struct NearbyView: View {
             .navigationDestination(for: Int.self) { stationId in
                 DetailView(stationId: stationId)
             }
+            .sheet(isPresented: $showingAuth) {
+                AuthView(onAuthed: {
+                    showingAuth = false
+                    Task { await viewModel?.refreshFavourites() }
+                })
+            }
+        }
+        .alert("Sign in required", isPresented: Binding(
+            get: { viewModel?.needsSignIn ?? false },
+            set: { newValue in if !newValue { viewModel?.needsSignIn = false } }
+        )) {
+            Button("Sign In") {
+                viewModel?.needsSignIn = false
+                showingAuth = true
+            }
+            Button("Cancel", role: .cancel) {
+                viewModel?.needsSignIn = false
+            }
+        } message: {
+            Text("Sign in to save favourite stations.")
         }
         .onAppear {
             if viewModel == nil, let appContainer {
@@ -109,6 +130,10 @@ struct NearbyView: View {
                     analytics: appContainer.analytics
                 )
             }
+            // Refresh every time this screen (re)appears — e.g. popping back from Detail, where a
+            // station could have just been favourited/unfavourited there — matching
+            // `FavouritesView`'s existing reappearance-reload convention.
+            Task { await viewModel?.refreshFavourites() }
         }
     }
 
@@ -125,6 +150,20 @@ struct NearbyView: View {
                 if showPanel {
                     searchPanel(viewModel)
                 }
+            }
+        }
+        .overlay(alignment: .bottom) {
+            if let message = viewModel.favouriteActionMessage {
+                Text(message)
+                    .font(.subheadline)
+                    .padding(12)
+                    .background(RoundedRectangle(cornerRadius: 8).fill(.regularMaterial))
+                    .shadow(radius: 4)
+                    .padding(.bottom, 24)
+                    .task {
+                        try? await Task.sleep(for: .seconds(3))
+                        viewModel.clearFavouriteActionMessage()
+                    }
             }
         }
     }
@@ -328,10 +367,19 @@ struct NearbyView: View {
                                 .listRowSeparator(.hidden)
                         } else {
                             ForEach(rows, id: \.id) { station in
-                                StationListRow(station: station, fuelType: viewModel.selectedFuelType, useLongNames: preferencesStore.preferences.useLongFuelNames) {
-                                    viewModel.trackStationClick(station.id, source: "list")
-                                    navigate(to: station.id)
-                                }
+                                StationListRow(
+                                    station: station,
+                                    fuelType: viewModel.selectedFuelType,
+                                    useLongNames: preferencesStore.preferences.useLongFuelNames,
+                                    userLat: viewModel.userLat,
+                                    userLng: viewModel.userLng,
+                                    isFavourite: viewModel.favouritesByStationId.map { $0[station.id] != nil },
+                                    onTap: {
+                                        viewModel.trackStationClick(station.id, source: "list")
+                                        navigate(to: station.id)
+                                    },
+                                    onToggleFavourite: { Task { await viewModel.toggleFavourite(station) } }
+                                )
                             }
                         }
 

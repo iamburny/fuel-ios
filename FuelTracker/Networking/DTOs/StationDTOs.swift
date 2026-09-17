@@ -359,4 +359,27 @@ extension StationDTO {
     var availableFuelTypes: [FuelType] {
         FuelType.allCases.filter { type in prices.contains { $0.fuelType == type.rawValue } }
     }
+
+    /// A distance to show in list rows: the server's `distanceMiles` when the response populated
+    /// it (a real query origin — `GET /api/stations/nearby`), else a client-side haversine
+    /// fallback against the user's current location when known, else `nil` (omitted entirely,
+    /// matching the existing "just omit if unknown" convention). `GET /api/stations/bounds` (the
+    /// viewport-drag results) and `GET /api/stations/search` never populate `distanceMiles`, so
+    /// without this fallback those rows would show no distance at all.
+    func displayDistance(userLat: Double?, userLng: Double?) -> DisplayDistance? {
+        if let distanceMiles {
+            return DisplayDistance(miles: distanceMiles, isApproximate: false)
+        }
+        guard let userLat, let userLng else { return nil }
+        let miles = FuelCostCalculator.haversineMiles(lat1: userLat, lng1: userLng, lat2: latitude, lng2: longitude)
+        return DisplayDistance(miles: miles, isApproximate: true)
+    }
+}
+
+/// Result of `StationDTO.displayDistance(userLat:userLng:)` — `isApproximate` is true only for the
+/// client-side haversine fallback, never for the server-computed `distanceMiles`, so the UI can
+/// mark it with a `~` prefix.
+struct DisplayDistance: Sendable {
+    let miles: Double
+    let isApproximate: Bool
 }
