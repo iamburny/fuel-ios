@@ -45,6 +45,13 @@ final class NearbyViewModel {
     /// Brief, self-clearing message for a favourite toggle failure that isn't a sign-in problem
     /// (offline, server error).
     var favouriteActionMessage: String?
+    /// Station ids with an add/remove favourite request currently in flight — guarded synchronously
+    /// at the top of `toggleFavourite(_:)` so a rapid double-tap on the same heart can't fire two
+    /// overlapping `addFavourite`/`removeFavourite` calls before the first's result lands (which
+    /// could otherwise create duplicate favourite rows server-side). Mirrors Android's
+    /// `NearbyViewModel.pendingFavouriteToggles`. `StationListRow` also disables/dims the heart for
+    /// any station id in this set.
+    var pendingFavouriteToggles: Set<Int> = []
 
     private let repository: FuelRepository
     private let locationManager: LocationManager
@@ -281,6 +288,15 @@ final class NearbyViewModel {
             needsSignIn = true
             return
         }
+        // Checked synchronously, before the first `await` below — a second rapid tap on the same
+        // row runs on the same main-actor turn as this check (nothing suspends in between), so it
+        // sees the id already pending and returns immediately instead of racing a second overlapping
+        // add/remove call against the first. `defer` guarantees the id is cleared on every exit path
+        // (success or failure) below.
+        guard !pendingFavouriteToggles.contains(station.id) else { return }
+        pendingFavouriteToggles.insert(station.id)
+        defer { pendingFavouriteToggles.remove(station.id) }
+
         var map = favouritesByStationId ?? [:]
         do {
             if let favouriteId = map[station.id] {

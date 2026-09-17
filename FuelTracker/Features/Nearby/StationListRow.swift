@@ -9,6 +9,10 @@ struct StationListRow: View {
     /// `nil` while favourite status hasn't loaded yet — the heart renders dimmed/disabled rather
     /// than guessing.
     let isFavourite: Bool?
+    /// True while an add/remove favourite request for this specific station is in flight — the
+    /// heart renders dimmed/disabled the same as the `isFavourite == nil` case, guarding against a
+    /// rapid double-tap firing a second overlapping request.
+    let isPending: Bool
     let onTap: () -> Void
     let onToggleFavourite: () -> Void
 
@@ -55,8 +59,8 @@ struct StationListRow: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .disabled(isFavourite == nil)
-            .opacity(isFavourite == nil ? 0.4 : 1.0)
+            .disabled(isFavourite == nil || isPending)
+            .opacity((isFavourite == nil || isPending) ? 0.4 : 1.0)
             .accessibilityLabel((isFavourite ?? false) ? "Remove favourite" : "Add favourite")
         }
     }
