@@ -73,7 +73,12 @@ struct NearbyView: View {
                         .accessibilityLabel(showPanel ? "Close" : "Cheapest prices")
 
                         if shouldShowCheapestTip {
-                            toggleButton.popoverTip(cheapestToggleTip)
+                            // `arrowEdge` names the edge of the *anchor* (this button) that the
+                            // tip's arrow touches — `.bottom` means the arrow touches the
+                            // button's bottom edge, pointing up into it, which puts the tip's
+                            // speech-bubble body below the button (the default, `.top`, would
+                            // render it above the button with the arrow pointing down).
+                            toggleButton.popoverTip(cheapestToggleTip, arrowEdge: .bottom)
                         } else {
                             toggleButton
                         }
