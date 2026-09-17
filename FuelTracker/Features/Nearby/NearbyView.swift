@@ -11,6 +11,7 @@ struct NearbyView: View {
     @State private var viewModel: NearbyViewModel?
     @State private var showPanel = false
     @State private var path: [Int] = []
+    @State private var showingAuth = false
 
     private let cheapestToggleTip = CheapestToggleTip()
     private let fuelTypePillTip = FuelTypePillTip()
@@ -99,16 +100,52 @@ struct NearbyView: View {
             .navigationDestination(for: Int.self) { stationId in
                 DetailView(stationId: stationId)
             }
-        }
-        .onAppear {
-            if viewModel == nil, let appContainer {
-                viewModel = NearbyViewModel(
-                    repository: appContainer.repository,
-                    locationManager: appContainer.locationManager,
-                    preferencesStore: appContainer.userPreferencesStore,
-                    analytics: appContainer.analytics
-                )
+            .sheet(isPresented: $showingAuth) {
+                AuthView(onAuthed: {
+                    showingAuth = false
+                    Task { await viewModel?.refreshFavourites() }
+                })
             }
+            // Attached here — to the stack's own root content (the `Group` above, via this shared
+            // modifier chain) — rather than to the `NavigationStack` itself below. `NavigationStack`
+            // pushing/popping `DetailView` (via `.navigationDestination` above) only swaps what's
+            // currently visible *inside* the stack; the `NavigationStack` view's own identity in
+            // `NearbyView`'s body never disappears/reappears for that, so an `.onAppear` chained onto
+            // it (as this used to be) only fires once, when `NearbyView` itself first mounts (or
+            // remounts on a genuine tab switch — see `RootView`'s `hasRecordedAppOpen` comment) —
+            // never on a Detail pop-back. The stack's *root content* view, in contrast, really is
+            // removed from the visible hierarchy while `DetailView` is pushed and reinserted when the
+            // user pops back, so an `.onAppear` here re-fires on exactly that transition — which is
+            // what lets a favourite toggled on Detail be reflected back in this list's hearts without
+            // requiring a tab switch away and back.
+            .onAppear {
+                if viewModel == nil, let appContainer {
+                    viewModel = NearbyViewModel(
+                        repository: appContainer.repository,
+                        locationManager: appContainer.locationManager,
+                        preferencesStore: appContainer.userPreferencesStore,
+                        analytics: appContainer.analytics
+                    )
+                }
+                // Refresh every time this screen's root content (re)appears — e.g. popping back from
+                // Detail, where a station could have just been favourited/unfavourited there —
+                // matching `FavouritesView`'s existing reappearance-reload convention.
+                Task { await viewModel?.refreshFavourites() }
+            }
+        }
+        .alert("Sign in required", isPresented: Binding(
+            get: { viewModel?.needsSignIn ?? false },
+            set: { newValue in if !newValue { viewModel?.needsSignIn = false } }
+        )) {
+            Button("Sign In") {
+                viewModel?.needsSignIn = false
+                showingAuth = true
+            }
+            Button("Cancel", role: .cancel) {
+                viewModel?.needsSignIn = false
+            }
+        } message: {
+            Text("Sign in to save favourite stations.")
         }
     }
 
@@ -125,6 +162,20 @@ struct NearbyView: View {
                 if showPanel {
                     searchPanel(viewModel)
                 }
+            }
+        }
+        .overlay(alignment: .bottom) {
+            if let message = viewModel.favouriteActionMessage {
+                Text(message)
+                    .font(.subheadline)
+                    .padding(12)
+                    .background(RoundedRectangle(cornerRadius: 8).fill(.regularMaterial))
+                    .shadow(radius: 4)
+                    .padding(.bottom, 24)
+                    .task {
+                        try? await Task.sleep(for: .seconds(3))
+                        viewModel.clearFavouriteActionMessage()
+                    }
             }
         }
     }
@@ -328,10 +379,20 @@ struct NearbyView: View {
                                 .listRowSeparator(.hidden)
                         } else {
                             ForEach(rows, id: \.id) { station in
-                                StationListRow(station: station, fuelType: viewModel.selectedFuelType, useLongNames: preferencesStore.preferences.useLongFuelNames) {
-                                    viewModel.trackStationClick(station.id, source: "list")
-                                    navigate(to: station.id)
-                                }
+                                StationListRow(
+                                    station: station,
+                                    fuelType: viewModel.selectedFuelType,
+                                    useLongNames: preferencesStore.preferences.useLongFuelNames,
+                                    userLat: viewModel.userLat,
+                                    userLng: viewModel.userLng,
+                                    isFavourite: viewModel.favouritesByStationId.map { $0[station.id] != nil },
+                                    isPending: viewModel.pendingFavouriteToggles.contains(station.id),
+                                    onTap: {
+                                        viewModel.trackStationClick(station.id, source: "list")
+                                        navigate(to: station.id)
+                                    },
+                                    onToggleFavourite: { Task { await viewModel.toggleFavourite(station) } }
+                                )
                             }
                         }
 
@@ -342,7 +403,7 @@ struct NearbyView: View {
                 }
             }
             .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.background))
-            .frame(height: UIScreen.main.bounds.height * 0.8)
+            .frame(height: UIScreen.main.bounds.height * 0.67)
         }
         .ignoresSafeArea(edges: .bottom)
     }

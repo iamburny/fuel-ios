@@ -34,6 +34,24 @@ final class NearbyViewModel {
     /// bar — the old pins stay on screen throughout (viewportStations is only replaced once the
     /// new response lands), so this is purely a "something's happening" signal, not a data swap.
     var isLoadingViewport = false
+    /// `nil` until the first `refreshFavourites()` completes, distinct from "loaded, empty" — a
+    /// row must never flash an incorrect unfavourited heart for a station that's actually already
+    /// favourited while this is still loading. Maps stationId -> the favourite row's own id, since
+    /// `removeFavourite` takes that id, not the station id.
+    var favouritesByStationId: [Int: Int]?
+    /// Set when a signed-out user taps a list heart — `NearbyView` surfaces this as an alert
+    /// offering to present `AuthView`, rather than the Detail screen's existing silent no-op.
+    var needsSignIn = false
+    /// Brief, self-clearing message for a favourite toggle failure that isn't a sign-in problem
+    /// (offline, server error).
+    var favouriteActionMessage: String?
+    /// Station ids with an add/remove favourite request currently in flight — guarded synchronously
+    /// at the top of `toggleFavourite(_:)` so a rapid double-tap on the same heart can't fire two
+    /// overlapping `addFavourite`/`removeFavourite` calls before the first's result lands (which
+    /// could otherwise create duplicate favourite rows server-side). Mirrors Android's
+    /// `NearbyViewModel.pendingFavouriteToggles`. `StationListRow` also disables/dims the heart for
+    /// any station id in this set.
+    var pendingFavouriteToggles: Set<Int> = []
 
     private let repository: FuelRepository
     private let locationManager: LocationManager
@@ -76,6 +94,7 @@ final class NearbyViewModel {
         }
         await loadNearby()
         startLocationUpdates()
+        await refreshFavourites()
 
         // Keep listening in case permission lands after our short wait above (e.g. the dialog
         // took longer than 3s to answer, or it's granted later via Settings). Split into its own
@@ -233,6 +252,77 @@ final class NearbyViewModel {
     /// analytics.
     func trackStationClick(_ stationId: Int, source: String) {
         analytics.trackEvent("select_station", params: ["station_id": stationId, "fuel_type": selectedFuelType, "source": source])
+    }
+
+    /// Loads the full favourites list into a stationId -> favouriteId map. Called from
+    /// `bootstrap()` and again from `NearbyView.onAppear` on every reappearance (e.g. popping back
+    /// from Detail, where a station could have just been favourited/unfavourited there).
+    func refreshFavourites() async {
+        guard repository.isLoggedIn else {
+            // A definitively resolved "signed out" state — matches Android's
+            // treat-signed-out-as-empty convention (see `FavouritesViewModel.load()`), not
+            // "not yet loaded", so hearts render as unfilled rather than staying dimmed forever.
+            favouritesByStationId = [:]
+            return
+        }
+        do {
+            let favourites = try await repository.getFavourites()
+            // `uniquingKeysWith` keeps the first occurrence for a duplicated stationId, matching
+            // `DetailViewModel.load()`'s `.first { $0.stationId == stationId }` semantics.
+            favouritesByStationId = Dictionary(
+                favourites.map { ($0.stationId, $0.id) },
+                uniquingKeysWith: { first, _ in first }
+            )
+        } catch {
+            // Best-effort — leave whatever was previously loaded (or nil) rather than clearing
+            // favourite state on a transient failure.
+        }
+    }
+
+    /// Mirrors `DetailViewModel.toggleFavourite()`'s add/remove semantics (default fuel type on
+    /// add, matched by stationId on remove), but — unlike that screen's existing silent no-op —
+    /// proactively checks `repository.isLoggedIn` first and surfaces a sign-in prompt instead of
+    /// letting a 401 fail invisibly.
+    func toggleFavourite(_ station: StationDTO) async {
+        guard repository.isLoggedIn else {
+            needsSignIn = true
+            return
+        }
+        // Checked synchronously, before the first `await` below — a second rapid tap on the same
+        // row runs on the same main-actor turn as this check (nothing suspends in between), so it
+        // sees the id already pending and returns immediately instead of racing a second overlapping
+        // add/remove call against the first. `defer` guarantees the id is cleared on every exit path
+        // (success or failure) below.
+        guard !pendingFavouriteToggles.contains(station.id) else { return }
+        pendingFavouriteToggles.insert(station.id)
+        defer { pendingFavouriteToggles.remove(station.id) }
+
+        var map = favouritesByStationId ?? [:]
+        do {
+            if let favouriteId = map[station.id] {
+                try await repository.removeFavourite(id: favouriteId)
+                analytics.trackEvent("remove_from_favourites", params: ["station_id": station.id])
+                map.removeValue(forKey: station.id)
+            } else {
+                let favourite = try await repository.addFavourite(stationId: station.id)
+                analytics.trackEvent("add_to_favourites", params: ["station_id": station.id])
+                map[station.id] = favourite.id
+            }
+            favouritesByStationId = map
+        } catch {
+            // A 401 mid-call means APIClient already tried a silent refresh and it failed,
+            // flipping `repository.isLoggedIn` to false — treat that as "needs sign-in" rather
+            // than a generic failure message, matching `FavouritesViewModel.load()`'s pattern.
+            if !repository.isLoggedIn {
+                needsSignIn = true
+            } else {
+                favouriteActionMessage = "Couldn't update favourite. Please try again."
+            }
+        }
+    }
+
+    func clearFavouriteActionMessage() {
+        favouriteActionMessage = nil
     }
 
     /// Client-side derived view of whatever's currently pinned on the map (viewportStations after a
