@@ -28,6 +28,7 @@ struct UserPreferences: Sendable, Equatable {
     var themeMode: ThemeMode = .system
     var dismissedAnnouncementMessage: String?
     var dismissedReleaseNoticeKey: String?
+    var hasSeenCheapestToggleTip: Bool = false
 
     /// True once there's enough info to estimate a driving cost (see `FuelCostCalculator`).
     var canEstimateDriveCost: Bool { mpg != nil && tankCapacityLitres != nil }
@@ -48,6 +49,7 @@ final class UserPreferencesStore {
         static let themeMode = "theme_mode"
         static let dismissedAnnouncement = "dismissed_announcement_message"
         static let dismissedReleaseNotice = "dismissed_release_notice_key"
+        static let hasSeenCheapestToggleTip = "has_seen_cheapest_toggle_tip"
     }
 
     private let defaults: UserDefaults
@@ -82,6 +84,13 @@ final class UserPreferencesStore {
         reload()
     }
 
+    /// Records the Cheapest-toggle coach mark as seen — persisted locally, never re-armed (unlike
+    /// the announcement/release-notice flags above, this hint has no remote content to change).
+    func markCheapestToggleTipSeen() {
+        defaults.set(true, forKey: Keys.hasSeenCheapestToggleTip)
+        reload()
+    }
+
     private func setOptionalDouble(_ value: Double?, forKey key: String) {
         if let value {
             defaults.set(value, forKey: key)
@@ -102,7 +111,8 @@ final class UserPreferencesStore {
             useLongFuelNames: defaults.bool(forKey: Keys.useLongFuelNames),
             themeMode: ThemeMode(rawValue: defaults.string(forKey: Keys.themeMode) ?? "") ?? .system,
             dismissedAnnouncementMessage: defaults.string(forKey: Keys.dismissedAnnouncement),
-            dismissedReleaseNoticeKey: defaults.string(forKey: Keys.dismissedReleaseNotice)
+            dismissedReleaseNoticeKey: defaults.string(forKey: Keys.dismissedReleaseNotice),
+            hasSeenCheapestToggleTip: defaults.bool(forKey: Keys.hasSeenCheapestToggleTip)
         )
     }
 }

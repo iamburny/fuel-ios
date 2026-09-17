@@ -1,7 +1,6 @@
 import SwiftUI
 
-/// Horizontal scrolling row of fuel-type selector chips — shared between `NearbyView`'s search
-/// panel and `CheapestSheetView` so both present an identical control.
+/// Horizontal scrolling row of fuel-type selector chips, used by `NearbyView`'s search panel.
 struct FuelTypeChipRow: View {
     let selectedFuelType: String
     let useLongNames: Bool

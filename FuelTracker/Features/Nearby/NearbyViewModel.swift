@@ -22,7 +22,8 @@ final class NearbyViewModel {
     var error: String?
     /// Stations for whatever map area the user last dragged to — nil until the first drag, at
     /// which point map pins switch to this instead of the GPS-anchored `stations`. The bottom
-    /// list panel always keeps using `stations`, unaffected by dragging.
+    /// list panel's default (non-search) list also tracks this via `nearbyStationsSortedByPrice`,
+    /// so it stays in sync with whatever's currently pinned on the map, including after a drag.
     var viewportStations: [StationDTO]?
     /// Bumped only when the map should jump to userLat/userLng — never on every reload, so
     /// changing the radius/fuel filter/mode doesn't fight a drag by snapping the camera back.
@@ -33,14 +34,6 @@ final class NearbyViewModel {
     /// bar — the old pins stay on screen throughout (viewportStations is only replaced once the
     /// new response lands), so this is purely a "something's happening" signal, not a data swap.
     var isLoadingViewport = false
-
-    /// True while the Cheapest sheet is presented over the map.
-    var isCheapestSheetPresented = false
-
-    /// Non-nil while the map camera should be focused on a single station (from the Cheapest sheet)
-    /// instead of GPS/viewport-drag center. Cleared by `recenterOnGps()`.
-    var focusedStationLat: Double?
-    var focusedStationLng: Double?
 
     private let repository: FuelRepository
     private let locationManager: LocationManager
@@ -192,8 +185,6 @@ final class NearbyViewModel {
         viewportStations = nil
         isOffGpsCenter = false
         isLoadingViewport = false
-        focusedStationLat = nil
-        focusedStationLng = nil
         cameraRecenterToken += 1
     }
 
@@ -247,24 +238,15 @@ final class NearbyViewModel {
     /// Client-side derived view of whatever's currently pinned on the map (viewportStations after a
     /// drag, else the GPS-anchored `stations`), sorted ascending by price for `selectedFuelType` and
     /// filtered to stations that have one. No network call — recomputed automatically by `@Observable`
-    /// whenever `stations`/`viewportStations`/`selectedFuelType` change, so it stays live while the
-    /// sheet is open (fuel-type changes re-sort for free).
-    var cheapestStations: [StationDTO] {
+    /// whenever `stations`/`viewportStations`/`selectedFuelType` change. Backs the bottom list
+    /// panel's only default (non-search) list.
+    var nearbyStationsSortedByPrice: [StationDTO] {
         (viewportStations ?? stations)
             .compactMap { station in
                 station.cheapestPrice(for: selectedFuelType).map { (station, $0.pricePence) }
             }
             .sorted { $0.1 < $1.1 }
             .map(\.0)
-    }
-
-    func focusStation(_ station: StationDTO) {
-        isCheapestSheetPresented = false
-        focusedStationLat = station.latitude
-        focusedStationLng = station.longitude
-        isOffGpsCenter = true
-        cameraRecenterToken += 1
-        trackStationClick(station.id, source: "cheapest_sheet")
     }
 
     private func reload(forceRefresh: Bool = false) async {
