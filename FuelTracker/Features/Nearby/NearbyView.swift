@@ -288,22 +288,29 @@ struct NearbyView: View {
                 } else {
                     let isSearching = viewModel.searchQuery.count >= 2
                     let rows = isSearching ? viewModel.stations : viewModel.nearbyStationsSortedByPrice
-                    if !isSearching && rows.isEmpty {
-                        emptyNearbyState(viewModel)
-                    } else {
-                        List {
+                    // `DataAttributionNotice` (the Guideline-5.6 "Report a price discrepancy" +
+                    // source-attribution block) must stay visible in every non-error state, not
+                    // only when there happen to be rows — so the `List` itself is always present,
+                    // and only the row content above the notice switches between the empty state
+                    // and the real rows.
+                    List {
+                        if !isSearching && rows.isEmpty {
+                            emptyNearbyState(viewModel)
+                                .listRowInsets(EdgeInsets())
+                                .listRowSeparator(.hidden)
+                        } else {
                             ForEach(rows, id: \.id) { station in
                                 StationListRow(station: station, fuelType: viewModel.selectedFuelType, useLongNames: preferencesStore.preferences.useLongFuelNames) {
                                     viewModel.trackStationClick(station.id, source: "list")
                                     navigate(to: station.id)
                                 }
                             }
-
-                            DataAttributionNotice()
-                                .listRowInsets(EdgeInsets())
                         }
-                        .listStyle(.plain)
+
+                        DataAttributionNotice()
+                            .listRowInsets(EdgeInsets())
                     }
+                    .listStyle(.plain)
                 }
             }
             .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.background))
