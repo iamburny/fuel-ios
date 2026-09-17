@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 import GoogleSignIn
 import GoogleMaps
+import TipKit
 
 @main
 struct FuelTrackerApp: App {
@@ -20,6 +21,9 @@ struct FuelTrackerApp: App {
         if let mapsKey = AppConfig.googleMapsAPIKey {
             GMSServices.provideAPIKey(mapsKey)
         }
+        // One-time setup for the CheapestToggleTip coach mark — safe to call unconditionally on
+        // every launch, per TipKit's own documented usage.
+        try? Tips.configure()
     }
 
     var body: some Scene {

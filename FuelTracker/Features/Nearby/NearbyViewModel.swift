@@ -3,11 +3,6 @@ import CoreLocation
 import GoogleMaps
 import Observation
 
-enum ListMode {
-    case nearby
-    case cheapest
-}
-
 /// Direct port of fuel-android's `NearbyViewModel.kt`. See its doc comments for the reasoning
 /// behind each piece of state — reproduced inline below rather than re-explained.
 ///
@@ -21,15 +16,14 @@ final class NearbyViewModel {
     var stations: [StationDTO] = []
     var selectedFuelType = FuelType.default.rawValue
     var radiusMiles = 10.0
-    var mode: ListMode = .nearby
     var searchQuery = ""
     var userLat: Double?
     var userLng: Double?
-    var discrepancyReportUrl = ""
     var error: String?
     /// Stations for whatever map area the user last dragged to — nil until the first drag, at
     /// which point map pins switch to this instead of the GPS-anchored `stations`. The bottom
-    /// list panel always keeps using `stations`, unaffected by dragging.
+    /// list panel's default (non-search) list also tracks this via `nearbyStationsSortedByPrice`,
+    /// so it stays in sync with whatever's currently pinned on the map, including after a drag.
     var viewportStations: [StationDTO]?
     /// Bumped only when the map should jump to userLat/userLng — never on every reload, so
     /// changing the radius/fuel filter/mode doesn't fight a drag by snapping the camera back.
@@ -197,24 +191,10 @@ final class NearbyViewModel {
     func setFuelType(_ type: String) {
         analytics.trackEvent("select_fuel_type", params: ["fuel_type": type])
         selectedFuelType = type
-        // Nearby mode already has every fuel type's prices cached/loaded — just re-filter for
-        // display. Cheapest mode ranks server-side per fuel type, so that genuinely needs a fresh
-        // request.
-        if mode == .cheapest {
-            Task { await reload() }
-        }
     }
 
     func setRadius(_ miles: Double) {
         radiusMiles = miles
-        Task { await reload() }
-    }
-
-    func setMode(_ newMode: ListMode) {
-        analytics.trackEvent("select_mode", params: ["mode": newMode == .nearby ? "nearby" : "cheapest"])
-        mode = newMode
-        searchQuery = ""
-        searchTask?.cancel()
         Task { await reload() }
     }
 
@@ -255,48 +235,26 @@ final class NearbyViewModel {
         analytics.trackEvent("select_station", params: ["station_id": stationId, "fuel_type": selectedFuelType, "source": source])
     }
 
-    func loadCheapest() async {
-        isLoading = true
-        error = nil
-        do {
-            let response = try await repository.getCheapest(fuelType: selectedFuelType, lat: userLat, lng: userLng, radiusMiles: radiusMiles)
-            // /api/prices/cheapest's station objects carry no `prices` array — only a top-level
-            // price for the one matched fuel type — so StationListRow/the map markers'
-            // `station.prices` lookups would find nothing and render no price at all. Synthesize
-            // the single-entry list they expect. Also sorted client-side by price ascending — not
-            // just relying on the backend's order — so "Cheapest" always reads cheapest-first.
-            let fuelType = selectedFuelType
-            let sorted = response.results.sorted { $0.pricePence < $1.pricePence }
-            isLoading = false
-            stations = sorted.map { entry in
-                let s = entry.station
-                return StationDTO(
-                    id: s.id, govId: s.govId, name: s.name, brand: s.brand, operatorName: s.operatorName,
-                    phone: s.phone, addressLine1: s.addressLine1, addressLine2: s.addressLine2,
-                    town: s.town, county: s.county, postcode: s.postcode,
-                    latitude: s.latitude, longitude: s.longitude,
-                    temporaryClosure: s.temporaryClosure, isMotorway: s.isMotorway, isSupermarket: s.isSupermarket,
-                    amenities: s.amenities, openingHours: s.openingHours,
-                    distanceMiles: entry.distanceMiles,
-                    prices: [PriceDTO(fuelType: fuelType, pricePence: entry.pricePence, reportedAt: "")]
-                )
+    /// Client-side derived view of whatever's currently pinned on the map (viewportStations after a
+    /// drag, else the GPS-anchored `stations`), sorted ascending by price for `selectedFuelType` and
+    /// filtered to stations that have one. No network call — recomputed automatically by `@Observable`
+    /// whenever `stations`/`viewportStations`/`selectedFuelType` change. Backs the bottom list
+    /// panel's only default (non-search) list.
+    var nearbyStationsSortedByPrice: [StationDTO] {
+        (viewportStations ?? stations)
+            .compactMap { station in
+                station.cheapestPrice(for: selectedFuelType).map { (station, $0.pricePence) }
             }
-            discrepancyReportUrl = response.discrepancyReportUrl
-        } catch {
-            isLoading = false
-            self.error = error.localizedDescription
-        }
+            .sorted { $0.1 < $1.1 }
+            .map(\.0)
     }
 
     private func reload(forceRefresh: Bool = false) async {
         if searchQuery.count >= 2 {
-            // Search and cheapest hit no local cache, so forceRefresh is a no-op for them.
+            // Search hits no local cache, so forceRefresh is a no-op for it.
             setSearchQuery(searchQuery)
         } else {
-            switch mode {
-            case .nearby: await loadNearby(forceRefresh: forceRefresh)
-            case .cheapest: await loadCheapest()
-            }
+            await loadNearby(forceRefresh: forceRefresh)
         }
     }
 }

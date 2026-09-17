@@ -245,7 +245,7 @@ This is the single most important thing to understand before touching `Repositor
   appearing on a dragged map viewport. Don't unify this with the rule above.
 - `getStation(id:)`: network-first, cache-fallback only on failure.
 - `searchStations`: network-first, in-memory substring-match fallback on failure.
-- `getCheapest` / `getNationalAverages` / `getHeatmap` / `getPriceHistory` / `getNationalTrends`:
+- `getNationalAverages` / `getHeatmap` / `getPriceHistory` / `getNationalTrends`:
   **never cached, no fallback** — errors must propagate to the UI. This is a Fair Use Policy
   compliance requirement, not just a UX choice; don't add caching here to "improve" offline support.
 

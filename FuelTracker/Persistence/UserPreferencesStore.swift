@@ -24,10 +24,12 @@ struct UserPreferences: Sendable, Equatable {
     var fuelType: String = FuelType.default.rawValue
     var mpg: Double?
     var tankCapacityLitres: Double?
-    var useLongFuelNames: Bool = false
+    var useLongFuelNames: Bool = true
     var themeMode: ThemeMode = .system
     var dismissedAnnouncementMessage: String?
     var dismissedReleaseNoticeKey: String?
+    var hasSeenCheapestToggleTip: Bool = false
+    var hasSeenFuelTypePillTip: Bool = false
 
     /// True once there's enough info to estimate a driving cost (see `FuelCostCalculator`).
     var canEstimateDriveCost: Bool { mpg != nil && tankCapacityLitres != nil }
@@ -48,6 +50,8 @@ final class UserPreferencesStore {
         static let themeMode = "theme_mode"
         static let dismissedAnnouncement = "dismissed_announcement_message"
         static let dismissedReleaseNotice = "dismissed_release_notice_key"
+        static let hasSeenCheapestToggleTip = "has_seen_cheapest_toggle_tip"
+        static let hasSeenFuelTypePillTip = "has_seen_fuel_type_pill_tip"
     }
 
     private let defaults: UserDefaults
@@ -82,6 +86,21 @@ final class UserPreferencesStore {
         reload()
     }
 
+    /// Records the Cheapest-toggle coach mark as seen — persisted locally, never re-armed (unlike
+    /// the announcement/release-notice flags above, this hint has no remote content to change).
+    func markCheapestToggleTipSeen() {
+        defaults.set(true, forKey: Keys.hasSeenCheapestToggleTip)
+        reload()
+    }
+
+    /// Records the fuel-type-pill coach mark as seen — chained to show right after the Cheapest
+    /// toggle's tip (see `FuelTypePillTip`/`NearbyView`), same "app flag + TipKit's own
+    /// `MaxDisplayCount(1)` as the authoritative backstop" pattern as `markCheapestToggleTipSeen()`.
+    func markFuelTypePillTipSeen() {
+        defaults.set(true, forKey: Keys.hasSeenFuelTypePillTip)
+        reload()
+    }
+
     private func setOptionalDouble(_ value: Double?, forKey key: String) {
         if let value {
             defaults.set(value, forKey: key)
@@ -99,10 +118,18 @@ final class UserPreferencesStore {
             fuelType: defaults.string(forKey: Keys.fuelType) ?? FuelType.default.rawValue,
             mpg: optionalDouble(forKey: Keys.mpg),
             tankCapacityLitres: optionalDouble(forKey: Keys.tankCapacityLitres),
-            useLongFuelNames: defaults.bool(forKey: Keys.useLongFuelNames),
+            // `defaults.bool(forKey:)` returns `false` whenever the key has never been written,
+            // regardless of `UserPreferences.useLongFuelNames`'s own Swift default — so a plain
+            // `.bool(forKey:)` here would silently ignore that default for every install, new and
+            // existing alike. Read the key as an optional instead: `nil` means "never explicitly
+            // set", which is the only case that should fall back to the new default of `true`; a
+            // user who ever toggled it (to true OR false) keeps their explicit choice.
+            useLongFuelNames: defaults.object(forKey: Keys.useLongFuelNames) as? Bool ?? true,
             themeMode: ThemeMode(rawValue: defaults.string(forKey: Keys.themeMode) ?? "") ?? .system,
             dismissedAnnouncementMessage: defaults.string(forKey: Keys.dismissedAnnouncement),
-            dismissedReleaseNoticeKey: defaults.string(forKey: Keys.dismissedReleaseNotice)
+            dismissedReleaseNoticeKey: defaults.string(forKey: Keys.dismissedReleaseNotice),
+            hasSeenCheapestToggleTip: defaults.bool(forKey: Keys.hasSeenCheapestToggleTip),
+            hasSeenFuelTypePillTip: defaults.bool(forKey: Keys.hasSeenFuelTypePillTip)
         )
     }
 }

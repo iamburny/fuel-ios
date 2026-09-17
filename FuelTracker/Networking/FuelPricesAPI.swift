@@ -14,7 +14,6 @@ protocol FuelPricesAPI: Sendable {
     func getStation(id: Int) async throws -> StationDTO
     func searchStations(query: String, limit: Int) async throws -> StationListResponse
 
-    func getCheapest(fuelType: String, lat: Double?, lng: Double?, radiusMiles: Double, limit: Int) async throws -> CheapestResponse
     func getNationalAverages() async throws -> AveragesResponse
     func getHeatmap(fuelType: String) async throws -> HeatmapResponse
     func getPriceHistory(stationId: Int, fuelType: String, days: Int) async throws -> PriceHistoryResponse
@@ -96,17 +95,6 @@ final class FuelPricesAPIClient: FuelPricesAPI {
     }
 
     // MARK: - Prices
-
-    func getCheapest(fuelType: String, lat: Double?, lng: Double?, radiusMiles: Double, limit: Int) async throws -> CheapestResponse {
-        var items = [
-            URLQueryItem(name: "fuel_type", value: fuelType),
-            .init(name: "radius", value: "\(radiusMiles)"),
-            .init(name: "limit", value: "\(limit)"),
-        ]
-        if let lat { items.append(.init(name: "lat", value: "\(lat)")) }
-        if let lng { items.append(.init(name: "lng", value: "\(lng)")) }
-        return try await client.request(APIEndpoint(path: "api/prices/cheapest", method: .get, queryItems: items))
-    }
 
     func getNationalAverages() async throws -> AveragesResponse {
         try await client.request(APIEndpoint(path: "api/prices/averages", method: .get))

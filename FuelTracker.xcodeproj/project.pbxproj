@@ -67,6 +67,10 @@
 		F2CEDA9D07D8CCDEE09943B9 /* FuelPricesAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3458D5975C955DA191E9FCA8 /* FuelPricesAPI.swift */; };
 		F4DF075A45602EF0167B0D5E /* NearbyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BE1075432AD2E4C56B5D7B7 /* NearbyView.swift */; };
 		F51EA92612A1D15D2AECA6BD /* FuelMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F66A025FA31DDD6482CEC58 /* FuelMapView.swift */; };
+		66C9A2248E98C944D0E63E97 /* StationListRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C989A74E4CC7BF464D076C9 /* StationListRow.swift */; };
+		43F43B3643B4E38BDA3DB18B /* FuelTypeChipRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39F2AFDD5FE921CBB4D47568 /* FuelTypeChipRow.swift */; };
+		26595B7A62414343AD70C019 /* CheapestToggleTip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4DCB6A85FC4929BCF9C6BC /* CheapestToggleTip.swift */; };
+		C37C967FB209ED87B54BCFAD /* FuelTypePillTip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C29F48DE3777D20394483F /* FuelTypePillTip.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -140,6 +144,10 @@
 		F08A330536516EB09899AD96 /* AnnouncementBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnouncementBanner.swift; sourceTree = "<group>"; };
 		F1B14496D8AC2AFA53A0A331 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		F3DFC853AF3E44F1B47BCFED /* ReleaseNoticeModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseNoticeModal.swift; sourceTree = "<group>"; };
+		9C989A74E4CC7BF464D076C9 /* StationListRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationListRow.swift; sourceTree = "<group>"; };
+		39F2AFDD5FE921CBB4D47568 /* FuelTypeChipRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelTypeChipRow.swift; sourceTree = "<group>"; };
+		0F4DCB6A85FC4929BCF9C6BC /* CheapestToggleTip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheapestToggleTip.swift; sourceTree = "<group>"; };
+		73C29F48DE3777D20394483F /* FuelTypePillTip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelTypePillTip.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -221,6 +229,10 @@
 			children = (
 				4BE1075432AD2E4C56B5D7B7 /* NearbyView.swift */,
 				85F7A0CCB5B7A5994961C93C /* NearbyViewModel.swift */,
+				9C989A74E4CC7BF464D076C9 /* StationListRow.swift */,
+				39F2AFDD5FE921CBB4D47568 /* FuelTypeChipRow.swift */,
+				0F4DCB6A85FC4929BCF9C6BC /* CheapestToggleTip.swift */,
+				73C29F48DE3777D20394483F /* FuelTypePillTip.swift */,
 			);
 			path = Nearby;
 			sourceTree = "<group>";
@@ -557,6 +569,10 @@
 				780BFD4C6A1E2D1CC86FF17F /* LocationManager.swift in Sources */,
 				F4DF075A45602EF0167B0D5E /* NearbyView.swift in Sources */,
 				5E2151C96C81DB6227B467B6 /* NearbyViewModel.swift in Sources */,
+				66C9A2248E98C944D0E63E97 /* StationListRow.swift in Sources */,
+				43F43B3643B4E38BDA3DB18B /* FuelTypeChipRow.swift in Sources */,
+				26595B7A62414343AD70C019 /* CheapestToggleTip.swift in Sources */,
+				C37C967FB209ED87B54BCFAD /* FuelTypePillTip.swift in Sources */,
 				E870D73ECE42C2BA993AECD7 /* OpeningHoursTableView.swift in Sources */,
 				2150CE5AC7919E32E28B1F4C /* PriceLineChart.swift in Sources */,
 				90C871DD3DF7EC6E3B980C4F /* PricesView.swift in Sources */,
