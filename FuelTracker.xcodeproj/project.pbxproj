@@ -70,6 +70,7 @@
 		66C9A2248E98C944D0E63E97 /* StationListRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C989A74E4CC7BF464D076C9 /* StationListRow.swift */; };
 		43F43B3643B4E38BDA3DB18B /* FuelTypeChipRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39F2AFDD5FE921CBB4D47568 /* FuelTypeChipRow.swift */; };
 		26595B7A62414343AD70C019 /* CheapestToggleTip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4DCB6A85FC4929BCF9C6BC /* CheapestToggleTip.swift */; };
+		C37C967FB209ED87B54BCFAD /* FuelTypePillTip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C29F48DE3777D20394483F /* FuelTypePillTip.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -146,6 +147,7 @@
 		9C989A74E4CC7BF464D076C9 /* StationListRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationListRow.swift; sourceTree = "<group>"; };
 		39F2AFDD5FE921CBB4D47568 /* FuelTypeChipRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelTypeChipRow.swift; sourceTree = "<group>"; };
 		0F4DCB6A85FC4929BCF9C6BC /* CheapestToggleTip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheapestToggleTip.swift; sourceTree = "<group>"; };
+		73C29F48DE3777D20394483F /* FuelTypePillTip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelTypePillTip.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -230,6 +232,7 @@
 				9C989A74E4CC7BF464D076C9 /* StationListRow.swift */,
 				39F2AFDD5FE921CBB4D47568 /* FuelTypeChipRow.swift */,
 				0F4DCB6A85FC4929BCF9C6BC /* CheapestToggleTip.swift */,
+				73C29F48DE3777D20394483F /* FuelTypePillTip.swift */,
 			);
 			path = Nearby;
 			sourceTree = "<group>";
@@ -569,6 +572,7 @@
 				66C9A2248E98C944D0E63E97 /* StationListRow.swift in Sources */,
 				43F43B3643B4E38BDA3DB18B /* FuelTypeChipRow.swift in Sources */,
 				26595B7A62414343AD70C019 /* CheapestToggleTip.swift in Sources */,
+				C37C967FB209ED87B54BCFAD /* FuelTypePillTip.swift in Sources */,
 				E870D73ECE42C2BA993AECD7 /* OpeningHoursTableView.swift in Sources */,
 				2150CE5AC7919E32E28B1F4C /* PriceLineChart.swift in Sources */,
 				90C871DD3DF7EC6E3B980C4F /* PricesView.swift in Sources */,

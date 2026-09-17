@@ -13,6 +13,7 @@ struct NearbyView: View {
     @State private var path: [Int] = []
 
     private let cheapestToggleTip = CheapestToggleTip()
+    private let fuelTypePillTip = FuelTypePillTip()
 
     /// Matches Android's `failureThreshold = 2` — one transient blip shouldn't nag the user.
     private var apiUnreachable: Bool { repository.apiFailureCount >= 2 }
@@ -21,6 +22,16 @@ struct NearbyView: View {
     /// button that opens it), and only until the user has seen it once, ever.
     private var shouldShowCheapestTip: Bool {
         !showPanel && !preferencesStore.preferences.hasSeenCheapestToggleTip
+    }
+
+    /// Chained to the Cheapest-toggle tip: eligible as soon as that one is marked seen, so it
+    /// appears right after that tip is dismissed. Not tied to `showPanel` — unlike the toolbar
+    /// button, the fuel-type pill lives on the map itself and stays visible regardless of the
+    /// search panel's state. Gating on `hasSeenCheapestToggleTip` also means this never competes
+    /// with the still-showing first tip, and an existing user who already dismissed the first tip
+    /// before this shipped becomes eligible for this one immediately.
+    private var shouldShowFuelTypePillTip: Bool {
+        preferencesStore.preferences.hasSeenCheapestToggleTip && !preferencesStore.preferences.hasSeenFuelTypePillTip
     }
 
     var body: some View {
@@ -167,10 +178,17 @@ struct NearbyView: View {
         VStack {
             HStack {
                 Spacer()
-                Button {
+                // Same `.popoverTip(_:)`-only-accepts-non-optional-Tip constraint as the toolbar
+                // toggle's tip above, so this is gated by conditionally applying the modifier at
+                // all, rather than by passing nil.
+                let pillButton = Button {
+                    let wasShowingTip = shouldShowFuelTypePillTip
                     let all = FuelType.allCases.map(\.rawValue)
                     let nextIndex = ((all.firstIndex(of: viewModel.selectedFuelType) ?? 0) + 1) % all.count
                     viewModel.setFuelType(all[nextIndex])
+                    if wasShowingTip {
+                        preferencesStore.markFuelTypePillTipSeen()
+                    }
                 } label: {
                     Text(FuelType(rawValue: viewModel.selectedFuelType)?.label(useLongNames: preferencesStore.preferences.useLongFuelNames) ?? viewModel.selectedFuelType)
                         .font(.caption.bold())
@@ -181,6 +199,16 @@ struct NearbyView: View {
                         .shadow(radius: 4)
                 }
                 .padding(12)
+
+                if shouldShowFuelTypePillTip {
+                    // The pill sits near the top of the screen, so — same reasoning as the toolbar
+                    // toggle's tip — `arrowEdge` names the edge of the anchor (this pill) the tip's
+                    // arrow touches: `.bottom` touches the pill's bottom edge, arrow pointing up
+                    // into it, rendering the tip's body below the pill.
+                    pillButton.popoverTip(fuelTypePillTip, arrowEdge: .bottom)
+                } else {
+                    pillButton
+                }
             }
             Spacer()
         }
