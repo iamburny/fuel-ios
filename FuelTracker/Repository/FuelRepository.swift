@@ -118,12 +118,29 @@ final class FuelRepository {
         }
     }
 
-    /// Network-first, cache fallback (name/brand/postcode substring match) on failure.
-    func searchStations(query: String) async throws -> StationListResponse {
+    /// Network-first, cache fallback (name/brand/postcode/town substring match) on failure.
+    ///
+    /// `lat`/`lng` are the caller's current location when it has one, and stay `nil` until the
+    /// first GPS fix — they're threaded all the way through to the query string, where they must
+    /// be *omitted* rather than sent as `0` (see `FuelPricesAPIClient.searchQueryItems`). They
+    /// steer the server's within-tier distance tie-break, and the offline fallback below applies
+    /// the same idea locally so search behaves consistently online and offline.
+    func searchStations(query: String, lat: Double? = nil, lng: Double? = nil) async throws -> StationListResponse {
         do {
-            return try await api.searchStations(query: query, limit: 20)
+            return try await api.searchStations(query: query, limit: 20, lat: lat, lng: lng)
+        } catch is CancellationError {
+            // A superseded keystroke is not a network failure. Falling through to the cache here
+            // would run a full SwiftData fetch + in-memory filter on the main actor for every
+            // cancelled search, and then throw the results away. Rethrow so the caller's
+            // Task.isCancelled check handles it. Matches fuel-android's
+            // `catch (e: CancellationException) { throw e }`.
+            throw CancellationError()
+        } catch let urlError as URLError where urlError.code == .cancelled {
+            // URLSession reports task cancellation as URLError.cancelled rather than
+            // CancellationError, so both spellings have to be caught.
+            throw CancellationError()
         } catch {
-            let cached = searchCachedStations(query: query).map { $0.toDTO(originLat: nil, originLng: nil) }
+            let cached = searchCachedStations(query: query, lat: lat, lng: lng).map { $0.toDTO(originLat: lat, originLng: lng) }
             return StationListResponse(count: cached.count, stations: cached)
         }
     }
@@ -307,16 +324,41 @@ final class FuelRepository {
         return (try? modelContext.fetch(descriptor)) ?? []
     }
 
-    /// Matches Room's `searchStations(query, limit = 20)`. Filtered in-memory rather than via
+    /// Mirrors Room's `searchStations(query, limit)` on Android, which is handed a 200-row
+    /// candidate pool rather than the display limit for the same sort-before-truncate reason. Filtered in-memory rather than via
     /// `#Predicate` (optional-string `Contains` support is finicky pre-iOS 17.4) — the cached
     /// station count is small enough (UK-wide dataset, thousands not millions) that a full-table
     /// scan on this rarely-hit offline-fallback path is fine.
-    private func searchCachedStations(query: String) -> [CachedStation] {
+    ///
+    /// `town` is matched as well as name/brand/postcode because that's the set of fields the
+    /// server's `/api/stations/search` searches — the cache used to check only three of them, so
+    /// a town-name query that worked online came back empty offline.
+    ///
+    /// When a location is known the matches are sorted nearest-first *before* the 20-row
+    /// truncation — truncating first would pick an arbitrary 20 and only then order those, so the
+    /// genuinely nearest station could be dropped before it was ever compared. With no location
+    /// the fetch order is left untouched; there's nothing meaningful to sort by.
+    ///
+    /// Note this is distance-only, not the server's ranking: the server sorts by relevance tier
+    /// first and uses distance only as the within-tier tie-break, which this cache has no way to
+    /// reproduce (no trigram/prefix scoring locally). Offline, a nearby weak match can therefore
+    /// outrank a distant exact-name match. Deliberate, and matched by fuel-android's Room-backed
+    /// fallback — if that changes on one platform it must change on both. fuel-web has no offline
+    /// search path at all, so it has no equivalent to keep in step.
+    private func searchCachedStations(query: String, lat: Double?, lng: Double?) -> [CachedStation] {
         let all = (try? modelContext.fetch(FetchDescriptor<CachedStation>())) ?? []
-        let matches = all.filter {
+        var matches = all.filter {
             $0.name.localizedCaseInsensitiveContains(query) ||
             ($0.brand?.localizedCaseInsensitiveContains(query) ?? false) ||
-            ($0.postcode?.localizedCaseInsensitiveContains(query) ?? false)
+            ($0.postcode?.localizedCaseInsensitiveContains(query) ?? false) ||
+            ($0.town?.localizedCaseInsensitiveContains(query) ?? false)
+        }
+        if let lat, let lng {
+            // Distance computed once per station rather than on every comparison.
+            matches = matches
+                .map { ($0, FuelCostCalculator.haversineMiles(lat1: lat, lng1: lng, lat2: $0.latitude, lng2: $0.longitude)) }
+                .sorted { $0.1 < $1.1 }
+                .map { $0.0 }
         }
         return Array(matches.prefix(20))
     }

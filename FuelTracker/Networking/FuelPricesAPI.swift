@@ -12,7 +12,7 @@ protocol FuelPricesAPI: Sendable {
     func getNearbyStations(lat: Double, lng: Double, radiusMiles: Double, limit: Int) async throws -> StationListResponse
     func getStationsInBounds(minLat: Double, maxLat: Double, minLng: Double, maxLng: Double, limit: Int) async throws -> StationListResponse
     func getStation(id: Int) async throws -> StationDTO
-    func searchStations(query: String, limit: Int) async throws -> StationListResponse
+    func searchStations(query: String, limit: Int, lat: Double?, lng: Double?) async throws -> StationListResponse
 
     func getNationalAverages() async throws -> AveragesResponse
     func getHeatmap(fuelType: String) async throws -> HeatmapResponse
@@ -87,10 +87,31 @@ final class FuelPricesAPIClient: FuelPricesAPI {
         try await client.request(APIEndpoint(path: "api/stations/\(id)", method: .get))
     }
 
-    func searchStations(query: String, limit: Int) async throws -> StationListResponse {
+    /// `lat`/`lng` are optional: when both are supplied the backend uses distance as the final
+    /// tie-break *within* a relevance tier and returns `distance_miles` on each station; when
+    /// they're absent the ordering is relevance-only and `distance_miles` is omitted entirely.
+    /// They must therefore be left out of the URL when nil rather than sent as `0` — a literal
+    /// `lat=0&lng=0` is a real point in the Gulf of Guinea and would silently reorder every
+    /// result. Same contract as fuel-web/fuel-android.
+    static func searchQueryItems(query: String, limit: Int, lat: Double?, lng: Double?) -> [URLQueryItem] {
+        var items = [
+            URLQueryItem(name: "q", value: query),
+            .init(name: "limit", value: "\(limit)"),
+        ]
+        if let lat, let lng {
+            items.append(.init(name: "lat", value: "\(lat)"))
+            items.append(.init(name: "lng", value: "\(lng)"))
+        }
+        return items
+    }
+
+    // No default values for lat/lng: the only caller reaches this through the `FuelPricesAPI`
+    // existential, where defaults don't apply anyway, and defaults here would let a future direct
+    // call on the concrete client silently drop the coordinates.
+    func searchStations(query: String, limit: Int, lat: Double?, lng: Double?) async throws -> StationListResponse {
         try await client.request(APIEndpoint(
             path: "api/stations/search/", method: .get,
-            queryItems: [.init(name: "q", value: query), .init(name: "limit", value: "\(limit)")]
+            queryItems: Self.searchQueryItems(query: query, limit: limit, lat: lat, lng: lng)
         ))
     }
 
