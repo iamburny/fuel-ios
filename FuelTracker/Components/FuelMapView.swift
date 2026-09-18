@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreLocation
 import GoogleMaps
 
 /// Mirrors fuel-android's `FuelMapView.kt`. Requires `AppConfig.googleMapsAPIKey`.
@@ -30,6 +31,9 @@ struct FuelMapView: UIViewRepresentable {
     var centerLat: Double = 51.5074
     var centerLng: Double = -0.1278
     var zoomLevel: Float = 12
+    /// Camera rotation, degrees clockwise from north. Defaults to 0 (north-up), preserving
+    /// `DetailView`'s existing static-map call site untouched.
+    var bearing: CLLocationDirection = 0
     var markers: [MapMarkerItem] = []
     var onMarkerClick: ((Int) -> Void)?
     var recenterKey: Int?
@@ -37,7 +41,7 @@ struct FuelMapView: UIViewRepresentable {
     var showMyLocation = false
 
     func makeUIView(context: Context) -> GMSMapView {
-        let camera = GMSCameraPosition.camera(withLatitude: centerLat, longitude: centerLng, zoom: zoomLevel)
+        let camera = GMSCameraPosition.camera(withLatitude: centerLat, longitude: centerLng, zoom: zoomLevel, bearing: bearing, viewingAngle: 0)
         let options = GMSMapViewOptions()
         options.camera = camera
         let mapView = GMSMapView(options: options)
@@ -62,7 +66,7 @@ struct FuelMapView: UIViewRepresentable {
         if recenterKey != context.coordinator.lastRecenterKey {
             context.coordinator.lastRecenterKey = recenterKey
             // Non-animated, matches Android's plain `position =` assignment.
-            mapView.camera = GMSCameraPosition.camera(withLatitude: centerLat, longitude: centerLng, zoom: zoomLevel)
+            mapView.camera = GMSCameraPosition.camera(withLatitude: centerLat, longitude: centerLng, zoom: zoomLevel, bearing: bearing, viewingAngle: 0)
         }
     }
 

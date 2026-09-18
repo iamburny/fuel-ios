@@ -9,6 +9,13 @@ import Observation
 /// Not ported: `apiUnreachable` — `NearbyView` reads `repository.apiFailureCount` directly instead
 /// (both are `@Observable` and reach the view via `@Environment`, so there's no need to re-mirror
 /// the repository's state into this view model the way Android's StateFlow architecture requires).
+/// Whether the map's rotation stays fixed to north, or follows the user's GPS travel direction.
+/// See `NearbyViewModel.mapBearing`.
+enum MapOrientationMode {
+    case northUp
+    case travelDirectionUp
+}
+
 @Observable
 @MainActor
 final class NearbyViewModel {
@@ -52,6 +59,15 @@ final class NearbyViewModel {
     /// `NearbyViewModel.pendingFavouriteToggles`. `StationListRow` also disables/dims the heart for
     /// any station id in this set.
     var pendingFavouriteToggles: Set<Int> = []
+    /// North-up (the default) vs. follow-travel-direction. See `mapBearing` and
+    /// `toggleMapOrientation()`.
+    var mapOrientationMode: MapOrientationMode = .northUp
+
+    /// The last GPS fix's course-over-ground that was actually valid (`course >= 0 &&
+    /// courseAccuracy >= 0`) — never overwritten by an invalid reading, so the map holds its last
+    /// known heading (rather than snapping back to north) when GPS course briefly drops out, e.g.
+    /// stopped at a light.
+    private var lastValidCourse: CLLocationDirection?
 
     private let repository: FuelRepository
     private let locationManager: LocationManager
@@ -126,6 +142,14 @@ final class NearbyViewModel {
                 if Task.isCancelled { break }
                 let lat = location.coordinate.latitude
                 let lng = location.coordinate.longitude
+                // Checked before the `moved` jitter-guard below — a course update is meaningful
+                // even on a sub-30m tick, unlike the position/camera-jump logic which should stay
+                // gated on genuine movement. Only overwrite on a genuinely valid reading (never
+                // reset to a garbage/zero value on an invalid one) so the map holds its last known
+                // heading rather than snapping to north on an ordinary GPS dropout.
+                if location.course >= 0, location.courseAccuracy >= 0 {
+                    self.lastValidCourse = location.course
+                }
                 // Ignore sub-30m jitter so the camera doesn't twitch while standing still.
                 let moved: Bool
                 if let prevLat = self.userLat, let prevLng = self.userLng {
@@ -204,7 +228,33 @@ final class NearbyViewModel {
         viewportStations = nil
         isOffGpsCenter = false
         isLoadingViewport = false
+        // No separate rotation handling needed here — bumping the token below already picks up
+        // the current `mapBearing` for free.
         cameraRecenterToken += 1
+    }
+
+    /// The camera bearing `FuelMapView` should render, derived from `mapOrientationMode` — computed
+    /// rather than a second manually-synced stored property so it can never drift out of sync with
+    /// the mode/course. North-up is always 0; travel-direction-up uses the last known good course,
+    /// falling back to 0 (north) if no valid course has ever been seen yet.
+    var mapBearing: CLLocationDirection {
+        switch mapOrientationMode {
+        case .northUp:
+            return 0
+        case .travelDirectionUp:
+            return lastValidCourse ?? 0
+        }
+    }
+
+    /// Flips the map's rotation mode. Only forces an immediate camera update when the map is
+    /// currently GPS-centered (`!isOffGpsCenter`) — if the user has dragged away, the new
+    /// orientation is picked up silently and takes effect next time they recenter, rather than
+    /// yanking their current view around.
+    func toggleMapOrientation() {
+        mapOrientationMode = mapOrientationMode == .northUp ? .travelDirectionUp : .northUp
+        if !isOffGpsCenter {
+            cameraRecenterToken += 1
+        }
     }
 
     func setFuelType(_ type: String) {
