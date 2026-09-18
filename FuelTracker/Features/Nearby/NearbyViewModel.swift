@@ -353,16 +353,27 @@ final class NearbyViewModel {
             // each other's update (a prior version snapshotted the dict into a local `var map`
             // before this `await` and wrote the whole thing back after, so whichever toggle
             // finished last silently overwrote the other's result — a lost-update race).
+            //
+            // Read fresh right after the `await` (not carried across it) and fall back to `[:]`
+            // rather than optional-chaining the write directly: `favouritesByStationId` is nil
+            // until the first `refreshFavourites()` completes, and `bootstrap()` renders/enables
+            // taps via `loadNearby()` *before* that finishes — a tap landing in that window would
+            // otherwise have `favouritesByStationId?[...] = ...` silently no-op on the nil
+            // receiver, losing the favourite locally and letting a second tap re-POST a duplicate.
             if let favouriteId = favouritesByStationId?[station.id] {
                 try await repository.removeFavourite(id: favouriteId)
                 analytics.trackEvent("remove_from_favourites", params: ["station_id": station.id])
-                favouritesByStationId?.removeValue(forKey: station.id)
+                var map = favouritesByStationId ?? [:]
+                map.removeValue(forKey: station.id)
+                favouritesByStationId = map
             } else {
                 // Pass the active fuel-type filter rather than letting this silently default to
                 // E10 — a diesel driver quick-favouriting from the map should get diesel alerts.
                 let favourite = try await repository.addFavourite(stationId: station.id, fuelType: selectedFuelType)
                 analytics.trackEvent("add_to_favourites", params: ["station_id": station.id])
-                favouritesByStationId?[station.id] = favourite.id
+                var map = favouritesByStationId ?? [:]
+                map[station.id] = favourite.id
+                favouritesByStationId = map
             }
         } catch {
             // A 401 mid-call means APIClient already tried a silent refresh and it failed,

@@ -12,6 +12,10 @@ final class FavouritesViewModel {
     var creatingAlert = false
     var error: String?
     var message: String?
+    /// Favourite ids with a `toggleNotify` PATCH currently in flight — guards against a rapid
+    /// double-tap on a row's bell firing two overlapping requests, matching
+    /// `NearbyViewModel.pendingFavouriteToggles`'s pattern.
+    var pendingNotifyToggleIds: Set<Int> = []
 
     private let repository: FuelRepository
     private let locationManager: LocationManager
@@ -102,6 +106,10 @@ final class FavouritesViewModel {
     }
 
     func toggleNotify(_ favourite: FavouriteDTO) async {
+        guard !pendingNotifyToggleIds.contains(favourite.id) else { return }
+        pendingNotifyToggleIds.insert(favourite.id)
+        defer { pendingNotifyToggleIds.remove(favourite.id) }
+
         let newValue = !favourite.notifyOnDrop
         do {
             let updated = try await repository.updateFavourite(id: favourite.id, notifyOnDrop: newValue)

@@ -11,6 +11,23 @@ When implementing or fixing a feature here, check the Android Kotlin source dire
 codebase is full of comments citing exact Android file/line parity. Backend contract questions
 (endpoint shapes, auth flow) are answered by reading `../fuel-api` directly, not by guessing.
 
+**Any user-facing feature or bug fix here must land on `fuel-android` too, in the same effort — not
+as a follow-up.** This holds even when the request is phrased in iOS-specific terms (SwiftUI,
+MapKit, Apple Sign-In) — ticket wording naming one platform's framework is not the same as the work
+being scoped to one platform. Before starting, check `../fuel-android` for the equivalent code path
+and current behavior; don't assume parity already exists in either direction — verify field by
+field (Android's `NearbyViewModel.kt` already had a favourite-toggle race fix this app was missing,
+but had the exact same missing re-entrancy guard as this app in `DetailViewModel.kt` — only checking
+both directly surfaced which was which).
+
+`fuel-api` is shared by this app, `fuel-android`, and `fuel-web`, and by every already-installed
+copy of this app that hasn't updated yet — App Store rollout means old builds keep hitting the
+current backend for weeks. Don't assume a backend change (a new field, a status-code change, a
+removed error case) is safe for a feature just because this app's own code handles it; see
+`../fuel-api/CLAUDE.md`'s backward-compatibility section, and treat any new response field as
+optional/absent-tolerant here too, since this app may ship before or after the corresponding
+backend change actually deploys.
+
 ## Build, test, run
 
 No `xcodegen`/CocoaPods workflow — `FuelTracker.xcodeproj/project.pbxproj` is the tracked, live

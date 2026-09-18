@@ -73,6 +73,7 @@ struct FavouritesView: View {
                             ForEach(viewModel.favourites, id: \.id) { favourite in
                                 favouriteRow(
                                     favourite,
+                                    isNotifyPending: viewModel.pendingNotifyToggleIds.contains(favourite.id),
                                     onTap: {
                                         viewModel.trackStationClick(favourite.stationId)
                                         path.append(favourite.stationId)
@@ -182,7 +183,7 @@ struct FavouritesView: View {
     /// doesn't hit-test a `Button` nested inside another `Button` correctly, so the bell couldn't
     /// just be added as a second button inside the row's old single enclosing `Button`.
     @ViewBuilder
-    private func favouriteRow(_ favourite: FavouriteDTO, onTap: @escaping () -> Void, onToggleNotify: @escaping () -> Void) -> some View {
+    private func favouriteRow(_ favourite: FavouriteDTO, isNotifyPending: Bool, onTap: @escaping () -> Void, onToggleNotify: @escaping () -> Void) -> some View {
         HStack(spacing: 0) {
             HStack {
                 Image(systemName: "heart.fill").foregroundStyle(FuelType.displayColor(forRaw: favourite.fuelType))
@@ -205,6 +206,8 @@ struct FavouritesView: View {
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
+            .disabled(isNotifyPending)
+            .opacity(isNotifyPending ? 0.5 : 1)
             .buttonStyle(.plain)
             .accessibilityLabel(favourite.notifyOnDrop ? "Mute price-drop alerts" : "Enable price-drop alerts")
         }
