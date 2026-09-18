@@ -156,7 +156,7 @@ struct NearbyView: View {
             ZStack {
                 mapLayer(viewModel)
                 fuelTypePill(viewModel)
-                recenterButton(viewModel)
+                bottomLeftMapControls(viewModel)
                 connectivityBanner(viewModel)
                 viewportLoadingBar(viewModel)
                 if showPanel {
@@ -204,6 +204,7 @@ struct NearbyView: View {
                 centerLat: userLat,
                 centerLng: userLng,
                 zoomLevel: 12,
+                bearing: viewModel.mapBearing,
                 markers: mapMarkers,
                 onMarkerClick: { id in
                     viewModel.trackStationClick(id, source: "map")
@@ -265,25 +266,55 @@ struct NearbyView: View {
         }
     }
 
+    /// Bottom-left FAB stack: the orientation toggle is always visible at the anchor position, with
+    /// the recenter button (only shown once the user's dragged off GPS-center) appearing above it —
+    /// so the always-visible toggle's position never shifts depending on whether recenter happens
+    /// to be showing.
     @ViewBuilder
-    private func recenterButton(_ viewModel: NearbyViewModel) -> some View {
-        if viewModel.isOffGpsCenter {
-            VStack {
-                Spacer()
-                HStack {
-                    Button {
-                        viewModel.recenterOnGps()
-                    } label: {
-                        Image(systemName: "location.fill")
-                            .padding(14)
-                            .background(Circle().fill(.background))
-                            .shadow(radius: 4)
+    private func bottomLeftMapControls(_ viewModel: NearbyViewModel) -> some View {
+        VStack {
+            Spacer()
+            HStack {
+                VStack(spacing: 12) {
+                    if viewModel.isOffGpsCenter {
+                        recenterButton(viewModel)
                     }
-                    .padding(16)
-                    Spacer()
+                    mapOrientationButton(viewModel)
                 }
+                .padding(16)
+                Spacer()
             }
         }
+    }
+
+    @ViewBuilder
+    private func recenterButton(_ viewModel: NearbyViewModel) -> some View {
+        Button {
+            viewModel.recenterOnGps()
+        } label: {
+            Image(systemName: "location.fill")
+                .padding(14)
+                .background(Circle().fill(.background))
+                .shadow(radius: 4)
+        }
+        .accessibilityLabel("Recenter on my location")
+    }
+
+    @ViewBuilder
+    private func mapOrientationButton(_ viewModel: NearbyViewModel) -> some View {
+        Button {
+            viewModel.toggleMapOrientation()
+        } label: {
+            Image(systemName: viewModel.mapOrientationMode == .northUp ? "location.north.line.fill" : "location.north.fill")
+                .padding(14)
+                .background(Circle().fill(.background))
+                .shadow(radius: 4)
+        }
+        .accessibilityLabel(
+            viewModel.mapOrientationMode == .northUp
+                ? "North up. Tap to follow direction of travel."
+                : "Following direction of travel. Tap to switch to north up."
+        )
     }
 
     /// Thin browser-style progress bar while a drag-triggered viewport reload is in flight — the
