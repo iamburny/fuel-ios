@@ -97,4 +97,33 @@ struct FavouritesAPIPatchTests {
         #expect(updated.id == 5)
         #expect(updated.notifyOnDrop == false)
     }
+
+    @Test func updateFavouriteFuelTypeIssuesPatchWithBodyAndAuthHeader() async throws {
+        let tokenStore = TokenStore()
+        let savedToken = tokenStore.token
+        defer { tokenStore.token = savedToken }
+        tokenStore.token = "test-access-token"
+
+        CapturingURLProtocol.reset(respondingWith: Data(
+            #"{"id":5,"station_id":501,"fuel_type":"HVO","notify_on_drop":true,"price_threshold_pence":null}"#.utf8
+        ))
+
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [CapturingURLProtocol.self]
+        let session = URLSession(configuration: config)
+        let apiClient = APIClient(baseURL: URL(string: "https://example.test")!, tokenStore: tokenStore, session: session)
+        let api = FuelPricesAPIClient(client: apiClient)
+
+        let updated = try await api.updateFavourite(id: 5, FavouriteFuelTypeUpdateRequest(fuelType: "HVO"))
+
+        let request = CapturingURLProtocol.lastRequest()
+        #expect(request?.httpMethod == "PATCH")
+        #expect(request?.url?.path == "/api/favourites/5")
+        #expect(request?.value(forHTTPHeaderField: "Authorization") == "Bearer test-access-token")
+        let sentBody = try request?.httpBody.map { try JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+        #expect(sentBody??["fuel_type"] as? String == "HVO")
+
+        #expect(updated.id == 5)
+        #expect(updated.fuelType == "HVO")
+    }
 }

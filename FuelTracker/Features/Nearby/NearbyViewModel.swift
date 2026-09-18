@@ -89,8 +89,12 @@ final class NearbyViewModel {
     }
 
     private func bootstrap() async {
-        // Start from the user's saved "usual fuel" preference rather than always defaulting to E10.
-        selectedFuelType = preferencesStore.preferences.fuelType
+        // Prefer this session's last active pill value (e.g. this view model was torn down and
+        // rebuilt by a tab switch while the process stayed alive) over the persisted "usual fuel"
+        // preference — falls back to it on a genuinely fresh launch, when `lastActiveFuelType` is
+        // still nil. Either way, write back through so it's always in sync with what's showing.
+        selectedFuelType = preferencesStore.lastActiveFuelType ?? preferencesStore.preferences.fuelType
+        preferencesStore.lastActiveFuelType = selectedFuelType
 
         locationManager.requestPermissionIfNeeded()
         // Give the permission dialog a brief window to be answered before firing the first
@@ -260,6 +264,7 @@ final class NearbyViewModel {
     func setFuelType(_ type: String) {
         analytics.trackEvent("select_fuel_type", params: ["fuel_type": type])
         selectedFuelType = type
+        preferencesStore.lastActiveFuelType = type
     }
 
     func setRadius(_ miles: Double) {

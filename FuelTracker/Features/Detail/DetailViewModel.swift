@@ -48,9 +48,18 @@ final class DetailViewModel {
         do {
             let station = try await repository.getStation(id: stationId)
             let preferences = preferencesStore.preferences
-            let fuelType = station.prices.contains { $0.fuelType == preferences.fuelType }
-                ? preferences.fuelType
-                : (station.prices.first?.fuelType ?? preferences.fuelType)
+            // Prefer whatever fuel type was last active on a browsing screen (e.g. Nearby's pill)
+            // this session, if the station actually offers it, over the persisted "usual fuel"
+            // preference — otherwise favouriting here after navigating from a non-default filter
+            // would silently revert to "usual fuel" instead of what was actually on screen.
+            let fuelType: String
+            if let lastActive = preferencesStore.lastActiveFuelType, station.prices.contains(where: { $0.fuelType == lastActive }) {
+                fuelType = lastActive
+            } else if station.prices.contains(where: { $0.fuelType == preferences.fuelType }) {
+                fuelType = preferences.fuelType
+            } else {
+                fuelType = station.prices.first?.fuelType ?? preferences.fuelType
+            }
 
             let history: [PriceHistoryPoint]
             do {

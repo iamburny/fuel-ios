@@ -8,6 +8,7 @@ struct FavouritesView: View {
     @State private var path: [Int] = []
     @State private var showingAuth = false
     @State private var showingCreateAlert = false
+    @State private var editingFuelTypeFor: FavouriteDTO?
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -35,6 +36,19 @@ struct FavouritesView: View {
                         Task { await viewModel.createAlertNearMe(radiusMiles: radius, fuelType: fuelType) }
                     } onCancel: {
                         showingCreateAlert = false
+                    }
+                }
+            }
+            .sheet(item: $editingFuelTypeFor) { favourite in
+                if let viewModel {
+                    FuelTypePickerSheet(
+                        currentFuelType: favourite.fuelType,
+                        useLongNames: preferencesStore.preferences.useLongFuelNames
+                    ) { newType in
+                        editingFuelTypeFor = nil
+                        Task { await viewModel.updateFuelType(favourite, to: newType) }
+                    } onCancel: {
+                        editingFuelTypeFor = nil
                     }
                 }
             }
@@ -73,12 +87,13 @@ struct FavouritesView: View {
                             ForEach(viewModel.favourites, id: \.id) { favourite in
                                 favouriteRow(
                                     favourite,
-                                    isNotifyPending: viewModel.pendingNotifyToggleIds.contains(favourite.id),
+                                    isNotifyPending: viewModel.pendingUpdateIds.contains(favourite.id),
                                     onTap: {
                                         viewModel.trackStationClick(favourite.stationId)
                                         path.append(favourite.stationId)
                                     },
-                                    onToggleNotify: { Task { await viewModel.toggleNotify(favourite) } }
+                                    onToggleNotify: { Task { await viewModel.toggleNotify(favourite) } },
+                                    onEditFuelType: { editingFuelTypeFor = favourite }
                                 )
                                 .swipeActions(edge: .trailing) {
                                     Button(role: .destructive) {
@@ -179,26 +194,37 @@ struct FavouritesView: View {
         .disabled(viewModel.creatingAlert)
     }
 
-    /// Two independently tappable regions rather than one `Button` wrapping the whole row: SwiftUI
-    /// doesn't hit-test a `Button` nested inside another `Button` correctly, so the bell couldn't
-    /// just be added as a second button inside the row's old single enclosing `Button`.
+    /// Three independently tappable, non-overlapping regions (not nested inside one another) —
+    /// the navigate-to-Detail region uses `.onTapGesture` rather than a `Button` specifically so
+    /// the fuel-type and bell `Button`s can sit alongside it as true siblings with their own
+    /// separate bounds; nesting either of those `Button`s *inside* the tap-gesture region's frame
+    /// would compete with its gesture rather than reliably winning within their own bounds. This
+    /// is also why the fuel-type control lives beside the name rather than stacked as a subtitle
+    /// underneath it, as it now visually reads a caption but isn't nested inside that region.
     @ViewBuilder
-    private func favouriteRow(_ favourite: FavouriteDTO, isNotifyPending: Bool, onTap: @escaping () -> Void, onToggleNotify: @escaping () -> Void) -> some View {
+    private func favouriteRow(_ favourite: FavouriteDTO, isNotifyPending: Bool, onTap: @escaping () -> Void, onToggleNotify: @escaping () -> Void, onEditFuelType: @escaping () -> Void) -> some View {
         HStack(spacing: 0) {
             HStack {
                 Image(systemName: "heart.fill").foregroundStyle(FuelType.displayColor(forRaw: favourite.fuelType))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(favourite.station?.name ?? "Station #\(favourite.stationId)").fontWeight(.medium)
-                    Text(FuelType.label(forRaw: favourite.fuelType, useLongNames: preferencesStore.preferences.useLongFuelNames))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                Text(favourite.station?.name ?? "Station #\(favourite.stationId)").fontWeight(.medium)
                 Spacer()
             }
             .contentShape(Rectangle())
             .onTapGesture(perform: onTap)
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(.isButton)
+
+            Button(action: onEditFuelType) {
+                Text(FuelType.label(forRaw: favourite.fuelType, useLongNames: preferencesStore.preferences.useLongFuelNames))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .underline()
+                    .padding(.horizontal, 8)
+                    .frame(height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Change tracked fuel type, currently \(FuelType.label(forRaw: favourite.fuelType, useLongNames: preferencesStore.preferences.useLongFuelNames))")
 
             Button(action: onToggleNotify) {
                 Image(systemName: favourite.notifyOnDrop ? "bell.fill" : "bell.slash")
@@ -211,6 +237,43 @@ struct FavouritesView: View {
             .buttonStyle(.plain)
             .accessibilityLabel(favourite.notifyOnDrop ? "Mute price-drop alerts" : "Enable price-drop alerts")
         }
+    }
+}
+
+/// Reuses `CreateAlertSheet`'s fuel-type chip row, just without the radius slider — lets the user
+/// change which fuel type an existing favourite tracks.
+private struct FuelTypePickerSheet: View {
+    let currentFuelType: String
+    let useLongNames: Bool
+    let onSelect: (String) -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(FuelType.allCases) { type in
+                        let selected = currentFuelType == type.rawValue
+                        Text(type.label(useLongNames: useLongNames))
+                            .font(.caption.bold())
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .foregroundStyle(selected ? .white : .primary)
+                            .background(Capsule().fill(selected ? type.color : Color.gray.opacity(0.15)))
+                            .onTapGesture { onSelect(type.rawValue) }
+                    }
+                }
+                .padding(16)
+            }
+            .navigationTitle("Track a different fuel type")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", action: onCancel)
+                }
+            }
+        }
+        .presentationDetents([.height(160)])
     }
 }
 
