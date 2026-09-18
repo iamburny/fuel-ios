@@ -74,6 +74,24 @@ struct DTODecodingTests {
         #expect(token.refreshToken == "opaque-refresh-value")
     }
 
+    @Test func decodesFavouriteDTOWithNotifyOnDrop() throws {
+        let json = """
+        {"id": 5, "station_id": 501, "fuel_type": "HVO", "notify_on_drop": false, "price_threshold_pence": 129.9}
+        """.data(using: .utf8)!
+        let favourite = try JSONDecoder().decode(FavouriteDTO.self, from: json)
+        #expect(favourite.id == 5)
+        #expect(favourite.stationId == 501)
+        #expect(favourite.fuelType == "HVO")
+        #expect(favourite.notifyOnDrop == false)
+        #expect(favourite.priceThresholdPence == 129.9)
+    }
+
+    @Test func encodesFavouriteUpdateRequest() throws {
+        let data = try FavouriteUpdateRequest(notifyOnDrop: false).asJSONData()
+        let decoded = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        #expect(decoded?["notify_on_drop"] as? Bool == false)
+    }
+
     @Test func fuelTypeRawValuesStayExactCase() {
         #expect(FuelType.b7Standard.rawValue == "B7_STANDARD")
         #expect(FuelType.b7Premium.rawValue == "B7_PREMIUM")
