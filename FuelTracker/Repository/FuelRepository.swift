@@ -254,6 +254,10 @@ final class FuelRepository {
         try await api.addFavourite(FavouriteCreateRequest(stationId: stationId, fuelType: fuelType))
     }
 
+    func updateFavourite(id: Int, notifyOnDrop: Bool) async throws -> FavouriteDTO {
+        try await api.updateFavourite(id: id, FavouriteUpdateRequest(notifyOnDrop: notifyOnDrop))
+    }
+
     func removeFavourite(id: Int) async throws { try await api.removeFavourite(id: id) }
 
     // MARK: - Area alerts

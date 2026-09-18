@@ -11,6 +11,12 @@ struct MapMarkerItem: Identifiable {
     let title: String
     let snippet: String?
     let color: UIColor?
+    /// Whether this station is in the user's favourites — rendered as a gold ring + star badge on
+    /// the price chip, layered on top of (not replacing) the fuel-type fill color, so it never
+    /// collides with the existing color coding. `var` (not `let`) so the synthesized memberwise
+    /// init can still take it as an overridable parameter — a `let` with a default value is
+    /// excluded from that init entirely, always locking it to `false`.
+    var isFavourite: Bool = false
 }
 
 /// Google Maps SDK wrapper.
@@ -48,6 +54,10 @@ struct FuelMapView: UIViewRepresentable {
         mapView.delegate = context.coordinator
         mapView.isMyLocationEnabled = showMyLocation
         mapView.settings.myLocationButton = false
+        // Native reorient-to-north control: shown only while the camera's bearing != 0, tapping it
+        // animates bearing back to 0 (leaving center/zoom untouched), then it fades out again —
+        // exactly matches the "compass" story's acceptance criteria with no custom overlay needed.
+        mapView.settings.compassButton = true
         context.coordinator.lastRecenterKey = recenterKey
         context.coordinator.onMarkerClick = onMarkerClick
         context.coordinator.onCameraIdle = onCameraIdle
@@ -81,6 +91,10 @@ struct FuelMapView: UIViewRepresentable {
         // stationId-less marker) rather than a flat array — lets applyMarkers below update an
         // existing pin in place instead of removing and recreating every marker on every call.
         private var markersByKey: [String: GMSMarker] = [:]
+        // Tracks the last-applied item per key so a pure favourite-toggle (snippet/price unchanged)
+        // still triggers an icon update — `existing.snippet != item.snippet` alone wouldn't notice
+        // an isFavourite flip when the price hasn't also changed.
+        private var lastItemByKey: [String: MapMarkerItem] = [:]
 
         private func key(for item: MapMarkerItem) -> String {
             if let stationId = item.stationId { return "s\(stationId)" }
@@ -103,28 +117,34 @@ struct FuelMapView: UIViewRepresentable {
                     if existing.position.latitude != item.lat || existing.position.longitude != item.lng {
                         existing.position = CLLocationCoordinate2D(latitude: item.lat, longitude: item.lng)
                     }
-                    if existing.snippet != item.snippet {
+                    let last = lastItemByKey[itemKey]
+                    if last?.snippet != item.snippet || last?.isFavourite != item.isFavourite {
                         existing.snippet = item.snippet
                         // No snippet (the Detail screen's single station-location marker, with no
                         // price to show) falls back to Google Maps' own default pin rather than a
                         // price chip with a placeholder "?" — that read as a data error, not "no
                         // price to show here".
-                        existing.iconView = item.snippet.map { PriceChipView(text: $0, color: item.color ?? .systemBlue) }
+                        existing.iconView = item.snippet.map { PriceChipView(text: $0, color: item.color ?? .systemBlue, isFavourite: item.isFavourite) }
                     }
                     existing.title = item.title
+                    existing.zIndex = item.isFavourite ? 1 : 0
+                    lastItemByKey[itemKey] = item
                 } else {
                     let marker = GMSMarker(position: CLLocationCoordinate2D(latitude: item.lat, longitude: item.lng))
                     marker.title = item.title
                     marker.snippet = item.snippet
-                    marker.iconView = item.snippet.map { PriceChipView(text: $0, color: item.color ?? .systemBlue) }
+                    marker.iconView = item.snippet.map { PriceChipView(text: $0, color: item.color ?? .systemBlue, isFavourite: item.isFavourite) }
                     marker.userData = item.stationId as Any
+                    marker.zIndex = item.isFavourite ? 1 : 0
                     marker.map = mapView
                     markersByKey[itemKey] = marker
+                    lastItemByKey[itemKey] = item
                 }
             }
             for (itemKey, marker) in markersByKey where !seenKeys.contains(itemKey) {
                 marker.map = nil
                 markersByKey.removeValue(forKey: itemKey)
+                lastItemByKey.removeValue(forKey: itemKey)
             }
         }
 
@@ -150,7 +170,7 @@ struct FuelMapView: UIViewRepresentable {
 /// the map without needing to tap through to an info window — mirrors `MarkerComposable`'s custom
 /// content in the Android source.
 private final class PriceChipView: UIView {
-    init(text: String, color: UIColor) {
+    init(text: String, color: UIColor, isFavourite: Bool = false) {
         let label = UILabel()
         label.text = text
         label.textColor = .white
@@ -158,17 +178,30 @@ private final class PriceChipView: UIView {
         label.sizeToFit()
         let width = label.bounds.width + 12
         let height = label.bounds.height + 6
-        super.init(frame: CGRect(x: 0, y: 0, width: width, height: height))
+        // Extra margin for the favourite badge, which overhangs the top-right corner — keeps it
+        // from being clipped by the chip's own bounds.
+        let badgeMargin: CGFloat = isFavourite ? 5 : 0
+        super.init(frame: CGRect(x: 0, y: 0, width: width + badgeMargin, height: height + badgeMargin))
         label.frame = CGRect(x: 6, y: 3, width: label.bounds.width, height: label.bounds.height)
         backgroundColor = color
         layer.cornerRadius = 6
-        layer.borderWidth = 1
-        layer.borderColor = UIColor.white.cgColor
+        // The chip's fill color still encodes fuel type (see NearbyView.mapLayer) — favourite
+        // status is layered on top as a gold ring + star badge, never a color change, so the two
+        // signals never collide.
+        layer.borderWidth = isFavourite ? 2.5 : 1
+        layer.borderColor = (isFavourite ? UIColor.systemYellow : UIColor.white).cgColor
         layer.shadowColor = UIColor.black.cgColor
         layer.shadowOpacity = 0.3
         layer.shadowRadius = 3
         layer.shadowOffset = CGSize(width: 0, height: 1)
         addSubview(label)
+
+        if isFavourite {
+            let star = UIImageView(image: UIImage(systemName: "star.fill"))
+            star.tintColor = .systemYellow
+            star.frame = CGRect(x: bounds.width - 12, y: -4, width: 12, height: 12)
+            addSubview(star)
+        }
     }
 
     required init?(coder: NSCoder) {

@@ -30,10 +30,22 @@ struct DetailView: View {
         .toolbar {
             if let viewModel {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        Task { await viewModel.toggleFavourite() }
-                    } label: {
-                        Image(systemName: viewModel.isFavourite ? "heart.fill" : "heart")
+                    HStack(spacing: 16) {
+                        if viewModel.isFavourite {
+                            Button {
+                                Task { await viewModel.toggleNotify() }
+                            } label: {
+                                Image(systemName: viewModel.notifyOnDrop ? "bell.fill" : "bell.slash")
+                            }
+                            .disabled(viewModel.pendingFavouriteToggle)
+                            .accessibilityLabel(viewModel.notifyOnDrop ? "Mute price-drop alerts" : "Enable price-drop alerts")
+                        }
+                        Button {
+                            Task { await viewModel.toggleFavourite() }
+                        } label: {
+                            Image(systemName: viewModel.isFavourite ? "heart.fill" : "heart")
+                        }
+                        .disabled(viewModel.pendingFavouriteToggle)
                     }
                 }
             }

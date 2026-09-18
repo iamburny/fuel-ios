@@ -57,6 +57,16 @@ struct FavouriteCreateRequest: Encodable, Sendable {
     }
 }
 
+/// PATCH /api/favourites/:id body — only `notify_on_drop` is editable via this route. `fuel_type`
+/// is set once at creation time (see `FavouriteCreateRequest`), not editable after the fact.
+struct FavouriteUpdateRequest: Encodable, Sendable {
+    let notifyOnDrop: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case notifyOnDrop = "notify_on_drop"
+    }
+}
+
 /// Area-radius push alert subscription — a DISTINCT feature/endpoint from `FavouriteDTO`'s
 /// per-station `notify_on_drop`. Deliberately has **no** price-threshold field; don't conflate
 /// the two shapes.

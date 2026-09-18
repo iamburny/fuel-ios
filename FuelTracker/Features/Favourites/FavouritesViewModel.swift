@@ -101,6 +101,25 @@ final class FavouritesViewModel {
         }
     }
 
+    func toggleNotify(_ favourite: FavouriteDTO) async {
+        let newValue = !favourite.notifyOnDrop
+        do {
+            let updated = try await repository.updateFavourite(id: favourite.id, notifyOnDrop: newValue)
+            if let idx = favourites.firstIndex(where: { $0.id == favourite.id }) {
+                favourites[idx] = FavouriteDTO(
+                    id: updated.id, stationId: updated.stationId, fuelType: updated.fuelType,
+                    notifyOnDrop: updated.notifyOnDrop, priceThresholdPence: updated.priceThresholdPence,
+                    // The PATCH response omits `station` (see FavouriteDTO's own doc comment on why
+                    // POST's response also omits it) — keep the one already loaded from GET.
+                    station: favourite.station
+                )
+            }
+            analytics.trackEvent(newValue ? "favourite_notify_enabled" : "favourite_notify_disabled", params: ["station_id": favourite.stationId])
+        } catch {
+            // Best-effort, matches removeFavourite's empty catch block.
+        }
+    }
+
     func removeFavourite(id: Int, stationId: Int) async {
         do {
             try await repository.removeFavourite(id: id)

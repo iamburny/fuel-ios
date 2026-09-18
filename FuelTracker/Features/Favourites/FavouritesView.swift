@@ -71,13 +71,14 @@ struct FavouritesView: View {
                                 .foregroundStyle(.secondary)
                         } else {
                             ForEach(viewModel.favourites, id: \.id) { favourite in
-                                Button {
-                                    viewModel.trackStationClick(favourite.stationId)
-                                    path.append(favourite.stationId)
-                                } label: {
-                                    favouriteRow(favourite)
-                                }
-                                .buttonStyle(.plain)
+                                favouriteRow(
+                                    favourite,
+                                    onTap: {
+                                        viewModel.trackStationClick(favourite.stationId)
+                                        path.append(favourite.stationId)
+                                    },
+                                    onToggleNotify: { Task { await viewModel.toggleNotify(favourite) } }
+                                )
                                 .swipeActions(edge: .trailing) {
                                     Button(role: .destructive) {
                                         Task { await viewModel.removeFavourite(id: favourite.id, stationId: favourite.stationId) }
@@ -177,20 +178,35 @@ struct FavouritesView: View {
         .disabled(viewModel.creatingAlert)
     }
 
+    /// Two independently tappable regions rather than one `Button` wrapping the whole row: SwiftUI
+    /// doesn't hit-test a `Button` nested inside another `Button` correctly, so the bell couldn't
+    /// just be added as a second button inside the row's old single enclosing `Button`.
     @ViewBuilder
-    private func favouriteRow(_ favourite: FavouriteDTO) -> some View {
-        HStack {
-            Image(systemName: "heart.fill").foregroundStyle(FuelType.displayColor(forRaw: favourite.fuelType))
-            VStack(alignment: .leading, spacing: 2) {
-                Text(favourite.station?.name ?? "Station #\(favourite.stationId)").fontWeight(.medium)
-                Text(FuelType.label(forRaw: favourite.fuelType, useLongNames: preferencesStore.preferences.useLongFuelNames))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+    private func favouriteRow(_ favourite: FavouriteDTO, onTap: @escaping () -> Void, onToggleNotify: @escaping () -> Void) -> some View {
+        HStack(spacing: 0) {
+            HStack {
+                Image(systemName: "heart.fill").foregroundStyle(FuelType.displayColor(forRaw: favourite.fuelType))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(favourite.station?.name ?? "Station #\(favourite.stationId)").fontWeight(.medium)
+                    Text(FuelType.label(forRaw: favourite.fuelType, useLongNames: preferencesStore.preferences.useLongFuelNames))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
             }
-            Spacer()
-            if favourite.notifyOnDrop {
-                Text("Alerts on").font(.caption2).foregroundStyle(.tint)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onTap)
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isButton)
+
+            Button(action: onToggleNotify) {
+                Image(systemName: favourite.notifyOnDrop ? "bell.fill" : "bell.slash")
+                    .foregroundStyle(favourite.notifyOnDrop ? Color.accentColor : Color.secondary)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel(favourite.notifyOnDrop ? "Mute price-drop alerts" : "Enable price-drop alerts")
         }
     }
 }

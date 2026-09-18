@@ -193,7 +193,8 @@ struct NearbyView: View {
                 lng: station.longitude,
                 title: station.name,
                 snippet: cheapest.map { String(format: "%.1fp", $0.pricePence) } ?? "No price",
-                color: UIColor(FuelType.color(forRaw: viewModel.selectedFuelType))
+                color: UIColor(FuelType.color(forRaw: viewModel.selectedFuelType)),
+                isFavourite: viewModel.favouritesByStationId?[station.id] != nil
             )
         }
 

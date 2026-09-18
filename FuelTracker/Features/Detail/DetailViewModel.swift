@@ -17,10 +17,17 @@ final class DetailViewModel {
     var selectedFuelType: String = FuelType.default.rawValue
     var isFavourite = false
     var favouriteId: Int?
+    var notifyOnDrop = true
     var nationalAverages: [NationalAverageDTO] = []
     var distanceMiles: Double?
     var driveCostPounds: Double?
     var error: String?
+    /// Guards `toggleFavourite()`/`toggleNotify()` re-entrancy — a rapid double-tap on the heart or
+    /// bell fires a new `Task` on every tap (see `DetailView`'s buttons), so without this a second
+    /// tap mid-flight could double-submit an add/remove/update call before the first's result
+    /// lands. Mirrors `NearbyViewModel.pendingFavouriteToggles`, just scoped to this screen's single
+    /// station rather than a `Set<Int>` of many.
+    var pendingFavouriteToggle = false
 
     private let repository: FuelRepository
     private let locationManager: LocationManager
@@ -90,6 +97,7 @@ final class DetailViewModel {
             self.selectedFuelType = fuelType
             self.isFavourite = existingFavourite != nil
             self.favouriteId = existingFavourite?.id
+            self.notifyOnDrop = existingFavourite?.notifyOnDrop ?? true
             self.nationalAverages = averages
             self.distanceMiles = distance
             self.driveCostPounds = driveCost
@@ -110,6 +118,10 @@ final class DetailViewModel {
     }
 
     func toggleFavourite() async {
+        guard !pendingFavouriteToggle else { return }
+        pendingFavouriteToggle = true
+        defer { pendingFavouriteToggle = false }
+
         do {
             if isFavourite, let favouriteId {
                 try await repository.removeFavourite(id: favouriteId)
@@ -117,13 +129,31 @@ final class DetailViewModel {
                 isFavourite = false
                 self.favouriteId = nil
             } else {
-                let favourite = try await repository.addFavourite(stationId: stationId)
+                // Pass the active fuel-type filter rather than letting this silently default to
+                // E10 — a diesel driver favouriting from here should get diesel alerts.
+                let favourite = try await repository.addFavourite(stationId: stationId, fuelType: selectedFuelType)
                 analytics.trackEvent("add_to_favourites", params: ["station_id": stationId])
                 isFavourite = true
                 favouriteId = favourite.id
+                notifyOnDrop = true
             }
         } catch {
             // Best-effort, matches Android's empty catch block.
+        }
+    }
+
+    func toggleNotify() async {
+        guard !pendingFavouriteToggle, let favouriteId else { return }
+        pendingFavouriteToggle = true
+        defer { pendingFavouriteToggle = false }
+
+        let newValue = !notifyOnDrop
+        do {
+            let updated = try await repository.updateFavourite(id: favouriteId, notifyOnDrop: newValue)
+            notifyOnDrop = updated.notifyOnDrop
+            analytics.trackEvent(newValue ? "favourite_notify_enabled" : "favourite_notify_disabled", params: ["station_id": stationId])
+        } catch {
+            // Best-effort, matches toggleFavourite()'s empty catch block.
         }
     }
 }
