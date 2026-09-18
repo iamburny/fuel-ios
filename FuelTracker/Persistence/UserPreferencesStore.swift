@@ -57,6 +57,16 @@ final class UserPreferencesStore {
     private let defaults: UserDefaults
     private(set) var preferences: UserPreferences
 
+    /// The most recently active fuel-type filter from a browsing screen (Nearby's pill), if any
+    /// — deliberately session-only, never written to `UserDefaults`/`reload()`d from it, unlike
+    /// everything else in this class. Lets a favourite created from Detail after navigating from
+    /// Nearby with a non-default filter active inherit that filter instead of `preferences.fuelType`
+    /// ("usual fuel") — which stays reserved for exactly one job, seeding the very first pin state
+    /// on a fresh launch. `nil` until the first pill interaction of this app session, and reset to
+    /// `nil` again on the next cold launch, matching that "usual fuel is only the fresh-open default"
+    /// rule exactly.
+    var lastActiveFuelType: String?
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         self.preferences = UserPreferences()

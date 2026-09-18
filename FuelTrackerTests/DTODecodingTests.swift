@@ -92,6 +92,12 @@ struct DTODecodingTests {
         #expect(decoded?["notify_on_drop"] as? Bool == false)
     }
 
+    @Test func encodesFavouriteFuelTypeUpdateRequest() throws {
+        let data = try FavouriteFuelTypeUpdateRequest(fuelType: "HVO").asJSONData()
+        let decoded = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        #expect(decoded?["fuel_type"] as? String == "HVO")
+    }
+
     @Test func fuelTypeRawValuesStayExactCase() {
         #expect(FuelType.b7Standard.rawValue == "B7_STANDARD")
         #expect(FuelType.b7Premium.rawValue == "B7_PREMIUM")

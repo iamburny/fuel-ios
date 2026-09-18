@@ -36,6 +36,7 @@ protocol FuelPricesAPI: Sendable {
     func getFavourites() async throws -> [FavouriteDTO]
     func addFavourite(_ body: FavouriteCreateRequest) async throws -> FavouriteDTO
     func updateFavourite(id: Int, _ body: FavouriteUpdateRequest) async throws -> FavouriteDTO
+    func updateFavourite(id: Int, _ body: FavouriteFuelTypeUpdateRequest) async throws -> FavouriteDTO
     func removeFavourite(id: Int) async throws
 
     func getAlerts() async throws -> [AlertSubscriptionDTO]
@@ -178,6 +179,10 @@ final class FuelPricesAPIClient: FuelPricesAPI {
     }
 
     func updateFavourite(id: Int, _ body: FavouriteUpdateRequest) async throws -> FavouriteDTO {
+        try await client.request(APIEndpoint(path: "api/favourites/\(id)", method: .patch, jsonBody: try body.asJSONData(encoder: encoder), requiresAuth: true))
+    }
+
+    func updateFavourite(id: Int, _ body: FavouriteFuelTypeUpdateRequest) async throws -> FavouriteDTO {
         try await client.request(APIEndpoint(path: "api/favourites/\(id)", method: .patch, jsonBody: try body.asJSONData(encoder: encoder), requiresAuth: true))
     }
 

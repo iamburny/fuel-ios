@@ -67,6 +67,18 @@ struct FavouriteUpdateRequest: Encodable, Sendable {
     }
 }
 
+/// A separate, single-purpose request type rather than adding an optional `fuelType` to
+/// `FavouriteUpdateRequest` — keeps every PATCH body concrete and fully populated (matching
+/// `FavouriteCreateRequest`'s own style) instead of relying on `Encodable`'s nil-omits-the-key
+/// behavior for a partial update.
+struct FavouriteFuelTypeUpdateRequest: Encodable, Sendable {
+    let fuelType: String
+
+    enum CodingKeys: String, CodingKey {
+        case fuelType = "fuel_type"
+    }
+}
+
 /// Area-radius push alert subscription — a DISTINCT feature/endpoint from `FavouriteDTO`'s
 /// per-station `notify_on_drop`. Deliberately has **no** price-threshold field; don't conflate
 /// the two shapes.

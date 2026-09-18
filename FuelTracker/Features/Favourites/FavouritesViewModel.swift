@@ -12,10 +12,10 @@ final class FavouritesViewModel {
     var creatingAlert = false
     var error: String?
     var message: String?
-    /// Favourite ids with a `toggleNotify` PATCH currently in flight — guards against a rapid
-    /// double-tap on a row's bell firing two overlapping requests, matching
-    /// `NearbyViewModel.pendingFavouriteToggles`'s pattern.
-    var pendingNotifyToggleIds: Set<Int> = []
+    /// Favourite ids with a `toggleNotify`/`updateFuelType` PATCH currently in flight — guards
+    /// against a rapid double-tap (or overlapping notify+fuel-type edits on the same row) firing
+    /// two overlapping requests, matching `NearbyViewModel.pendingFavouriteToggles`'s pattern.
+    var pendingUpdateIds: Set<Int> = []
 
     private let repository: FuelRepository
     private let locationManager: LocationManager
@@ -106,26 +106,43 @@ final class FavouritesViewModel {
     }
 
     func toggleNotify(_ favourite: FavouriteDTO) async {
-        guard !pendingNotifyToggleIds.contains(favourite.id) else { return }
-        pendingNotifyToggleIds.insert(favourite.id)
-        defer { pendingNotifyToggleIds.remove(favourite.id) }
+        guard !pendingUpdateIds.contains(favourite.id) else { return }
+        pendingUpdateIds.insert(favourite.id)
+        defer { pendingUpdateIds.remove(favourite.id) }
 
         let newValue = !favourite.notifyOnDrop
         do {
             let updated = try await repository.updateFavourite(id: favourite.id, notifyOnDrop: newValue)
-            if let idx = favourites.firstIndex(where: { $0.id == favourite.id }) {
-                favourites[idx] = FavouriteDTO(
-                    id: updated.id, stationId: updated.stationId, fuelType: updated.fuelType,
-                    notifyOnDrop: updated.notifyOnDrop, priceThresholdPence: updated.priceThresholdPence,
-                    // The PATCH response omits `station` (see FavouriteDTO's own doc comment on why
-                    // POST's response also omits it) — keep the one already loaded from GET.
-                    station: favourite.station
-                )
-            }
+            replaceFavourite(favourite, with: updated)
             analytics.trackEvent(newValue ? "favourite_notify_enabled" : "favourite_notify_disabled", params: ["station_id": favourite.stationId])
         } catch {
             // Best-effort, matches removeFavourite's empty catch block.
         }
+    }
+
+    func updateFuelType(_ favourite: FavouriteDTO, to newFuelType: String) async {
+        guard !pendingUpdateIds.contains(favourite.id), newFuelType != favourite.fuelType else { return }
+        pendingUpdateIds.insert(favourite.id)
+        defer { pendingUpdateIds.remove(favourite.id) }
+
+        do {
+            let updated = try await repository.updateFavouriteFuelType(id: favourite.id, fuelType: newFuelType)
+            replaceFavourite(favourite, with: updated)
+            analytics.trackEvent("favourite_fuel_type_changed", params: ["station_id": favourite.stationId, "fuel_type": newFuelType])
+        } catch {
+            // Best-effort, matches removeFavourite's empty catch block.
+        }
+    }
+
+    /// Both PATCH responses omit `station` (see `FavouriteDTO`'s own doc comment on why POST's
+    /// response also omits it) — keep the one already loaded from GET.
+    private func replaceFavourite(_ original: FavouriteDTO, with updated: FavouriteDTO) {
+        guard let idx = favourites.firstIndex(where: { $0.id == original.id }) else { return }
+        favourites[idx] = FavouriteDTO(
+            id: updated.id, stationId: updated.stationId, fuelType: updated.fuelType,
+            notifyOnDrop: updated.notifyOnDrop, priceThresholdPence: updated.priceThresholdPence,
+            station: original.station
+        )
     }
 
     func removeFavourite(id: Int, stationId: Int) async {
