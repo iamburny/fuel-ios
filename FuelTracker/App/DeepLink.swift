@@ -21,11 +21,19 @@ enum DeepLink: Equatable {
         }
         let segments = url.pathComponents.filter { $0 != "/" }
         if segments.isEmpty { return .home }
-        if segments[0] == "stations", segments.count >= 2, let id = Int(segments[1]) {
+        if segments[0] == "stations", segments.count >= 2, let id = stationId(from: segments[1]) {
             return .station(id)
         }
         if segments[0] == "prices" { return .prices }
         if segments[0] == "settings" { return .settings }
         return nil
+    }
+
+    /// The station id out of a path segment, which is either a bare id or an id followed by a
+    /// human-readable slug — `4312` and `4312-shell-high-street-guildford` are the same station.
+    /// Only digits terminated by the end of the segment or a hyphen count, so `shell-4312` and
+    /// `4312abc` are not stations. Matches `stationIdFrom` in fuel-android.
+    private static func stationId(from segment: String) -> Int? {
+        Int(segment.prefix { $0 != "-" })
     }
 }
