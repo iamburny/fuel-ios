@@ -89,7 +89,8 @@ final class DetailViewModel {
             var driveCost: Double?
             if preferences.canEstimateDriveCost {
                 let location = await locationManager.getCurrentLocation()
-                let price = station.prices.first { $0.fuelType == preferences.fuelType }?.pricePence
+                // A flagged price would give a misleading cost, so no estimate is shown for it.
+                let price = station.prices.first { $0.fuelType == preferences.fuelType && $0.warning == nil }?.pricePence
                 if let location, let price, let mpg = preferences.mpg {
                     let d = FuelCostCalculator.haversineMiles(
                         lat1: location.coordinate.latitude, lng1: location.coordinate.longitude,

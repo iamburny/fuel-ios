@@ -366,7 +366,7 @@ final class FuelRepository {
 
             // Replace-with-latest-snapshot, mirroring Room's upsert-prices behaviour.
             for old in entity.prices { modelContext.delete(old) }
-            entity.prices = dto.prices.map { CachedFuelPrice(fuelType: $0.fuelType, pricePence: $0.pricePence, reportedAt: $0.reportedAt, station: entity) }
+            entity.prices = dto.prices.map { CachedFuelPrice(fuelType: $0.fuelType, pricePence: $0.pricePence, reportedAt: $0.reportedAt, warning: $0.warning?.rawValue, station: entity) }
         }
         try? modelContext.save()
     }
