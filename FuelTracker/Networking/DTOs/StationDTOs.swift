@@ -104,7 +104,7 @@ struct OpeningHoursDTO: Codable, Sendable {
 /// The backend's caveat on a current price it considers unreliable. The price itself is still
 /// shown unmodified; the warning only adds a caveat and keeps it out of local "cheapest" picks.
 enum PriceWarning: String, Sendable, Hashable {
-    /// Not re-reported for 60+ days.
+    /// Price unchanged for 60+ days (`reported_at` only moves when the price changes).
     case stale
     /// Far below the national median for that fuel.
     case unusuallyLow = "unusually_low"
@@ -120,7 +120,7 @@ enum PriceWarning: String, Sendable, Hashable {
 
     var explanation: String {
         switch self {
-        case .stale: "Not updated in over 60 days, so this price may be out of date."
+        case .stale: "Unchanged for over 60 days, so this price may be out of date."
         case .unusuallyLow: "Much lower than other stations' prices for this fuel, so it may have been reported incorrectly."
         case .unusuallyHigh: "Much higher than other stations' prices for this fuel, so it may have been reported incorrectly."
         }
