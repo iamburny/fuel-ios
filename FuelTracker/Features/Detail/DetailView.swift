@@ -191,7 +191,7 @@ struct DetailView: View {
         guard let ratingsViewModel, let viewModel, let station = viewModel.station else { return }
         ratingsViewModel.openRateSheet(
             fuelTypes: StationRatingsViewModel.ratableFuelTypes(for: station),
-            defaultFuelType: viewModel.selectedFuelType
+            defaultFuelType: preferencesStore.preferences.fuelType
         )
         showingRateSheet = true
     }

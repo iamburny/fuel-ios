@@ -116,7 +116,7 @@ struct RatingDTODecodingTests {
          "rating_summary": {"rater_count": 7, "avg_stars": 2.4, "price_match_pct": 43, "avg_gap_pence": 3.1},
          "price_accuracy_warning": true}
         """)
-        #expect(station.ratingSummary == RatingSummaryDTO(raterCount: 7, avgStars: 2.4, priceMatchPct: 43, avgGapPence: 3.1))
+        #expect(station.ratingSummary == RatingSummaryDTO(raterCount: 7, avgStars: 2.4, priceCheckCount: 0, priceMatchPct: 43, avgGapPence: 3.1))
         #expect(station.priceAccuracyWarning == true)
     }
 
@@ -164,6 +164,24 @@ struct RatingDTODecodingTests {
         #expect(rating.isEditable(now: now) == false)
     }
 
+    @Test func ratingWithoutFuelDecodesWithNoPriceCheck() throws {
+        let page = try decode(PublicRatingsResponse.self, #"{"items": [{"id": 3, "stars": 4, "price_matched": null, "fuel_type": null, "author_ref": "abc"}]}"#)
+        #expect(page.items[0].priceMatched == nil)
+        #expect(page.items[0].fuelType == nil)
+        #expect(RatingCopy.matchLabel(page.items[0]) == nil)
+
+        let summary = try decode(RatingSummaryDTO.self, #"{"rater_count": 3, "avg_stars": 4, "price_check_count": 0, "price_match_pct": null, "avg_gap_pence": null}"#)
+        #expect(summary.priceCheckCount == 0)
+        #expect(summary.priceMatchPct == nil)
+    }
+
+    @Test func ratingWithoutFuelSendsExplicitNulls() throws {
+        let data = try RatingInput(fuelType: nil, priceMatched: nil, reportedPricePence: nil, stars: 3, comment: nil).asJSONData()
+        let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        #expect(object?["fuel_type"] is NSNull)
+        #expect(object?["price_matched"] is NSNull)
+    }
+
     @Test func ratingInputSendsExplicitNulls() throws {
         let data = try RatingInput(fuelType: "E10", priceMatched: true, reportedPricePence: nil, stars: 4, comment: nil).asJSONData()
         let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
@@ -194,44 +212,43 @@ struct RatingFormatTests {
 
 @MainActor
 struct RatingSheetModeTests {
-    private let fuels = ["E10", "E5"]
 
     @Test func signedOutOrUnavailableBeforeAnyState() {
-        #expect(RatingSheetMode.resolve(state: nil, isLoading: true, fuelTypes: fuels, now: now) == .loading)
-        #expect(RatingSheetMode.resolve(state: nil, isLoading: false, fuelTypes: fuels, now: now) == .unavailable)
+        #expect(RatingSheetMode.resolve(state: nil, isLoading: true, now: now) == .loading)
+        #expect(RatingSheetMode.resolve(state: nil, isLoading: false, now: now) == .unavailable)
     }
 
     @Test func cooldownWinsWhenRatingIsNotEditable() throws {
         let state = try decode(MyRatingStateDTO.self, mineJSON(
             rating: ownRatingJSON(editsRemaining: 0), canRateAt: "2026-10-08T09:00:00.000Z", blockers: ["email_unverified"]
         ))
-        let mode = RatingSheetMode.resolve(state: state, isLoading: false, fuelTypes: fuels, now: now)
+        let mode = RatingSheetMode.resolve(state: state, isLoading: false, now: now)
         #expect(mode == .cooldown(ratedOn: "2026-10-01T09:00:00.000Z", canRateAt: "2026-10-08T09:00:00.000Z"))
     }
 
     @Test func emailVerificationBeforeOtherBlockers() throws {
         let state = try decode(MyRatingStateDTO.self, mineJSON(blockers: ["email_unverified", "account_too_new"]))
-        #expect(RatingSheetMode.resolve(state: state, isLoading: false, fuelTypes: fuels, now: now) == .verifyEmail)
+        #expect(RatingSheetMode.resolve(state: state, isLoading: false, now: now) == .verifyEmail)
     }
 
     @Test func blockersOtherThanTermsShowTheirMessage() throws {
         let suspended = try decode(MyRatingStateDTO.self, mineJSON(blockers: ["suspended"]))
-        #expect(RatingSheetMode.resolve(state: suspended, isLoading: false, fuelTypes: fuels, now: now)
+        #expect(RatingSheetMode.resolve(state: suspended, isLoading: false, now: now)
             == .blocked(message: "Your account can no longer leave ratings."))
 
         let tooNew = try decode(MyRatingStateDTO.self, mineJSON(blockers: ["terms", "account_too_new"]))
-        #expect(RatingSheetMode.resolve(state: tooNew, isLoading: false, fuelTypes: fuels, now: now)
+        #expect(RatingSheetMode.resolve(state: tooNew, isLoading: false, now: now)
             == .blocked(message: "Accounts need to be 3 days old before they can leave a rating."))
     }
 
     @Test func termsAloneShowsTheFormWithTheCheckbox() throws {
         let state = try decode(MyRatingStateDTO.self, mineJSON(blockers: ["terms"]))
-        #expect(RatingSheetMode.resolve(state: state, isLoading: false, fuelTypes: fuels, now: now) == .form(existing: nil, needsTerms: true))
+        #expect(RatingSheetMode.resolve(state: state, isLoading: false, now: now) == .form(existing: nil, needsTerms: true))
     }
 
     @Test func editableRatingOpensEditModeEvenDuringCooldown() throws {
         let state = try decode(MyRatingStateDTO.self, mineJSON(rating: ownRatingJSON(), canRateAt: "2026-10-08T09:00:00.000Z"))
-        guard case .form(let existing, let needsTerms) = RatingSheetMode.resolve(state: state, isLoading: false, fuelTypes: fuels, now: now) else {
+        guard case .form(let existing, let needsTerms) = RatingSheetMode.resolve(state: state, isLoading: false, now: now) else {
             Issue.record("Expected the form")
             return
         }
@@ -243,15 +260,15 @@ struct RatingSheetModeTests {
         let state = try decode(MyRatingStateDTO.self, mineJSON(
             rating: ownRatingJSON(editableUntil: "2026-10-01T08:00:00.000Z"), canRateAt: "2026-10-08T09:00:00.000Z"
         ))
-        guard case .cooldown = RatingSheetMode.resolve(state: state, isLoading: false, fuelTypes: fuels, now: now) else {
+        guard case .cooldown = RatingSheetMode.resolve(state: state, isLoading: false, now: now) else {
             Issue.record("Expected the cooldown message")
             return
         }
     }
 
-    @Test func stationWithNoPricesCannotBeRated() throws {
+    @Test func stationWithNoPricesCanStillBeRatedWithoutFuel() throws {
         let state = try decode(MyRatingStateDTO.self, mineJSON())
-        #expect(RatingSheetMode.resolve(state: state, isLoading: false, fuelTypes: [], now: now) == .noFuels)
+        #expect(RatingSheetMode.resolve(state: state, isLoading: false, now: now) == .form(existing: nil, needsTerms: false))
     }
 }
 
@@ -266,6 +283,38 @@ struct StationRatingsViewModelTests {
         viewModel.setPaidText("152.9")
         viewModel.setStars(2)
         viewModel.setComment("  Pump was 3p more  ")
+    }
+
+    @Test func newRatingDefaultsToTheUsualFuel() async throws {
+        let repository = FakeRatingsRepository()
+        repository.mine = try decode(MyRatingStateDTO.self, mineJSON())
+        let viewModel = makeViewModel(repository)
+        await viewModel.refreshMine()
+        viewModel.openRateSheet(fuelTypes: ["E10", "E5"], defaultFuelType: "E5")
+        #expect(viewModel.formFuelType == "E5")
+
+        viewModel.openRateSheet(fuelTypes: ["E10"], defaultFuelType: "B7_STANDARD")
+        #expect(viewModel.formFuelType == "E10")
+
+        viewModel.openRateSheet(fuelTypes: [], defaultFuelType: "E10")
+        #expect(viewModel.formFuelType == nil)
+    }
+
+    @Test func choosingNoFuelSkipsThePriceCheckAndSendsNulls() async throws {
+        let repository = FakeRatingsRepository()
+        repository.mine = try decode(MyRatingStateDTO.self, mineJSON())
+        repository.createResult = .success(try decode(RatingSaveResponse.self, #"{"rating": \#(ownRatingJSON(commentStatus: "approved")), "can_rate_at": null}"#))
+        let viewModel = makeViewModel(repository)
+        await viewModel.refreshMine()
+        viewModel.openRateSheet(fuelTypes: ["E10", "E5"], defaultFuelType: "E5")
+        fillForm(viewModel)
+        viewModel.setFuelType(nil)
+
+        #expect(viewModel.formPriceMatched == nil)
+        #expect(viewModel.canSubmit == true)
+        await viewModel.submit()
+
+        #expect(repository.lastInput == RatingInput(fuelType: nil, priceMatched: nil, reportedPricePence: nil, stars: 2, comment: "Pump was 3p more"))
     }
 
     @Test func acceptsTermsBeforeCreatingTheRating() async throws {
@@ -435,7 +484,7 @@ struct StationRatingsViewModelTests {
 
     private static func json(_ rating: PublicRatingDTO) -> String {
         """
-        {"id": \(rating.id), "stars": \(rating.stars), "price_matched": \(rating.priceMatched), "fuel_type": "\(rating.fuelType)",
+        {"id": \(rating.id), "stars": \(rating.stars), "price_matched": \(rating.priceMatched ?? true), "fuel_type": "\(rating.fuelType ?? "")",
          "gap_pence": null, "comment": "Fine", "created_at": "\(rating.createdAt)", "edited": false, "author_ref": "\(rating.authorRef)"}
         """
     }

@@ -9,7 +9,10 @@ import Foundation
 struct RatingSummaryDTO: Decodable, Sendable, Equatable {
     let raterCount: Int
     let avgStars: Double
-    let priceMatchPct: Double
+    /// Raters who checked a price; a driver who didn't buy fuel rates without one.
+    let priceCheckCount: Int
+    /// Share of those checks where the pump matched, 0–100; `nil` when nobody checked a price.
+    let priceMatchPct: Double?
     /// Mean of (price paid − price published) over mismatch reports that gave a price, so positive
     /// means drivers paid more than listed; `nil` when none gave a price.
     let avgGapPence: Double?
@@ -17,8 +20,21 @@ struct RatingSummaryDTO: Decodable, Sendable, Equatable {
     enum CodingKeys: String, CodingKey {
         case raterCount = "rater_count"
         case avgStars = "avg_stars"
+        case priceCheckCount = "price_check_count"
         case priceMatchPct = "price_match_pct"
         case avgGapPence = "avg_gap_pence"
+    }
+}
+
+// In an extension so the memberwise initialiser is kept.
+extension RatingSummaryDTO {
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        raterCount = try c.decode(Int.self, forKey: .raterCount)
+        avgStars = try c.decode(Double.self, forKey: .avgStars)
+        priceCheckCount = try c.decodeIfPresent(Int.self, forKey: .priceCheckCount) ?? 0
+        priceMatchPct = try c.decodeIfPresent(Double.self, forKey: .priceMatchPct)
+        avgGapPence = try c.decodeIfPresent(Double.self, forKey: .avgGapPence)
     }
 }
 
@@ -27,8 +43,9 @@ struct RatingSummaryDTO: Decodable, Sendable, Equatable {
 struct PublicRatingDTO: Decodable, Sendable, Equatable, Identifiable {
     let id: Int
     let stars: Int
-    let priceMatched: Bool
-    let fuelType: String
+    /// Both `nil` when the driver didn't buy fuel, and so made no price check.
+    let priceMatched: Bool?
+    let fuelType: String?
     let gapPence: Double?
     let comment: String?
     let createdAt: String
@@ -50,8 +67,8 @@ struct PublicRatingDTO: Decodable, Sendable, Equatable, Identifiable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(Int.self, forKey: .id)
         stars = try c.decode(Int.self, forKey: .stars)
-        priceMatched = try c.decodeIfPresent(Bool.self, forKey: .priceMatched) ?? false
-        fuelType = try c.decodeIfPresent(String.self, forKey: .fuelType) ?? ""
+        priceMatched = try c.decodeIfPresent(Bool.self, forKey: .priceMatched)
+        fuelType = try c.decodeIfPresent(String.self, forKey: .fuelType)
         gapPence = try c.decodeIfPresent(Double.self, forKey: .gapPence)
         comment = try c.decodeIfPresent(String.self, forKey: .comment)
         createdAt = try c.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
@@ -85,8 +102,8 @@ struct OwnRatingDTO: Decodable, Sendable, Equatable, Identifiable {
     let id: Int
     let stationId: Int
     let stars: Int
-    let priceMatched: Bool
-    let fuelType: String
+    let priceMatched: Bool?
+    let fuelType: String?
     let reportedPricePence: Double?
     let publishedPricePence: Double?
     let gapPence: Double?
@@ -124,8 +141,8 @@ struct OwnRatingDTO: Decodable, Sendable, Equatable, Identifiable {
         id = try c.decode(Int.self, forKey: .id)
         stationId = try c.decodeIfPresent(Int.self, forKey: .stationId) ?? 0
         stars = try c.decode(Int.self, forKey: .stars)
-        priceMatched = try c.decodeIfPresent(Bool.self, forKey: .priceMatched) ?? false
-        fuelType = try c.decodeIfPresent(String.self, forKey: .fuelType) ?? ""
+        priceMatched = try c.decodeIfPresent(Bool.self, forKey: .priceMatched)
+        fuelType = try c.decodeIfPresent(String.self, forKey: .fuelType)
         reportedPricePence = try c.decodeIfPresent(Double.self, forKey: .reportedPricePence)
         publishedPricePence = try c.decodeIfPresent(Double.self, forKey: .publishedPricePence)
         gapPence = try c.decodeIfPresent(Double.self, forKey: .gapPence)
@@ -183,10 +200,11 @@ struct MyRatingStateDTO: Decodable, Sendable, Equatable {
 
 /// Body for both `POST /api/stations/{id}/ratings` and `PATCH /api/ratings/{id}`. Encodes absent
 /// values as explicit `null`s, so an edit that clears the comment says so rather than leaving the
-/// key out.
+/// key out. A driver who didn't buy fuel sends a `nil` `fuelType`, and then `priceMatched` is
+/// `nil` too.
 struct RatingInput: Encodable, Sendable, Equatable {
-    let fuelType: String
-    let priceMatched: Bool
+    let fuelType: String?
+    let priceMatched: Bool?
     let reportedPricePence: Double?
     let stars: Int
     let comment: String?

@@ -77,8 +77,6 @@ struct RateStationSheet: View {
             verifyEmailPanel
         case .blocked(let text):
             message(text)
-        case .noFuels:
-            message("This station isn't listing any prices at the moment, so there's nothing to compare against.")
         case .form(let existing, let needsTerms):
             form(existing: existing, needsTerms: needsTerms)
         case .saved(let rating):
@@ -136,31 +134,30 @@ struct RateStationSheet: View {
         Form {
             Section {
                 Text(stationName).font(.headline)
-                if viewModel.fuelTypes.count > 1 {
-                    Picker("Which fuel did you buy?", selection: Binding(
-                        get: { viewModel.formFuelType },
-                        set: { viewModel.setFuelType($0) }
-                    )) {
-                        ForEach(viewModel.fuelTypes, id: \.self) { type in
-                            Text(FuelType.label(forRaw: type, useLongNames: useLongNames)).tag(type)
-                        }
+                Picker("Which fuel did you buy?", selection: Binding(
+                    get: { viewModel.formFuelType },
+                    set: { viewModel.setFuelType($0) }
+                )) {
+                    ForEach(viewModel.fuelTypes, id: \.self) { type in
+                        Text(FuelType.label(forRaw: type, useLongNames: useLongNames)).tag(String?.some(type))
                     }
-                } else {
-                    Text("Fuel: \(FuelType.label(forRaw: viewModel.formFuelType, useLongNames: useLongNames))")
-                        .foregroundStyle(.secondary)
+                    Text("None — I didn't buy fuel").tag(String?.none)
                 }
             }
 
-            Section("Did the pump price match the price shown?") {
-                choiceRow("Yes, it matched", selected: viewModel.formPriceMatched == true) {
-                    viewModel.setPriceMatched(true)
-                }
-                choiceRow("No, it was different", selected: viewModel.formPriceMatched == false) {
-                    viewModel.setPriceMatched(false)
+            // Without fuel there was no pump price to check, so that question doesn't apply.
+            if viewModel.formFuelType != nil {
+                Section("Did the pump price match the price shown?") {
+                    choiceRow("Yes, it matched", selected: viewModel.formPriceMatched == true) {
+                        viewModel.setPriceMatched(true)
+                    }
+                    choiceRow("No, it was different", selected: viewModel.formPriceMatched == false) {
+                        viewModel.setPriceMatched(false)
+                    }
                 }
             }
 
-            if viewModel.formPriceMatched == false {
+            if viewModel.formFuelType != nil && viewModel.formPriceMatched == false {
                 Section {
                     TextField("e.g. 152.9", text: Binding(
                         get: { viewModel.formPaidText },

@@ -145,8 +145,10 @@ enum RatingCopy {
         return text
     }
 
-    static func matchLabel(_ rating: PublicRatingDTO) -> String {
-        if rating.priceMatched { return "Price matched" }
+    /// `nil` for a rating made without buying fuel, which has no price check to describe.
+    static func matchLabel(_ rating: PublicRatingDTO) -> String? {
+        guard let matched = rating.priceMatched else { return nil }
+        if matched { return "Price matched" }
         if let gap = rating.gapPence, gap != 0 { return "Charged \(RatingFormat.gapPhrase(gap))" }
         return "Price didn't match"
     }
@@ -163,11 +165,10 @@ enum RatingSheetMode: Equatable {
     case cooldown(ratedOn: String?, canRateAt: String)
     case verifyEmail
     case blocked(message: String)
-    case noFuels
     case form(existing: OwnRatingDTO?, needsTerms: Bool)
     case saved(OwnRatingDTO)
 
-    static func resolve(state: MyRatingStateDTO?, isLoading: Bool, fuelTypes: [String], now: Date) -> RatingSheetMode {
+    static func resolve(state: MyRatingStateDTO?, isLoading: Bool, now: Date) -> RatingSheetMode {
         guard let state else { return isLoading ? .loading : .unavailable }
         let own = state.rating
         let editing = own?.isEditable(now: now) ?? false
@@ -182,7 +183,6 @@ enum RatingSheetMode: Equatable {
                 return .blocked(message: RatingCopy.blockerMessage(blocker, dailyCapResetsAt: state.dailyCapResetsAt))
             }
         }
-        if fuelTypes.isEmpty { return .noFuels }
         return .form(existing: editing ? own : nil, needsTerms: !editing && state.blockers.contains(RatingBlocker.terms.rawValue))
     }
 }
@@ -214,7 +214,8 @@ final class StationRatingsViewModel {
     private(set) var commentMessages: [Int: String] = [:]
 
     private(set) var fuelTypes: [String] = []
-    private(set) var formFuelType = ""
+    /// `nil` means the driver didn't buy fuel, which leaves no price to check.
+    private(set) var formFuelType: String?
     private(set) var formPriceMatched: Bool?
     private(set) var formPaidText = ""
     private(set) var formStars: Int?
@@ -264,7 +265,7 @@ final class StationRatingsViewModel {
     var sheetMode: RatingSheetMode {
         if let savedRating { return .saved(savedRating) }
         if !repository.isLoggedIn { return .signedOut }
-        return RatingSheetMode.resolve(state: myRating, isLoading: isLoadingMine, fuelTypes: fuelTypes, now: now())
+        return RatingSheetMode.resolve(state: myRating, isLoading: isLoadingMine, now: now())
     }
 
     /// `nil` for an empty field (the paid price is optional); accepts a comma as the decimal mark.
@@ -280,10 +281,11 @@ final class StationRatingsViewModel {
     }
 
     var canSubmit: Bool {
-        guard case .form(_, let needsTerms) = sheetMode, !isSubmitting,
-              let matched = formPriceMatched, formStars != nil,
-              fuelTypes.contains(formFuelType) else { return false }
-        if !matched && !paidIsValid { return false }
+        guard case .form(_, let needsTerms) = sheetMode, !isSubmitting, formStars != nil else { return false }
+        if let fuel = formFuelType {
+            guard fuelTypes.contains(fuel), let matched = formPriceMatched else { return false }
+            if !matched && !paidIsValid { return false }
+        }
         return !needsTerms || termsAccepted
     }
 
@@ -390,23 +392,26 @@ final class StationRatingsViewModel {
         }
     }
 
-    /// Edit mode starts from the user's own rating; a new rating starts blank, on their fuel.
+    /// Edit mode starts from the user's own rating; a new rating starts blank, on their usual fuel.
     private func prefillForm() {
         let existing = ownRatingIsEditable ? ownRating : nil
-        if let existing, fuelTypes.contains(existing.fuelType) {
-            formFuelType = existing.fuelType
+        if let existing {
+            formFuelType = existing.fuelType.flatMap { fuelTypes.contains($0) ? $0 : nil }
         } else if fuelTypes.contains(defaultFuelType) {
             formFuelType = defaultFuelType
         } else {
-            formFuelType = fuelTypes.first ?? defaultFuelType
+            formFuelType = fuelTypes.first
         }
-        formPriceMatched = existing?.priceMatched
+        formPriceMatched = formFuelType == nil ? nil : existing?.priceMatched
         formPaidText = existing?.reportedPricePence.map(RatingFormat.number) ?? ""
         formStars = existing?.stars
         formComment = existing?.comment ?? ""
     }
 
-    func setFuelType(_ value: String) { formFuelType = value }
+    func setFuelType(_ value: String?) {
+        formFuelType = value
+        if value == nil { formPriceMatched = nil }
+    }
     func setPriceMatched(_ value: Bool) { formPriceMatched = value }
     func setPaidText(_ value: String) { formPaidText = value }
     func setStars(_ value: Int) { formStars = min(max(value, 1), 5) }
@@ -418,8 +423,8 @@ final class StationRatingsViewModel {
     }
 
     func submit() async {
-        guard canSubmit, case .form(let existing, let needsTerms) = sheetMode,
-              let matched = formPriceMatched, let stars = formStars else { return }
+        guard canSubmit, case .form(let existing, let needsTerms) = sheetMode, let stars = formStars else { return }
+        let matched = formFuelType == nil ? nil : formPriceMatched
         isSubmitting = true
         defer { isSubmitting = false }
         submitError = nil
@@ -428,7 +433,7 @@ final class StationRatingsViewModel {
         let input = RatingInput(
             fuelType: formFuelType,
             priceMatched: matched,
-            reportedPricePence: matched ? nil : paidValue,
+            reportedPricePence: matched == false ? paidValue : nil,
             stars: stars,
             comment: comment.isEmpty ? nil : comment
         )
@@ -442,12 +447,14 @@ final class StationRatingsViewModel {
             } else {
                 saved = try await repository.createRating(stationId: stationId, input: input).rating
             }
-            analytics.trackEvent(existing == nil ? "submit_rating" : "edit_rating", params: [
+            var params: [String: Any] = [
                 "station_id": stationId,
-                "price_matched": matched,
+                "bought_fuel": input.fuelType != nil,
                 "stars": stars,
                 "has_comment": input.comment != nil,
-            ])
+            ]
+            if let matched { params["price_matched"] = matched }
+            analytics.trackEvent(existing == nil ? "submit_rating" : "edit_rating", params: params)
             savedRating = saved
             await refreshMine()
         } catch {

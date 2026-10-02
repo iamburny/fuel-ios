@@ -90,11 +90,17 @@ struct StationRatingsSection: View {
             }
             .accessibilityElement(children: .combine)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text("\(Int(summary.priceMatchPct.rounded()))%").font(.title2.bold())
-                Text("found the pump price matched").font(.caption).foregroundStyle(.secondary)
+            if let pct = summary.priceMatchPct {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(Int(pct.rounded()))%").font(.title2.bold())
+                    Text(summary.priceCheckCount < summary.raterCount
+                         ? "of the \(summary.priceCheckCount) who bought fuel found the pump price matched"
+                         : "found the pump price matched")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .accessibilityElement(children: .combine)
             }
-            .accessibilityElement(children: .combine)
 
             if let gap = summary.avgGapPence, gap != 0 {
                 VStack(alignment: .leading, spacing: 2) {
@@ -148,14 +154,19 @@ private struct RatingCommentRow: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
                 StarsView(value: Double(rating.stars))
-                Text(FuelType.label(forRaw: rating.fuelType, useLongNames: useLongNames))
-                    .font(.caption.bold())
-                Text(RatingCopy.matchLabel(rating))
-                    .font(.caption2)
-                    .foregroundStyle(rating.priceMatched ? Color.green : AccuracyWarningChip.tint)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Capsule().fill((rating.priceMatched ? Color.green : AccuracyWarningChip.tint).opacity(0.15)))
+                if let fuel = rating.fuelType {
+                    Text(FuelType.label(forRaw: fuel, useLongNames: useLongNames))
+                        .font(.caption.bold())
+                }
+                if let label = RatingCopy.matchLabel(rating) {
+                    let tint = rating.priceMatched == true ? Color.green : AccuracyWarningChip.tint
+                    Text(label)
+                        .font(.caption2)
+                        .foregroundStyle(tint)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(tint.opacity(0.15)))
+                }
             }
             Text("Verified driver · \(RatingFormat.ukDate(rating.createdAt))\(rating.edited ? " · edited" : "")")
                 .font(.caption2)
