@@ -396,7 +396,10 @@ final class StationRatingsViewModel {
     private func prefillForm() {
         let existing = ownRatingIsEditable ? ownRating : nil
         if let existing {
-            formFuelType = existing.fuelType.flatMap { fuelTypes.contains($0) ? $0 : nil }
+            // An edit keeps its fuel on offer even if the station has since stopped listing it, so
+            // saving doesn't quietly drop the price check.
+            if let fuel = existing.fuelType, !fuelTypes.contains(fuel) { fuelTypes.append(fuel) }
+            formFuelType = existing.fuelType
         } else if fuelTypes.contains(defaultFuelType) {
             formFuelType = defaultFuelType
         } else {
