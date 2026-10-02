@@ -361,6 +361,35 @@ struct StationRatingsViewModelTests {
         #expect(viewModel.savedRating.map(RatingCopy.savedMessage) == "Thanks — your rating counts now. Your comment will appear once it's been checked.")
     }
 
+    @Test func cooldownConflictCarryingADifferentRatingIsARefusal() async throws {
+        let repository = FakeRatingsRepository()
+        repository.mine = try decode(MyRatingStateDTO.self, mineJSON())
+        let other = ownRatingJSON().replacingOccurrences(of: #""stars": 2"#, with: #""stars": 5"#)
+        let body = Data(#"{"detail": "You can rate this station once every 7 days.", "reason": "cooldown", "can_rate_at": "2026-10-08T09:00:00.000Z", "rating": \#(other)}"#.utf8)
+        repository.createResult = .failure(APIError.rejected(status: 409, message: "You can rate this station once every 7 days.", reason: "cooldown", body: body))
+        let viewModel = makeViewModel(repository)
+        await viewModel.refreshMine()
+        viewModel.openRateSheet(fuelTypes: ["E10"], defaultFuelType: "E10")
+        fillForm(viewModel)
+
+        await viewModel.submit()
+
+        #expect(viewModel.savedRating == nil)
+        #expect(viewModel.submitError == "You can rate this station once every 7 days.")
+    }
+
+    @Test func storedRatingMatchesWhatTheBackendStores() throws {
+        let stored = try decode(OwnRatingDTO.self, ownRatingJSON())
+        let input = RatingInput(fuelType: "E10", priceMatched: false, reportedPricePence: 152.94, stars: 2, comment: "Pump\u{200B}  was\n3p\u{00AD} more")
+        #expect(StationRatingsViewModel.matches(stored, input))
+    }
+
+    @Test func commentNormalisationMirrorsTheBackend() {
+        #expect(StationRatingsViewModel.normalisedComment("  a\u{0007}b\u{FEFF}c  ") == "a bc")
+        #expect(StationRatingsViewModel.normalisedComment("👨\u{200D}👩") == "👨👩")
+        #expect(StationRatingsViewModel.normalisedComment(" \u{200B} ") == nil)
+    }
+
     @Test func otherRejectionsShowTheAPIDetail() async throws {
         let repository = FakeRatingsRepository()
         repository.mine = try decode(MyRatingStateDTO.self, mineJSON())

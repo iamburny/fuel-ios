@@ -190,8 +190,12 @@ final class NearbyViewModel {
         error = nil
         do {
             let location = await locationManager.getCurrentLocation()
-            let lat = location?.coordinate.latitude ?? 51.5074 // default: London
-            let lng = location?.coordinate.longitude ?? -0.1278
+            // No fix this time but a real one earlier: search around that, so the results match
+            // the distances shown (measured from userLat/userLng) and the camera position.
+            let fallbackLat = hasGpsFix ? userLat : nil
+            let fallbackLng = hasGpsFix ? userLng : nil
+            let lat = location?.coordinate.latitude ?? fallbackLat ?? 51.5074 // default: London
+            let lng = location?.coordinate.longitude ?? fallbackLng ?? -0.1278
 
             // No fuelType here — the repository always caches full price data per station now,
             // so switching the fuel filter chip doesn't need a new fetch, just a client-side

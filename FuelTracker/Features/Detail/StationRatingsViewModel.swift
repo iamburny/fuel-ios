@@ -460,7 +460,9 @@ final class StationRatingsViewModel {
         } catch {
             // A retried submit that already landed comes back as a cooldown carrying the stored
             // rating — that's the user's rating saved, not a failure.
-            if existing == nil, let stored = Self.cooldownRating(from: error) {
+            // Only when the stored rating is the one just sent: a different one means the user
+            // rated elsewhere since the sheet opened, so this submit really was refused.
+            if existing == nil, let stored = Self.cooldownRating(from: error), Self.matches(stored, input) {
                 savedRating = stored
                 await refreshMine()
             } else {
@@ -479,6 +481,35 @@ final class StationRatingsViewModel {
               case .rejected(let status, _, let reason, let body) = apiError,
               status == 409, reason == "cooldown" else { return nil }
         return (try? JSONDecoder().decode(RatingCooldownBody.self, from: body))?.rating
+    }
+
+    /// Whether a stored rating is the one `input` would have produced, applying the same
+    /// normalisation the backend does before storing: price rounded to 0.1p, comment cleaned up.
+    static func matches(_ stored: OwnRatingDTO, _ input: RatingInput) -> Bool {
+        stored.stars == input.stars
+            && stored.fuelType == input.fuelType
+            && stored.priceMatched == input.priceMatched
+            && stored.reportedPricePence == input.reportedPricePence.map { ($0 * 10).rounded() / 10 }
+            && normalisedComment(stored.comment) == normalisedComment(input.comment)
+    }
+
+    /// Mirrors the backend's comment normalisation: control characters become spaces, invisible
+    /// formatting characters are dropped, whitespace runs collapse, and an empty result is nil.
+    static func normalisedComment(_ value: String?) -> String? {
+        guard let value else { return nil }
+        let invisible: [ClosedRange<UInt32>] = [
+            0x00AD...0x00AD, 0x180E...0x180E, 0x200B...0x200F, 0x202A...0x202E, 0x2060...0x2069, 0xFEFF...0xFEFF,
+        ]
+        var scalars = String.UnicodeScalarView()
+        for scalar in value.unicodeScalars {
+            if scalar.value <= 0x1F || scalar.value == 0x7F {
+                scalars.append(" ")
+            } else if !invisible.contains(where: { $0.contains(scalar.value) }) {
+                scalars.append(scalar)
+            }
+        }
+        let cleaned = String(scalars).split(whereSeparator: \.isWhitespace).joined(separator: " ")
+        return cleaned.isEmpty ? nil : cleaned
     }
 
     func sendVerificationEmail() async {
