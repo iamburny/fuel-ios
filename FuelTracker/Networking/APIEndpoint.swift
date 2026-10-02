@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 enum HTTPMethod: String {
     case get = "GET"
@@ -93,7 +94,11 @@ final class APIClient: Sendable {
     /// itself is missing/invalid/expired. Set by `AppContainer` once `FuelRepository` exists, to
     /// flip `isLoggedIn`/`currentEmail` back to signed-out. Awaited (not fire-and-forget) so that
     /// state update happens before the triggering error reaches any caller's `catch`.
-    var onSessionExpired: (@Sendable () async -> Void)?
+    var onSessionExpired: (@Sendable () async -> Void)? {
+        get { sessionExpiredHandler.withLock { $0 } }
+        set { sessionExpiredHandler.withLock { $0 = newValue } }
+    }
+    private let sessionExpiredHandler = OSAllocatedUnfairLock<(@Sendable () async -> Void)?>(initialState: nil)
 
     init(
         baseURL: URL,
