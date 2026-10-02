@@ -137,6 +137,13 @@ struct StationDTO: Decodable, Sendable, Identifiable {
     /// responses set it.
     let distanceMiles: Double?
     let prices: [PriceDTO]
+    /// Driver-reported, never Fuel Finder data. Only `GET /api/stations/{id}` carries it, and only
+    /// once enough drivers have rated; absent from older backends and while ratings are off.
+    let ratingSummary: RatingSummaryDTO?
+    /// True when drivers who rated this station often found the pump price didn't match. Shown as
+    /// a chip beside the price; it must never change sorting, filtering or how prices are shown.
+    /// `false` when absent, so an older backend reads as "no warning".
+    let priceAccuracyWarning: Bool
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -154,6 +161,8 @@ struct StationDTO: Decodable, Sendable, Identifiable {
         case openingHours = "opening_hours"
         case distanceMiles = "distance_miles"
         case prices
+        case ratingSummary = "rating_summary"
+        case priceAccuracyWarning = "price_accuracy_warning"
     }
 
     /// Explicit memberwise init — needed because `init(from:)` below suppresses the synthesized
@@ -162,7 +171,8 @@ struct StationDTO: Decodable, Sendable, Identifiable {
         id: Int, govId: String, name: String, brand: String?, operatorName: String?, phone: String?,
         addressLine1: String?, addressLine2: String?, town: String?, county: String?, postcode: String?,
         latitude: Double, longitude: Double, temporaryClosure: Bool, isMotorway: Bool, isSupermarket: Bool,
-        amenities: AmenitiesValue?, openingHours: OpeningHoursDTO?, distanceMiles: Double?, prices: [PriceDTO]
+        amenities: AmenitiesValue?, openingHours: OpeningHoursDTO?, distanceMiles: Double?, prices: [PriceDTO],
+        ratingSummary: RatingSummaryDTO? = nil, priceAccuracyWarning: Bool = false
     ) {
         self.id = id
         self.govId = govId
@@ -184,6 +194,8 @@ struct StationDTO: Decodable, Sendable, Identifiable {
         self.openingHours = openingHours
         self.distanceMiles = distanceMiles
         self.prices = prices
+        self.ratingSummary = ratingSummary
+        self.priceAccuracyWarning = priceAccuracyWarning
     }
 
     init(from decoder: Decoder) throws {
@@ -208,6 +220,9 @@ struct StationDTO: Decodable, Sendable, Identifiable {
         openingHours = try c.decodeIfPresent(OpeningHoursDTO.self, forKey: .openingHours)
         distanceMiles = try c.decodeIfPresent(Double.self, forKey: .distanceMiles)
         prices = try c.decodeIfPresent([PriceDTO].self, forKey: .prices) ?? []
+        // `try?` so a malformed ratings field only loses the ratings data, never the station.
+        ratingSummary = try? c.decodeIfPresent(RatingSummaryDTO.self, forKey: .ratingSummary)
+        priceAccuracyWarning = (try? c.decodeIfPresent(Bool.self, forKey: .priceAccuracyWarning)) ?? false
     }
 }
 

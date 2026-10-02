@@ -7,8 +7,20 @@ struct DetailView: View {
 
     @Environment(\.appContainer) private var appContainer
     @Environment(UserPreferencesStore.self) private var preferencesStore
+    @Environment(FuelRepository.self) private var repository
+    @Environment(FeatureFlags.self) private var featureFlags
     @Environment(\.openURL) private var openURL
+    @Environment(\.scenePhase) private var scenePhase
     @State private var viewModel: DetailViewModel?
+    @State private var ratingsViewModel: StationRatingsViewModel?
+    @State private var showingRateSheet = false
+    @State private var showingAuth = false
+    /// Set when "Rate this station" sent a signed-out user to sign in, so the rate sheet opens
+    /// once they're back.
+    @State private var rateAfterSignIn = false
+
+    /// Defaults to false so ratings can be switched off remotely; see `FeatureFlags`.
+    private var ratingsEnabled: Bool { featureFlags.isEnabled("shared.station-ratings", default: false) }
 
     var body: some View {
         Group {
@@ -60,7 +72,55 @@ struct DetailView: View {
                     analytics: appContainer.analytics
                 )
             }
+            if ratingsViewModel == nil, let appContainer {
+                ratingsViewModel = StationRatingsViewModel(
+                    stationId: stationId,
+                    repository: appContainer.repository,
+                    analytics: appContainer.analytics
+                )
+            }
         }
+        .sheet(isPresented: $showingAuth, onDismiss: {
+            // Opened only after the auth sheet has fully gone, since one view can't present two
+            // sheets at once.
+            if rateAfterSignIn && repository.isLoggedIn {
+                openRateSheet()
+            }
+            rateAfterSignIn = false
+        }) {
+            AuthView(onAuthed: { showingAuth = false })
+        }
+        .sheet(isPresented: $showingRateSheet) {
+            if let ratingsViewModel {
+                RateStationSheet(
+                    viewModel: ratingsViewModel,
+                    stationName: viewModel?.station?.name ?? "",
+                    useLongNames: preferencesStore.preferences.useLongFuelNames,
+                    onClose: { showingRateSheet = false }
+                )
+            }
+        }
+        // Signing in or out (including a session that expired mid-visit) changes what the ratings
+        // section offers, so it re-reads the user's own state.
+        .onChange(of: repository.isLoggedIn) { _, _ in
+            guard ratingsEnabled else { return }
+            Task { await ratingsViewModel?.authChanged() }
+        }
+        // Email verification completes on the website, so coming back to the app is the cue to
+        // check whether the user can rate now.
+        .onChange(of: scenePhase) { _, phase in
+            guard ratingsEnabled, phase == .active else { return }
+            Task { await ratingsViewModel?.refreshMine() }
+        }
+    }
+
+    private func openRateSheet() {
+        guard let ratingsViewModel, let viewModel, let station = viewModel.station else { return }
+        ratingsViewModel.openRateSheet(
+            fuelTypes: StationRatingsViewModel.ratableFuelTypes(for: station),
+            defaultFuelType: viewModel.selectedFuelType
+        )
+        showingRateSheet = true
     }
 
     @ViewBuilder
@@ -201,6 +261,25 @@ struct DetailView: View {
                             .foregroundStyle(.secondary)
                             .padding(16)
                     }
+                }
+
+                if ratingsEnabled, let ratingsViewModel {
+                    Divider()
+
+                    StationRatingsSection(
+                        viewModel: ratingsViewModel,
+                        summary: station.ratingSummary,
+                        useLongNames: preferencesStore.preferences.useLongFuelNames,
+                        onRate: {
+                            if repository.isLoggedIn {
+                                openRateSheet()
+                            } else {
+                                rateAfterSignIn = true
+                                showingAuth = true
+                            }
+                        },
+                        onSignIn: { showingAuth = true }
+                    )
                 }
 
                 Divider()

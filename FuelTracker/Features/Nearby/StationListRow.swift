@@ -13,6 +13,9 @@ struct StationListRow: View {
     /// heart renders dimmed/disabled the same as the `isFavourite == nil` case, guarding against a
     /// rapid double-tap firing a second overlapping request.
     let isPending: Bool
+    /// Shows the driver-reported price-accuracy chip under the station details. Never affects the
+    /// price shown or where the row sorts.
+    let showsAccuracyWarning: Bool
     let onTap: () -> Void
     let onToggleFavourite: () -> Void
 
@@ -33,6 +36,9 @@ struct StationListRow: View {
                         .compactMap { $0 }.joined(separator: " · "))
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                    if showsAccuracyWarning {
+                        AccuracyWarningChip()
+                    }
                 }
                 Spacer()
                 if let price = station.cheapestPrice(for: fuelType) {

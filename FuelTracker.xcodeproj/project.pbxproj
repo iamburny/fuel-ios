@@ -72,6 +72,12 @@
 		43F43B3643B4E38BDA3DB18B /* FuelTypeChipRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39F2AFDD5FE921CBB4D47568 /* FuelTypeChipRow.swift */; };
 		26595B7A62414343AD70C019 /* CheapestToggleTip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4DCB6A85FC4929BCF9C6BC /* CheapestToggleTip.swift */; };
 		C37C967FB209ED87B54BCFAD /* FuelTypePillTip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C29F48DE3777D20394483F /* FuelTypePillTip.swift */; };
+		B273785F09538A96665C5ADA /* RatingDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81983EE6123BBC34F5D72743 /* RatingDTOs.swift */; };
+		22E9BB863D88BAFEEB0212ED /* StationRatingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BC9ADAA24BA6BC49EAFB41C /* StationRatingsViewModel.swift */; };
+		84C61204E051C8A2F02A225C /* StationRatingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C656FFA7318A35B2911117C /* StationRatingsSection.swift */; };
+		4012F12768A33CBB9CF23C90 /* RateStationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEF0292727FC1CB011857A35 /* RateStationSheet.swift */; };
+		C807848892D36A3EEF19DF44 /* AccuracyWarningChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84BAF2417E80DB71FEFA9915 /* AccuracyWarningChip.swift */; };
+		4F6DFF7110DED1BDD54AB31E /* StationRatingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 555FE67B83668F95021DCD68 /* StationRatingsTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -150,6 +156,12 @@
 		39F2AFDD5FE921CBB4D47568 /* FuelTypeChipRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelTypeChipRow.swift; sourceTree = "<group>"; };
 		0F4DCB6A85FC4929BCF9C6BC /* CheapestToggleTip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheapestToggleTip.swift; sourceTree = "<group>"; };
 		73C29F48DE3777D20394483F /* FuelTypePillTip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelTypePillTip.swift; sourceTree = "<group>"; };
+		81983EE6123BBC34F5D72743 /* RatingDTOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatingDTOs.swift; sourceTree = "<group>"; };
+		6BC9ADAA24BA6BC49EAFB41C /* StationRatingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationRatingsViewModel.swift; sourceTree = "<group>"; };
+		0C656FFA7318A35B2911117C /* StationRatingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationRatingsSection.swift; sourceTree = "<group>"; };
+		FEF0292727FC1CB011857A35 /* RateStationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RateStationSheet.swift; sourceTree = "<group>"; };
+		84BAF2417E80DB71FEFA9915 /* AccuracyWarningChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccuracyWarningChip.swift; sourceTree = "<group>"; };
+		555FE67B83668F95021DCD68 /* StationRatingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationRatingsTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -304,6 +316,7 @@
 			children = (
 				F08A330536516EB09899AD96 /* AnnouncementBanner.swift */,
 				1EB32268F27FB3AD1C3F2254 /* DataAttributionNotice.swift */,
+				84BAF2417E80DB71FEFA9915 /* AccuracyWarningChip.swift */,
 				5F66A025FA31DDD6482CEC58 /* FuelMapView.swift */,
 				B3BF373821F6CA70597AE426 /* PriceLineChart.swift */,
 				F3DFC853AF3E44F1B47BCFED /* ReleaseNoticeModal.swift */,
@@ -332,6 +345,7 @@
 				39D72CD0A4324420884D5936 /* DTODecodingTests.swift */,
 				3B63AF83E6E6156CE1B977B3 /* FuelCostCalculatorTests.swift */,
 				23AF276F8D403CEF92636C33 /* HeatmapTests.swift */,
+				555FE67B83668F95021DCD68 /* StationRatingsTests.swift */,
 				2CE2D84659A64D011C3D6254 /* APIClientRefreshTests.swift */,
 				16F882DE62600260A996B90C /* FavouritesAPIPatchTests.swift */,
 			);
@@ -396,6 +410,7 @@
 			children = (
 				5A44E3BA842112F05DD868F5 /* AuthDTOs.swift */,
 				4892DDE26B1C0AC28E82B9C6 /* FavouriteAndAlertDTOs.swift */,
+				81983EE6123BBC34F5D72743 /* RatingDTOs.swift */,
 				818AEAA4BCE44C239797E044 /* PreferencesDTO.swift */,
 				9AAD55E85CFCCC66C91445A2 /* StationDTOs.swift */,
 			);
@@ -416,6 +431,9 @@
 			children = (
 				41DBF56E22F4A12C2A0DECA0 /* DetailView.swift */,
 				8BFB672611E5491BC0B9601A /* DetailViewModel.swift */,
+				FEF0292727FC1CB011857A35 /* RateStationSheet.swift */,
+				0C656FFA7318A35B2911117C /* StationRatingsSection.swift */,
+				6BC9ADAA24BA6BC49EAFB41C /* StationRatingsViewModel.swift */,
 				0915A796F986476B981A0C37 /* OpeningHoursTableView.swift */,
 			);
 			path = Detail;
@@ -588,6 +606,11 @@
 				E625C9992184D039AA1ED603 /* StationDTOs.swift in Sources */,
 				02D03A92641D654F05EE7128 /* TokenStore.swift in Sources */,
 				1C8AFF31C60E93B02A659BF2 /* UserPreferencesStore.swift in Sources */,
+				C807848892D36A3EEF19DF44 /* AccuracyWarningChip.swift in Sources */,
+				4012F12768A33CBB9CF23C90 /* RateStationSheet.swift in Sources */,
+				84C61204E051C8A2F02A225C /* StationRatingsSection.swift in Sources */,
+				22E9BB863D88BAFEEB0212ED /* StationRatingsViewModel.swift in Sources */,
+				B273785F09538A96665C5ADA /* RatingDTOs.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -601,6 +624,7 @@
 				C0397FCCAB491510AE5EBE16 /* HeatmapTests.swift in Sources */,
 				5FCB17402B91ADF346906AD2 /* APIClientRefreshTests.swift in Sources */,
 				7B2EADC6C395D84642C9ADDC /* FavouritesAPIPatchTests.swift in Sources */,
+				4F6DFF7110DED1BDD54AB31E /* StationRatingsTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

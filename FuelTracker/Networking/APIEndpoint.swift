@@ -21,21 +21,38 @@ struct APIEndpoint {
 
 enum APIError: Error, LocalizedError, Sendable {
     case http(status: Int, message: String?)
+    /// A non-2xx answer whose body also carries a machine-readable `reason` code (the ratings
+    /// endpoints' 403 blocker and 409 cooldown/edit-window answers). `body` is the raw response so
+    /// a caller can decode the extra fields that come with it, such as the stored rating a 409
+    /// cooldown returns. Never used for a 401, which always stays `.http` so the refresh-and-retry
+    /// path below sees it.
+    case rejected(status: Int, message: String?, reason: String, body: Data)
     case decoding(String)
     case invalidURL
 
     var errorDescription: String? {
         switch self {
         case .http(let status, let message): message ?? "Request failed (HTTP \(status))"
+        case .rejected(let status, let message, _, _): message ?? "Request failed (HTTP \(status))"
         case .decoding(let detail): "Couldn't read the server's response (\(detail))"
         case .invalidURL: "Invalid request URL"
         }
     }
+
+    /// The HTTP status for either HTTP-failure case, `nil` for decoding/URL failures.
+    var statusCode: Int? {
+        switch self {
+        case .http(let status, _), .rejected(let status, _, _, _): status
+        case .decoding, .invalidURL: nil
+        }
+    }
 }
 
-/// Mirrors the backend's uniform `{"detail": "..."}` error body.
+/// Mirrors the backend's uniform `{"detail": "..."}` error body, plus the optional `reason` code
+/// some endpoints add.
 private struct ErrorDetail: Decodable {
     let detail: String?
+    let reason: String?
 }
 
 /// Single-flight coordinator for the token refresh call: when several requests 401 around the
@@ -196,8 +213,11 @@ final class APIClient: Sendable {
             throw APIError.http(status: -1, message: nil)
         }
         guard (200..<300).contains(http.statusCode) else {
-            let message = (try? JSONDecoder().decode(ErrorDetail.self, from: data))?.detail
-            throw APIError.http(status: http.statusCode, message: message)
+            let errorBody = try? JSONDecoder().decode(ErrorDetail.self, from: data)
+            if http.statusCode != 401, let reason = errorBody?.reason, !reason.isEmpty {
+                throw APIError.rejected(status: http.statusCode, message: errorBody?.detail, reason: reason, body: data)
+            }
+            throw APIError.http(status: http.statusCode, message: errorBody?.detail)
         }
         return data
     }

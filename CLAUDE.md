@@ -138,10 +138,30 @@ have tripped this up before:
 - **Privacy Policy URL**: `https://fueltracker.uk/privacy` (source: `fuel-web/app/privacy/page.tsx`
   — check it still mentions iOS/Apple Sign-In, not just Android, before pointing reviewers at it).
 - **Primary category**: Utilities (Travel is a reasonable secondary).
-- **Age rating questionnaire**: answer "None"/"No" throughout — no mature content, no unrestricted
-  in-app web browsing (external links open in the system browser, not an embedded one), and the
-  discrepancy-report feature sends free text privately to admins rather than publishing it, so it
-  doesn't count as user-generated content either.
+- **Age rating questionnaire**: no mature content and no unrestricted in-app web browsing
+  (external links open in the system browser, not an embedded one). The discrepancy-report
+  feature sends free text privately to admins, so it isn't user-generated content. **Station
+  ratings are**, while the `shared.station-ratings` flag is on: signed-in drivers publish star
+  ratings with optional short comments that other users can read. Answer the questionnaire's
+  user-generated-content question accordingly, and keep the moderation described below in place —
+  Guideline 1.2 requires filtering, reporting, blocking and a way to act on complaints for any
+  published UGC.
+- **App Review notes** (App Store Connect → the version → App Review Information → Notes). These
+  live only in App Store Connect; this is the text to paste, kept here so it stays in step with
+  the app:
+  > Fuel Tracker UK shows UK fuel prices from the Government's Fuel Finder open data. Signed-in
+  > users can also rate a station: whether the pump price matched the published price, 1–5 stars
+  > and an optional comment of up to 280 characters. Ratings are shown on the station screen,
+  > clearly labelled as driver reports and kept separate from the official price data.
+  > Moderation: every comment is screened automatically before it is published, and anything
+  > uncertain is held for a person to review. Users must have a verified email address, an account
+  > at least 3 days old, and must accept the reviews content policy
+  > (https://fueltracker.uk/terms#reviews) before rating; ratings are limited to 5 a day and one
+  > per station per week. Any user can report a comment (reported comments are hidden once enough
+  > reports arrive, pending review) or hide all comments from a reviewer. Admins can remove
+  > comments and suspend an account's ability to rate. Complaints: privacy@fueltracker.uk.
+  > Accounts can be deleted in-app from Settings. To see ratings, sign in (Sign in with Apple
+  > works) and open any station from the map or list.
 - **13-inch iPad screenshot**: required because `TARGETED_DEVICE_FAMILY = "1,2"` in
   `project.pbxproj` declares iPad support, even though the app has no iPad-specific layout (it's
   portrait-only, `UIRequiresFullScreen = true`) — it just scales up fine. To generate one without a

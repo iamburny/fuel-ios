@@ -7,6 +7,7 @@ struct NearbyView: View {
     @Environment(FuelRepository.self) private var repository
     @Environment(UserPreferencesStore.self) private var preferencesStore
     @Environment(\.appContainer) private var appContainer
+    @Environment(FeatureFlags.self) private var featureFlags
 
     @State private var viewModel: NearbyViewModel?
     @State private var showPanel = false
@@ -15,6 +16,10 @@ struct NearbyView: View {
 
     private let cheapestToggleTip = CheapestToggleTip()
     private let fuelTypePillTip = FuelTypePillTip()
+
+    /// The price-accuracy chip is part of station ratings, so it follows the same flag; defaults to
+    /// false so ratings can be switched off remotely.
+    private var ratingsEnabled: Bool { featureFlags.isEnabled("shared.station-ratings", default: false) }
 
     /// Matches Android's `failureThreshold = 2` — one transient blip shouldn't nag the user.
     private var apiUnreachable: Bool { repository.apiFailureCount >= 2 }
@@ -194,7 +199,8 @@ struct NearbyView: View {
                 title: station.name,
                 snippet: cheapest.map { String(format: "%.1fp", $0.pricePence) } ?? "No price",
                 color: UIColor(FuelType.color(forRaw: viewModel.selectedFuelType)),
-                isFavourite: viewModel.favouritesByStationId?[station.id] != nil
+                isFavourite: viewModel.favouritesByStationId?[station.id] != nil,
+                hasAccuracyWarning: ratingsEnabled && station.priceAccuracyWarning
             )
         }
 
@@ -419,6 +425,7 @@ struct NearbyView: View {
                                     userLng: viewModel.userLng,
                                     isFavourite: viewModel.favouritesByStationId.map { $0[station.id] != nil },
                                     isPending: viewModel.pendingFavouriteToggles.contains(station.id),
+                                    showsAccuracyWarning: ratingsEnabled && station.priceAccuracyWarning,
                                     onTap: {
                                         viewModel.trackStationClick(station.id, source: "list")
                                         navigate(to: station.id)
