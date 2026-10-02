@@ -300,6 +300,18 @@ struct StationRatingsViewModelTests {
         #expect(viewModel.formFuelType == nil)
     }
 
+    @Test func editKeepsAFuelTheStationNoLongerLists() async throws {
+        let repository = FakeRatingsRepository()
+        repository.mine = try decode(MyRatingStateDTO.self, mineJSON(rating: ownRatingJSON()))
+        let viewModel = makeViewModel(repository)
+        await viewModel.refreshMine()
+        viewModel.openRateSheet(fuelTypes: ["E5"], defaultFuelType: "E5")
+
+        #expect(viewModel.formFuelType == "E10")
+        #expect(viewModel.fuelTypes.contains("E10"))
+        #expect(viewModel.formPriceMatched == false)
+    }
+
     @Test func choosingNoFuelSkipsThePriceCheckAndSendsNulls() async throws {
         let repository = FakeRatingsRepository()
         repository.mine = try decode(MyRatingStateDTO.self, mineJSON())
