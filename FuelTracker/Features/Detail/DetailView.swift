@@ -53,6 +53,7 @@ struct DetailView: View {
                                 Task { await viewModel.toggleNotify() }
                             } label: {
                                 Image(systemName: viewModel.notifyOnDrop ? "bell.fill" : "bell.slash")
+                                    .floatingBacking()
                             }
                             .disabled(viewModel.pendingFavouriteToggle)
                             .accessibilityLabel(viewModel.notifyOnDrop ? "Mute price-drop alerts" : "Enable price-drop alerts")
@@ -61,6 +62,7 @@ struct DetailView: View {
                             Task { await viewModel.toggleFavourite() }
                         } label: {
                             Image(systemName: viewModel.isFavourite ? "heart.fill" : "heart")
+                                .floatingBacking()
                         }
                         .disabled(viewModel.pendingFavouriteToggle)
                     }
@@ -142,8 +144,11 @@ struct DetailView: View {
                         .font(.subheadline.weight(.semibold).monospacedDigit())
                         .foregroundStyle(.primary)
                 }
+                .padding(.horizontal, 6)
+                .floatingBacking()
             } else {
                 Image(systemName: "star")
+                    .floatingBacking()
             }
         }
         .accessibilityLabel(
@@ -170,7 +175,14 @@ struct DetailView: View {
                     centerLat: station.latitude, centerLng: station.longitude, zoomLevel: 15,
                     markers: [MapMarkerItem(stationId: nil, lat: station.latitude, lng: station.longitude, title: station.name, snippet: nil, color: nil)]
                 )
-                .frame(height: 200)
+                // Taller than the space it shows: the top runs up under the status and navigation
+                // bars, which float over it on a faint fade.
+                .frame(height: 300)
+                .overlay(alignment: .top) {
+                    LinearGradient(colors: [.black.opacity(0.18), .clear], startPoint: .top, endPoint: .bottom)
+                        .frame(height: 140)
+                        .allowsHitTesting(false)
+                }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(station.name)
@@ -322,6 +334,8 @@ struct DetailView: View {
                 DataAttributionNotice()
             }
         }
+        // The navigation bar is see-through over the map and turns solid as content scrolls under it.
+        .ignoresSafeArea(edges: .top)
     }
 
     @ViewBuilder
@@ -420,5 +434,13 @@ private struct FlowLayout: Layout {
             x += size.width + spacing
             rowHeight = max(rowHeight, size.height)
         }
+    }
+}
+
+private extension View {
+    /// A round backing so a toolbar button stays legible over the map that runs under the bar.
+    func floatingBacking() -> some View {
+        frame(minWidth: 34, minHeight: 34)
+            .background(.regularMaterial, in: Capsule())
     }
 }
