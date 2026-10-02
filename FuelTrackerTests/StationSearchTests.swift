@@ -78,7 +78,6 @@ private final class StubFuelPricesAPI: FuelPricesAPI, @unchecked Sendable {
     func getNearbyStations(lat: Double, lng: Double, radiusMiles: Double, limit: Int) async throws -> StationListResponse { throw StubError.unimplemented }
     func getStationsInBounds(minLat: Double, maxLat: Double, minLng: Double, maxLng: Double, limit: Int) async throws -> StationListResponse { throw StubError.unimplemented }
     func getStation(id: Int) async throws -> StationDTO { throw StubError.unimplemented }
-    func getCheapest(fuelType: String, lat: Double?, lng: Double?, radiusMiles: Double, limit: Int) async throws -> CheapestResponse { throw StubError.unimplemented }
     func getNationalAverages() async throws -> AveragesResponse { throw StubError.unimplemented }
     func getHeatmap(fuelType: String) async throws -> HeatmapResponse { throw StubError.unimplemented }
     func getPriceHistory(stationId: Int, fuelType: String, days: Int) async throws -> PriceHistoryResponse { throw StubError.unimplemented }
