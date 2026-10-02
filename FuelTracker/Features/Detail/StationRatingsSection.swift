@@ -8,7 +8,6 @@ struct StationRatingsSection: View {
     let viewModel: StationRatingsViewModel
     let summary: RatingSummaryDTO?
     let useLongNames: Bool
-    let onRate: () -> Void
     let onSignIn: () -> Void
 
     var body: some View {
@@ -27,10 +26,8 @@ struct StationRatingsSection: View {
                     .foregroundStyle(.secondary)
             }
 
-            Button(viewModel.rateButtonTitle, action: onRate)
-                .buttonStyle(.bordered)
-                .padding(.top, 4)
-
+            // Rating itself starts from the button beside "Get directions"; this shows where the
+            // user's own rating stands.
             if let status = viewModel.ownStatusText {
                 Text(status)
                     .font(.caption)

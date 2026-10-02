@@ -143,6 +143,24 @@ struct DetailView: View {
         }
     }
 
+    @ViewBuilder
+    private func stationActions(_ station: StationDTO) -> some View {
+        Button {
+            let url = URL(string: "https://maps.apple.com/?daddr=\(station.latitude),\(station.longitude)")!
+            openURL(url)
+        } label: {
+            Label("Get directions", systemImage: "arrow.triangle.turn.up.right.diamond.fill")
+        }
+        .buttonStyle(.bordered)
+
+        if ratingsEnabled, let ratingsViewModel {
+            Button(action: rateTapped) {
+                Label(ratingsViewModel.rateButtonTitle, systemImage: "star")
+            }
+            .buttonStyle(.bordered)
+        }
+    }
+
     /// The station's driver score beside the favourite heart, and the quickest way to rate it: the
     /// average with a filled star once enough drivers have rated it, an outlined star until then.
     private func ratingBadge(summary: RatingSummaryDTO?) -> some View {
@@ -231,13 +249,11 @@ struct DetailView: View {
                         .padding(.top, 4)
                     }
 
-                    Button {
-                        let url = URL(string: "https://maps.apple.com/?daddr=\(station.latitude),\(station.longitude)")!
-                        openURL(url)
-                    } label: {
-                        Label("Get directions", systemImage: "arrow.triangle.turn.up.right.diamond.fill")
+                    // The station's two actions, side by side, stacking when the screen is too narrow.
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 8) { stationActions(station) }
+                        VStack(alignment: .leading, spacing: 8) { stationActions(station) }
                     }
-                    .buttonStyle(.bordered)
                     .padding(.top, 8)
                 }
                 .padding(16)
@@ -336,7 +352,6 @@ struct DetailView: View {
                         viewModel: ratingsViewModel,
                         summary: station.ratingSummary,
                         useLongNames: preferencesStore.preferences.useLongFuelNames,
-                        onRate: rateTapped,
                         onSignIn: { showingAuth = true }
                     )
                 }
