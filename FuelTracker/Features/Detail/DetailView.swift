@@ -196,7 +196,8 @@ struct DetailView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(station.name)
+                    // The feed is mostly ALL CAPS; shown in the same title case as the website.
+                    Text(StationText.displayName(station.name))
                         .font(.title2.bold())
                         .accessibilityAddTraits(.isHeader)
                     if let brand = station.brand {
