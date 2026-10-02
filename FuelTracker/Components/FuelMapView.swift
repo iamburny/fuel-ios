@@ -17,6 +17,10 @@ struct MapMarkerItem: Identifiable {
     /// init can still take it as an overridable parameter — a `let` with a default value is
     /// excluded from that init entirely, always locking it to `false`.
     var isFavourite: Bool = false
+    /// Drivers often found this station's pump price didn't match (the API's
+    /// `price_accuracy_warning`) — an amber badge on the chip's opposite corner from the favourite
+    /// star. The price text itself is unchanged.
+    var hasAccuracyWarning: Bool = false
 }
 
 /// Google Maps SDK wrapper.
@@ -118,13 +122,13 @@ struct FuelMapView: UIViewRepresentable {
                         existing.position = CLLocationCoordinate2D(latitude: item.lat, longitude: item.lng)
                     }
                     let last = lastItemByKey[itemKey]
-                    if last?.snippet != item.snippet || last?.isFavourite != item.isFavourite {
+                    if last?.snippet != item.snippet || last?.isFavourite != item.isFavourite || last?.hasAccuracyWarning != item.hasAccuracyWarning {
                         existing.snippet = item.snippet
                         // No snippet (the Detail screen's single station-location marker, with no
                         // price to show) falls back to Google Maps' own default pin rather than a
                         // price chip with a placeholder "?" — that read as a data error, not "no
                         // price to show here".
-                        existing.iconView = item.snippet.map { PriceChipView(text: $0, color: item.color ?? .systemBlue, isFavourite: item.isFavourite) }
+                        existing.iconView = item.snippet.map { PriceChipView(text: $0, color: item.color ?? .systemBlue, isFavourite: item.isFavourite, hasAccuracyWarning: item.hasAccuracyWarning) }
                     }
                     existing.title = item.title
                     existing.zIndex = item.isFavourite ? 1 : 0
@@ -133,7 +137,7 @@ struct FuelMapView: UIViewRepresentable {
                     let marker = GMSMarker(position: CLLocationCoordinate2D(latitude: item.lat, longitude: item.lng))
                     marker.title = item.title
                     marker.snippet = item.snippet
-                    marker.iconView = item.snippet.map { PriceChipView(text: $0, color: item.color ?? .systemBlue, isFavourite: item.isFavourite) }
+                    marker.iconView = item.snippet.map { PriceChipView(text: $0, color: item.color ?? .systemBlue, isFavourite: item.isFavourite, hasAccuracyWarning: item.hasAccuracyWarning) }
                     marker.userData = item.stationId as Any
                     marker.zIndex = item.isFavourite ? 1 : 0
                     marker.map = mapView
@@ -170,7 +174,7 @@ struct FuelMapView: UIViewRepresentable {
 /// the map without needing to tap through to an info window — mirrors `MarkerComposable`'s custom
 /// content in the Android source.
 private final class PriceChipView: UIView {
-    init(text: String, color: UIColor, isFavourite: Bool = false) {
+    init(text: String, color: UIColor, isFavourite: Bool = false, hasAccuracyWarning: Bool = false) {
         let label = UILabel()
         label.text = text
         label.textColor = .white
@@ -201,6 +205,16 @@ private final class PriceChipView: UIView {
             star.tintColor = .systemYellow
             star.frame = CGRect(x: bounds.width - 12, y: -4, width: 12, height: 12)
             addSubview(star)
+        }
+
+        if hasAccuracyWarning {
+            let badge = UIImageView(image: UIImage(systemName: "exclamationmark.triangle.fill"))
+            badge.tintColor = UIColor(AccuracyWarningChip.tint)
+            badge.frame = CGRect(x: -4, y: -4, width: 12, height: 12)
+            addSubview(badge)
+            isAccessibilityElement = true
+            accessibilityLabel = "\(text). \(AccuracyWarningChip.label)"
+            accessibilityHint = AccuracyWarningChip.detail
         }
     }
 

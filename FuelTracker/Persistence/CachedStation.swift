@@ -26,6 +26,8 @@ final class CachedStation {
     var amenitiesJSON: Data?
     var openingHoursJSON: Data?
     var lastFetchedAt: Date
+    /// Defaulted so existing stores migrate without a schema version bump.
+    var priceAccuracyWarning: Bool = false
 
     @Relationship(deleteRule: .cascade, inverse: \CachedFuelPrice.station)
     var prices: [CachedFuelPrice] = []
@@ -63,12 +65,16 @@ final class CachedFuelPrice {
     var fuelType: String
     var pricePence: Double
     var reportedAt: String
+    /// `PriceWarning` raw value. Optional so stores written before this attribute existed migrate
+    /// automatically.
+    var warning: String? = nil
     var station: CachedStation?
 
-    init(fuelType: String, pricePence: Double, reportedAt: String, station: CachedStation? = nil) {
+    init(fuelType: String, pricePence: Double, reportedAt: String, warning: String? = nil, station: CachedStation? = nil) {
         self.fuelType = fuelType
         self.pricePence = pricePence
         self.reportedAt = reportedAt
+        self.warning = warning
         self.station = station
     }
 }
@@ -92,7 +98,13 @@ extension CachedStation {
             latitude: latitude, longitude: longitude, temporaryClosure: temporaryClosure,
             isMotorway: isMotorway, isSupermarket: isSupermarket, amenities: amenities, openingHours: openingHours,
             distanceMiles: distance,
-            prices: prices.map { PriceDTO(fuelType: $0.fuelType, pricePence: $0.pricePence, reportedAt: $0.reportedAt) }
+            prices: prices.map {
+                PriceDTO(
+                    fuelType: $0.fuelType, pricePence: $0.pricePence, reportedAt: $0.reportedAt,
+                    warning: $0.warning.flatMap(PriceWarning.init(rawValue:))
+                )
+            },
+            priceAccuracyWarning: priceAccuracyWarning
         )
     }
 }

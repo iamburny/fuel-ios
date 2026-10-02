@@ -9,10 +9,11 @@ struct DataAttributionNotice: View {
 
     @Environment(\.openURL) private var openURL
 
-    /// The specific /report-discrepancy path 404s (confirmed both on Android and as the backend's
-    /// own configured default) — points at the working base domain until there's a real report
-    /// page to link to. Matches Android's hardcoded URL exactly.
-    static let discrepancyURL = URL(string: "https://www.fuel-finder.service.gov.uk/")!
+    /// Destination of "Report a price discrepancy", which the Fuel Finder scheme requires apps
+    /// showing its prices to offer. GOV.UK's guidance page explains how to report a wrong price and
+    /// links on to the service's report form, so the app doesn't depend on the form's own URL.
+    /// Same URL as Android's `DataAttributionNotice`.
+    static let discrepancyURL = URL(string: "https://www.gov.uk/guidance/report-an-error-in-fuel-prices-or-forecourt-details")!
 
     static let sourceURL = URL(string: "https://www.gov.uk/government/collections/fuel-finder")!
 

@@ -7,12 +7,13 @@ struct DiscrepancyReportUrlResponse: Decodable, Sendable {
 
 /// One function per backend endpoint — direct port of fuel-android's `FuelPricesApi.kt` Retrofit
 /// interface. Trailing slashes on favourites/alerts/discrepancy paths are intentional, matching
-/// the Android client exactly (the backend's Express routes are mounted with them).
+/// the Android client exactly (the backend's Express routes are mounted with them). The ratings
+/// and email-verification routes have no trailing slash.
 protocol FuelPricesAPI: Sendable {
     func getNearbyStations(lat: Double, lng: Double, radiusMiles: Double, limit: Int) async throws -> StationListResponse
     func getStationsInBounds(minLat: Double, maxLat: Double, minLng: Double, maxLng: Double, limit: Int) async throws -> StationListResponse
     func getStation(id: Int) async throws -> StationDTO
-    func searchStations(query: String, limit: Int) async throws -> StationListResponse
+    func searchStations(query: String, limit: Int, lat: Double?, lng: Double?) async throws -> StationListResponse
 
     func getNationalAverages() async throws -> AveragesResponse
     func getHeatmap(fuelType: String) async throws -> HeatmapResponse
@@ -45,6 +46,17 @@ protocol FuelPricesAPI: Sendable {
 
     func reportDiscrepancy(_ body: DiscrepancyReportRequest) async throws
     func getDiscrepancyReportUrl() async throws -> DiscrepancyReportUrlResponse
+
+    func getStationRatings(stationId: Int, page: Int) async throws -> PublicRatingsResponse
+    func getMyRating(stationId: Int) async throws -> MyRatingStateDTO
+    func createRating(stationId: Int, _ body: RatingInput) async throws -> RatingSaveResponse
+    func updateRating(id: Int, _ body: RatingInput) async throws -> RatingSaveResponse
+    func reportRating(id: Int, _ body: ReportRatingRequest) async throws
+    func blockRatingAuthor(ratingId: Int) async throws -> BlockAuthorResponse
+    func getBlockedReviewers() async throws -> BlockedReviewersResponse
+    func unblockReviewer(authorRef: String) async throws
+    func requestEmailVerification() async throws -> VerifyEmailResponse
+    func acceptTerms(_ body: AcceptTermsRequest) async throws
 }
 
 final class FuelPricesAPIClient: FuelPricesAPI {
@@ -89,10 +101,31 @@ final class FuelPricesAPIClient: FuelPricesAPI {
         try await client.request(APIEndpoint(path: "api/stations/\(id)", method: .get))
     }
 
-    func searchStations(query: String, limit: Int) async throws -> StationListResponse {
+    /// `lat`/`lng` are optional: when both are supplied the backend uses distance as the final
+    /// tie-break *within* a relevance tier and returns `distance_miles` on each station; when
+    /// they're absent the ordering is relevance-only and `distance_miles` is omitted entirely.
+    /// They must therefore be left out of the URL when nil rather than sent as `0` — a literal
+    /// `lat=0&lng=0` is a real point in the Gulf of Guinea and would silently reorder every
+    /// result. Same contract as fuel-web/fuel-android.
+    static func searchQueryItems(query: String, limit: Int, lat: Double?, lng: Double?) -> [URLQueryItem] {
+        var items = [
+            URLQueryItem(name: "q", value: query),
+            .init(name: "limit", value: "\(limit)"),
+        ]
+        if let lat, let lng {
+            items.append(.init(name: "lat", value: "\(lat)"))
+            items.append(.init(name: "lng", value: "\(lng)"))
+        }
+        return items
+    }
+
+    // No default values for lat/lng: the only caller reaches this through the `FuelPricesAPI`
+    // existential, where defaults don't apply anyway, and defaults here would let a future direct
+    // call on the concrete client silently drop the coordinates.
+    func searchStations(query: String, limit: Int, lat: Double?, lng: Double?) async throws -> StationListResponse {
         try await client.request(APIEndpoint(
             path: "api/stations/search/", method: .get,
-            queryItems: [.init(name: "q", value: query), .init(name: "limit", value: "\(limit)")]
+            queryItems: Self.searchQueryItems(query: query, limit: limit, lat: lat, lng: lng)
         ))
     }
 
@@ -212,5 +245,54 @@ final class FuelPricesAPIClient: FuelPricesAPI {
 
     func getDiscrepancyReportUrl() async throws -> DiscrepancyReportUrlResponse {
         try await client.request(APIEndpoint(path: "api/discrepancy/report-url", method: .get))
+    }
+
+    // MARK: - Station ratings
+
+    func getStationRatings(stationId: Int, page: Int) async throws -> PublicRatingsResponse {
+        try await client.request(APIEndpoint(
+            path: "api/stations/\(stationId)/ratings", method: .get,
+            queryItems: [.init(name: "page", value: "\(page)")]
+        ))
+    }
+
+    func getMyRating(stationId: Int) async throws -> MyRatingStateDTO {
+        try await client.request(APIEndpoint(
+            path: "api/ratings/mine", method: .get,
+            queryItems: [.init(name: "station_id", value: "\(stationId)")],
+            requiresAuth: true
+        ))
+    }
+
+    func createRating(stationId: Int, _ body: RatingInput) async throws -> RatingSaveResponse {
+        try await client.request(APIEndpoint(path: "api/stations/\(stationId)/ratings", method: .post, jsonBody: try body.asJSONData(encoder: encoder), requiresAuth: true))
+    }
+
+    func updateRating(id: Int, _ body: RatingInput) async throws -> RatingSaveResponse {
+        try await client.request(APIEndpoint(path: "api/ratings/\(id)", method: .patch, jsonBody: try body.asJSONData(encoder: encoder), requiresAuth: true))
+    }
+
+    func reportRating(id: Int, _ body: ReportRatingRequest) async throws {
+        try await client.requestNoContent(APIEndpoint(path: "api/ratings/\(id)/report", method: .post, jsonBody: try body.asJSONData(encoder: encoder), requiresAuth: true))
+    }
+
+    func blockRatingAuthor(ratingId: Int) async throws -> BlockAuthorResponse {
+        try await client.request(APIEndpoint(path: "api/ratings/\(ratingId)/block-author", method: .post, requiresAuth: true))
+    }
+
+    func getBlockedReviewers() async throws -> BlockedReviewersResponse {
+        try await client.request(APIEndpoint(path: "api/ratings/blocked", method: .get, requiresAuth: true))
+    }
+
+    func unblockReviewer(authorRef: String) async throws {
+        try await client.requestNoContent(APIEndpoint(path: "api/ratings/blocked/\(authorRef)", method: .delete, requiresAuth: true))
+    }
+
+    func requestEmailVerification() async throws -> VerifyEmailResponse {
+        try await client.request(APIEndpoint(path: "api/auth/verify-email/request", method: .post, requiresAuth: true))
+    }
+
+    func acceptTerms(_ body: AcceptTermsRequest) async throws {
+        try await client.requestNoContent(APIEndpoint(path: "api/auth/accept-terms", method: .post, jsonBody: try body.asJSONData(encoder: encoder), requiresAuth: true))
     }
 }

@@ -29,13 +29,15 @@ final class AppContainer {
         userPreferencesStore = UserPreferencesStore()
         apiClient = APIClient(baseURL: AppConfig.apiBaseURL, tokenStore: tokenStore)
         api = FuelPricesAPIClient(client: apiClient)
-        repository = FuelRepository(api: api, modelContext: container.mainContext, tokenStore: tokenStore)
+        let repository = FuelRepository(api: api, modelContext: container.mainContext, tokenStore: tokenStore)
+        self.repository = repository
         // APIClient can't hold a reference to FuelRepository at construction time (repository is
         // built after it, and wraps it indirectly via `api`), so this callback is wired after the
         // fact instead — invoked when a 401 survives a refresh attempt, to flip
         // isLoggedIn/currentEmail back to signed-out. See APIClient.onSessionExpired.
-        apiClient.onSessionExpired = { [weak repository] in
-            await MainActor.run { repository?.logout() }
+        weak let weakRepository = repository
+        apiClient.onSessionExpired = {
+            await MainActor.run { weakRepository?.logout() }
         }
         locationManager = LocationManager()
         analytics = FirebaseAppAnalytics() // gated internally on FirebaseApp.app() != nil
