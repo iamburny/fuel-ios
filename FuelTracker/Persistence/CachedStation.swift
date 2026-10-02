@@ -26,6 +26,8 @@ final class CachedStation {
     var amenitiesJSON: Data?
     var openingHoursJSON: Data?
     var lastFetchedAt: Date
+    /// Defaulted so existing stores migrate without a schema version bump.
+    var priceAccuracyWarning: Bool = false
 
     @Relationship(deleteRule: .cascade, inverse: \CachedFuelPrice.station)
     var prices: [CachedFuelPrice] = []
@@ -101,7 +103,8 @@ extension CachedStation {
                     fuelType: $0.fuelType, pricePence: $0.pricePence, reportedAt: $0.reportedAt,
                     warning: $0.warning.flatMap(PriceWarning.init(rawValue:))
                 )
-            }
+            },
+            priceAccuracyWarning: priceAccuracyWarning
         )
     }
 }

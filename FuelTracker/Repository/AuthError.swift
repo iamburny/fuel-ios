@@ -20,7 +20,7 @@ struct AuthError: Error, LocalizedError, Sendable {
 
     /// Maps an `APIError.http` status code the same way `AuthException.from(HttpException)` does.
     static func from(_ error: APIError) -> AuthError {
-        guard case .http(let status, _) = error else {
+        guard let status = error.statusCode else {
             return AuthError(reason: .other, message: "Couldn't connect. Check your connection and try again.")
         }
         switch status {

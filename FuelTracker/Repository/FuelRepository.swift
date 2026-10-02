@@ -280,6 +280,49 @@ final class FuelRepository {
         try await api.reportDiscrepancy(request)
     }
 
+    // MARK: - Station ratings — never cached. They are driver reports, not price data, and a
+    // stale copy of someone's own rating state would offer actions the backend then refuses.
+
+    func getStationRatings(stationId: Int, page: Int) async throws -> PublicRatingsResponse {
+        try await api.getStationRatings(stationId: stationId, page: page)
+    }
+
+    func getMyRating(stationId: Int) async throws -> MyRatingStateDTO {
+        try await api.getMyRating(stationId: stationId)
+    }
+
+    func createRating(stationId: Int, input: RatingInput) async throws -> RatingSaveResponse {
+        try await api.createRating(stationId: stationId, input)
+    }
+
+    func updateRating(id: Int, input: RatingInput) async throws -> RatingSaveResponse {
+        try await api.updateRating(id: id, input)
+    }
+
+    func reportRating(id: Int, reason: String) async throws {
+        try await api.reportRating(id: id, ReportRatingRequest(reason: reason))
+    }
+
+    func blockRatingAuthor(ratingId: Int) async throws -> String {
+        try await api.blockRatingAuthor(ratingId: ratingId).authorRef
+    }
+
+    func getBlockedReviewers() async throws -> [String] {
+        try await api.getBlockedReviewers().authorRefs
+    }
+
+    func unblockReviewer(authorRef: String) async throws {
+        try await api.unblockReviewer(authorRef: authorRef)
+    }
+
+    func requestEmailVerification() async throws -> VerifyEmailResponse {
+        try await api.requestEmailVerification()
+    }
+
+    func acceptTerms(version: String) async throws {
+        try await api.acceptTerms(AcceptTermsRequest(version: version))
+    }
+
     // MARK: - Cache helpers
 
     private func freshCachedStationsNear(lat: Double, lng: Double, radiusMiles: Double) -> [StationDTO] {
@@ -363,6 +406,7 @@ final class FuelRepository {
             entity.amenitiesJSON = dto.amenities.flatMap { try? encoder.encode($0) }
             entity.openingHoursJSON = dto.openingHours.flatMap { try? encoder.encode($0) }
             entity.lastFetchedAt = now
+            entity.priceAccuracyWarning = dto.priceAccuracyWarning
 
             // Replace-with-latest-snapshot, mirroring Room's upsert-prices behaviour.
             for old in entity.prices { modelContext.delete(old) }
@@ -371,3 +415,5 @@ final class FuelRepository {
         try? modelContext.save()
     }
 }
+
+extension FuelRepository: StationRatingsRepository {}

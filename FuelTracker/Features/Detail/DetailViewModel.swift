@@ -152,6 +152,19 @@ final class DetailViewModel {
         }
     }
 
+    /// Saves the favourite a signed-out user tapped, once they've signed in. The station may already
+    /// be a favourite on that account, so this re-reads before adding.
+    func completeFavouriteAfterSignIn() async {
+        let existing = try? await repository.getFavourites().first { $0.stationId == stationId }
+        if let existing {
+            isFavourite = true
+            favouriteId = existing.id
+            notifyOnDrop = existing.notifyOnDrop
+        } else {
+            await toggleFavourite()
+        }
+    }
+
     func toggleNotify() async {
         guard !pendingFavouriteToggle, let favouriteId else { return }
         pendingFavouriteToggle = true

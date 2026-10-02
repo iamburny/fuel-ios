@@ -7,8 +7,22 @@ struct DetailView: View {
 
     @Environment(\.appContainer) private var appContainer
     @Environment(UserPreferencesStore.self) private var preferencesStore
+    @Environment(FuelRepository.self) private var repository
+    @Environment(FeatureFlags.self) private var featureFlags
     @Environment(\.openURL) private var openURL
+    @Environment(\.scenePhase) private var scenePhase
     @State private var viewModel: DetailViewModel?
+    @State private var ratingsViewModel: StationRatingsViewModel?
+    @State private var showingRateSheet = false
+    @State private var showingAuth = false
+    /// Set when "Rate this station" sent a signed-out user to sign in, so the rate sheet opens
+    /// once they're back.
+    @State private var rateAfterSignIn = false
+    /// A favourite tapped while signed out, saved once the auth sheet closes signed in.
+    @State private var favouriteAfterSignIn = false
+
+    /// Defaults to false so ratings can be switched off remotely; see `FeatureFlags`.
+    private var ratingsEnabled: Bool { featureFlags.isEnabled("shared.station-ratings", default: false) }
 
     var body: some View {
         Group {
@@ -25,25 +39,37 @@ struct DetailView: View {
                 ProgressView()
             }
         }
-        .navigationTitle(viewModel?.station?.name ?? "Station")
+        // No bar title: there's no room for a forecourt name beside the toolbar's buttons, so the
+        // name is the heading under the map instead.
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if let viewModel {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 16) {
+                        if ratingsEnabled, let station = viewModel.station {
+                            ratingBadge(summary: station.ratingSummary)
+                        }
                         if viewModel.isFavourite {
                             Button {
                                 Task { await viewModel.toggleNotify() }
                             } label: {
                                 Image(systemName: viewModel.notifyOnDrop ? "bell.fill" : "bell.slash")
+                                    .floatingBacking()
                             }
                             .disabled(viewModel.pendingFavouriteToggle)
                             .accessibilityLabel(viewModel.notifyOnDrop ? "Mute price-drop alerts" : "Enable price-drop alerts")
                         }
                         Button {
-                            Task { await viewModel.toggleFavourite() }
+                            if repository.isLoggedIn {
+                                Task { await viewModel.toggleFavourite() }
+                            } else {
+                                favouriteAfterSignIn = true
+                                showingAuth = true
+                            }
                         } label: {
                             Image(systemName: viewModel.isFavourite ? "heart.fill" : "heart")
+                                .floatingBacking()
                         }
                         .disabled(viewModel.pendingFavouriteToggle)
                     }
@@ -60,7 +86,114 @@ struct DetailView: View {
                     analytics: appContainer.analytics
                 )
             }
+            if ratingsViewModel == nil, let appContainer {
+                ratingsViewModel = StationRatingsViewModel(
+                    stationId: stationId,
+                    repository: appContainer.repository,
+                    analytics: appContainer.analytics
+                )
+            }
         }
+        .sheet(isPresented: $showingAuth, onDismiss: {
+            if favouriteAfterSignIn && repository.isLoggedIn {
+                Task { await viewModel?.completeFavouriteAfterSignIn() }
+            }
+            favouriteAfterSignIn = false
+            // Opened only after the auth sheet has fully gone, since one view can't present two
+            // sheets at once.
+            if rateAfterSignIn && repository.isLoggedIn {
+                openRateSheet()
+            }
+            rateAfterSignIn = false
+        }) {
+            AuthView(onAuthed: { showingAuth = false })
+        }
+        .sheet(isPresented: $showingRateSheet) {
+            if let ratingsViewModel {
+                RateStationSheet(
+                    viewModel: ratingsViewModel,
+                    stationName: viewModel?.station?.name ?? "",
+                    useLongNames: preferencesStore.preferences.useLongFuelNames,
+                    onClose: { showingRateSheet = false }
+                )
+            }
+        }
+        // Signing in or out (including a session that expired mid-visit) changes what the ratings
+        // section offers, so it re-reads the user's own state.
+        .onChange(of: repository.isLoggedIn) { _, _ in
+            guard ratingsEnabled else { return }
+            Task { await ratingsViewModel?.authChanged() }
+        }
+        // Email verification completes on the website, so coming back to the app is the cue to
+        // check whether the user can rate now.
+        .onChange(of: scenePhase) { _, phase in
+            guard ratingsEnabled, phase == .active else { return }
+            Task { await ratingsViewModel?.refreshMine() }
+        }
+    }
+
+    /// Rating starts from the toolbar star or the Driver reports section; a signed-out user signs
+    /// in first and the sheet opens once the auth sheet has gone.
+    private func rateTapped() {
+        if repository.isLoggedIn {
+            openRateSheet()
+        } else {
+            rateAfterSignIn = true
+            showingAuth = true
+        }
+    }
+
+    @ViewBuilder
+    private func stationActions(_ station: StationDTO) -> some View {
+        Button {
+            let url = URL(string: "https://maps.apple.com/?daddr=\(station.latitude),\(station.longitude)")!
+            openURL(url)
+        } label: {
+            Label("Get directions", systemImage: "arrow.triangle.turn.up.right.diamond.fill")
+        }
+        .buttonStyle(.bordered)
+
+        if ratingsEnabled, let ratingsViewModel {
+            Button(action: rateTapped) {
+                Label(ratingsViewModel.rateButtonTitle, systemImage: "star")
+            }
+            .buttonStyle(.bordered)
+        }
+    }
+
+    /// The station's driver score beside the favourite heart, and the quickest way to rate it: the
+    /// average with a filled star once enough drivers have rated it, an outlined star until then.
+    private func ratingBadge(summary: RatingSummaryDTO?) -> some View {
+        Button(action: rateTapped) {
+            if let summary {
+                HStack(spacing: 3) {
+                    Image(systemName: "star.fill")
+                        .foregroundStyle(AccuracyWarningChip.tint)
+                    Text(String(format: "%.1f", summary.avgStars))
+                        .font(.subheadline.weight(.semibold).monospacedDigit())
+                        .foregroundStyle(.primary)
+                }
+                .padding(.horizontal, 6)
+                .floatingBacking()
+            } else {
+                Image(systemName: "star")
+                    .floatingBacking()
+            }
+        }
+        .accessibilityLabel(
+            summary.map {
+                "Rated \(String(format: "%.1f", $0.avgStars)) out of 5 by \($0.raterCount) drivers. Rate this station"
+            } ?? "Rate this station"
+        )
+    }
+
+    private func openRateSheet() {
+        guard let ratingsViewModel, let viewModel, let station = viewModel.station else { return }
+        ratingsViewModel.openRateSheet(
+            fuelTypes: StationRatingsViewModel.ratableFuelTypes(for: station),
+            defaultFuelType: preferencesStore.preferences.fuelType
+        )
+        showingRateSheet = true
     }
 
     @ViewBuilder
@@ -71,9 +204,20 @@ struct DetailView: View {
                     centerLat: station.latitude, centerLng: station.longitude, zoomLevel: 15,
                     markers: [MapMarkerItem(stationId: nil, lat: station.latitude, lng: station.longitude, title: station.name, snippet: nil, color: nil)]
                 )
-                .frame(height: 200)
+                // Taller than the space it shows: the top runs up under the status and navigation
+                // bars, which float over it on a faint fade.
+                .frame(height: 300)
+                .overlay(alignment: .top) {
+                    LinearGradient(colors: [.black.opacity(0.18), .clear], startPoint: .top, endPoint: .bottom)
+                        .frame(height: 140)
+                        .allowsHitTesting(false)
+                }
 
                 VStack(alignment: .leading, spacing: 4) {
+                    // The feed is mostly ALL CAPS; shown in the same title case as the website.
+                    Text(StationText.displayName(station.name))
+                        .font(.title2.bold())
+                        .accessibilityAddTraits(.isHeader)
                     if let brand = station.brand {
                         Text(brand).font(.subheadline.bold()).foregroundStyle(.tint)
                     }
@@ -105,13 +249,11 @@ struct DetailView: View {
                         .padding(.top, 4)
                     }
 
-                    Button {
-                        let url = URL(string: "https://maps.apple.com/?daddr=\(station.latitude),\(station.longitude)")!
-                        openURL(url)
-                    } label: {
-                        Label("Get directions", systemImage: "arrow.triangle.turn.up.right.diamond.fill")
+                    // The station's two actions, side by side, stacking when the screen is too narrow.
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 8) { stationActions(station) }
+                        VStack(alignment: .leading, spacing: 8) { stationActions(station) }
                     }
-                    .buttonStyle(.bordered)
                     .padding(.top, 8)
                 }
                 .padding(16)
@@ -203,11 +345,24 @@ struct DetailView: View {
                     }
                 }
 
+                if ratingsEnabled, let ratingsViewModel {
+                    Divider()
+
+                    StationRatingsSection(
+                        viewModel: ratingsViewModel,
+                        summary: station.ratingSummary,
+                        useLongNames: preferencesStore.preferences.useLongFuelNames,
+                        onSignIn: { showingAuth = true }
+                    )
+                }
+
                 Divider()
 
                 DataAttributionNotice()
             }
         }
+        // The navigation bar is see-through over the map and turns solid as content scrolls under it.
+        .ignoresSafeArea(edges: .top)
     }
 
     @ViewBuilder
@@ -320,5 +475,13 @@ private struct FlowLayout: Layout {
             x += size.width + spacing
             rowHeight = max(rowHeight, size.height)
         }
+    }
+}
+
+private extension View {
+    /// A round backing so a toolbar button stays legible over the map that runs under the bar.
+    func floatingBacking() -> some View {
+        frame(minWidth: 34, minHeight: 34)
+            .background(.regularMaterial, in: Capsule())
     }
 }
