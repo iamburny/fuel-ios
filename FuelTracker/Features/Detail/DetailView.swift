@@ -43,6 +43,9 @@ struct DetailView: View {
             if let viewModel {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 16) {
+                        if ratingsEnabled, let station = viewModel.station {
+                            ratingBadge(summary: station.ratingSummary)
+                        }
                         if viewModel.isFavourite {
                             Button {
                                 Task { await viewModel.toggleNotify() }
@@ -112,6 +115,40 @@ struct DetailView: View {
             guard ratingsEnabled, phase == .active else { return }
             Task { await ratingsViewModel?.refreshMine() }
         }
+    }
+
+    /// Rating starts from the toolbar star or the Driver reports section; a signed-out user signs
+    /// in first and the sheet opens once the auth sheet has gone.
+    private func rateTapped() {
+        if repository.isLoggedIn {
+            openRateSheet()
+        } else {
+            rateAfterSignIn = true
+            showingAuth = true
+        }
+    }
+
+    /// The station's driver score beside the favourite heart, and the quickest way to rate it: the
+    /// average with a filled star once enough drivers have rated it, an outlined star until then.
+    private func ratingBadge(summary: RatingSummaryDTO?) -> some View {
+        Button(action: rateTapped) {
+            if let summary {
+                HStack(spacing: 3) {
+                    Image(systemName: "star.fill")
+                        .foregroundStyle(AccuracyWarningChip.tint)
+                    Text(String(format: "%.1f", summary.avgStars))
+                        .font(.subheadline.weight(.semibold).monospacedDigit())
+                        .foregroundStyle(.primary)
+                }
+            } else {
+                Image(systemName: "star")
+            }
+        }
+        .accessibilityLabel(
+            summary.map {
+                "Rated \(String(format: "%.1f", $0.avgStars)) out of 5 by \($0.raterCount) drivers. Rate this station"
+            } ?? "Rate this station"
+        )
     }
 
     private func openRateSheet() {
@@ -270,14 +307,7 @@ struct DetailView: View {
                         viewModel: ratingsViewModel,
                         summary: station.ratingSummary,
                         useLongNames: preferencesStore.preferences.useLongFuelNames,
-                        onRate: {
-                            if repository.isLoggedIn {
-                                openRateSheet()
-                            } else {
-                                rateAfterSignIn = true
-                                showingAuth = true
-                            }
-                        },
+                        onRate: rateTapped,
                         onSignIn: { showingAuth = true }
                     )
                 }
