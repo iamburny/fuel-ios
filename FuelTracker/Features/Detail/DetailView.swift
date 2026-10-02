@@ -37,7 +37,9 @@ struct DetailView: View {
                 ProgressView()
             }
         }
-        .navigationTitle(viewModel?.station?.name ?? "Station")
+        // No bar title: there's no room for a forecourt name beside the toolbar's buttons, so the
+        // name is the heading under the map instead.
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if let viewModel {
@@ -171,6 +173,9 @@ struct DetailView: View {
                 .frame(height: 200)
 
                 VStack(alignment: .leading, spacing: 4) {
+                    Text(station.name)
+                        .font(.title2.bold())
+                        .accessibilityAddTraits(.isHeader)
                     if let brand = station.brand {
                         Text(brand).font(.subheadline.bold()).foregroundStyle(.tint)
                     }
