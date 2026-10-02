@@ -18,6 +18,8 @@ struct DetailView: View {
     /// Set when "Rate this station" sent a signed-out user to sign in, so the rate sheet opens
     /// once they're back.
     @State private var rateAfterSignIn = false
+    /// A favourite tapped while signed out, saved once the auth sheet closes signed in.
+    @State private var favouriteAfterSignIn = false
 
     /// Defaults to false so ratings can be switched off remotely; see `FeatureFlags`.
     private var ratingsEnabled: Bool { featureFlags.isEnabled("shared.station-ratings", default: false) }
@@ -59,7 +61,12 @@ struct DetailView: View {
                             .accessibilityLabel(viewModel.notifyOnDrop ? "Mute price-drop alerts" : "Enable price-drop alerts")
                         }
                         Button {
-                            Task { await viewModel.toggleFavourite() }
+                            if repository.isLoggedIn {
+                                Task { await viewModel.toggleFavourite() }
+                            } else {
+                                favouriteAfterSignIn = true
+                                showingAuth = true
+                            }
                         } label: {
                             Image(systemName: viewModel.isFavourite ? "heart.fill" : "heart")
                                 .floatingBacking()
@@ -88,6 +95,10 @@ struct DetailView: View {
             }
         }
         .sheet(isPresented: $showingAuth, onDismiss: {
+            if favouriteAfterSignIn && repository.isLoggedIn {
+                Task { await viewModel?.completeFavouriteAfterSignIn() }
+            }
+            favouriteAfterSignIn = false
             // Opened only after the auth sheet has fully gone, since one view can't present two
             // sheets at once.
             if rateAfterSignIn && repository.isLoggedIn {
