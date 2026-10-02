@@ -36,9 +36,24 @@ struct StationListRow: View {
                 }
                 Spacer()
                 if let price = station.cheapestPrice(for: fuelType) {
-                    Text(String(format: "%.1fp", price.pricePence))
-                        .font(.title3.bold())
-                        .foregroundStyle(FuelType.displayColor(forRaw: fuelType))
+                    // A flagged price is only headlined when it's the station's sole price for
+                    // this fuel; it's muted and caveated rather than hidden.
+                    if let warning = price.warning {
+                        HStack(spacing: 4) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.caption)
+                                .foregroundStyle(.orange)
+                            Text(String(format: "%.1fp", price.pricePence))
+                                .font(.title3.bold())
+                                .foregroundStyle(.secondary)
+                        }
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(String(format: "%.1fp, ", price.pricePence) + warning.badgeLabel)
+                    } else {
+                        Text(String(format: "%.1fp", price.pricePence))
+                            .font(.title3.bold())
+                            .foregroundStyle(FuelType.displayColor(forRaw: fuelType))
+                    }
                 }
             }
             .contentShape(Rectangle())

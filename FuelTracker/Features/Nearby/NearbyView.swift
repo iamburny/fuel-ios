@@ -187,13 +187,17 @@ struct NearbyView: View {
         // `nearbyStationsSortedByPrice`, so it stays in sync with the map, including after a drag.
         let mapMarkers: [MapMarkerItem] = viewModel.isLoading ? [] : (viewModel.viewportStations ?? viewModel.stations).map { station in
             let cheapest = station.cheapestPrice(for: viewModel.selectedFuelType)
+            // A flagged price (only headlined when it's the station's sole price for this fuel)
+            // gets a grey chip with a trailing "?"; the "?" also changes the snippet, which is
+            // what makes FuelMapView rebuild the chip when a price's flag changes.
+            let isFlagged = cheapest?.warning != nil
             return MapMarkerItem(
                 stationId: station.id,
                 lat: station.latitude,
                 lng: station.longitude,
                 title: station.name,
-                snippet: cheapest.map { String(format: "%.1fp", $0.pricePence) } ?? "No price",
-                color: UIColor(FuelType.color(forRaw: viewModel.selectedFuelType)),
+                snippet: cheapest.map { String(format: "%.1fp", $0.pricePence) + (isFlagged ? "?" : "") } ?? "No price",
+                color: isFlagged ? UIColor.systemGray : UIColor(FuelType.color(forRaw: viewModel.selectedFuelType)),
                 isFavourite: viewModel.favouritesByStationId?[station.id] != nil
             )
         }

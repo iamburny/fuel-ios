@@ -398,13 +398,14 @@ final class NearbyViewModel {
 
     /// Client-side derived view of whatever's currently pinned on the map (viewportStations after a
     /// drag, else the GPS-anchored `stations`), sorted ascending by price for `selectedFuelType` and
-    /// filtered to stations that have one. No network call — recomputed automatically by `@Observable`
+    /// filtered to stations that have one. Stations whose only price for that fuel carries a
+    /// `warning` sort after every unflagged one. No network call — recomputed automatically by `@Observable`
     /// whenever `stations`/`viewportStations`/`selectedFuelType` change. Backs the bottom list
     /// panel's only default (non-search) list.
     var nearbyStationsSortedByPrice: [StationDTO] {
         (viewportStations ?? stations)
             .compactMap { station in
-                station.cheapestPrice(for: selectedFuelType).map { (station, $0.pricePence) }
+                station.cheapestPrice(for: selectedFuelType).map { (station, $0.headlineSortKey) }
             }
             .sorted { $0.1 < $1.1 }
             .map(\.0)

@@ -27,7 +27,7 @@ enum FuelCostCalculator {
     /// driving there (using the national average price as the cost basis for the fuel already in
     /// the tank). Positive means the detour is worth it; negative means it costs more than it
     /// saves. Returns `nil` if preferences don't have enough info yet, or the station has no
-    /// distance or no price for the preferred fuel type.
+    /// distance or no unflagged (`warning == nil`) price for the preferred fuel type.
     ///
     /// Not consumed by the phone UI (car-app-only sort in Android) but ported anyway — small,
     /// self-contained, and a natural fit if a future screen needs it.
@@ -39,7 +39,7 @@ enum FuelCostCalculator {
         guard let mpg = preferences.mpg,
               let tankCapacityLitres = preferences.tankCapacityLitres,
               let distanceMiles = station.distanceMiles,
-              let stationPricePence = station.prices.first(where: { $0.fuelType == preferences.fuelType })?.pricePence,
+              let stationPricePence = station.prices.first(where: { $0.fuelType == preferences.fuelType && $0.warning == nil })?.pricePence,
               let avgPricePence = averages.first(where: { $0.fuelType == preferences.fuelType })?.avgPricePence
         else { return nil }
 

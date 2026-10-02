@@ -101,15 +101,67 @@ struct OpeningHoursDTO: Codable, Sendable {
     }
 }
 
+/// The backend's caveat on a current price it considers unreliable. The price itself is still
+/// shown unmodified; the warning only adds a caveat and keeps it out of local "cheapest" picks.
+enum PriceWarning: String, Sendable, Hashable {
+    /// Price unchanged for 60+ days (`reported_at` only moves when the price changes).
+    case stale
+    /// Far below the national median for that fuel.
+    case unusuallyLow = "unusually_low"
+    /// Far above the national median for that fuel.
+    case unusuallyHigh = "unusually_high"
+
+    var badgeLabel: String {
+        switch self {
+        case .stale: "May be out of date"
+        case .unusuallyLow, .unusuallyHigh: "May be incorrect"
+        }
+    }
+
+    var explanation: String {
+        switch self {
+        case .stale: "Unchanged for over 60 days, so this price may be out of date."
+        case .unusuallyLow: "Much lower than other stations' prices for this fuel, so it may have been reported incorrectly."
+        case .unusuallyHigh: "Much higher than other stations' prices for this fuel, so it may have been reported incorrectly."
+        }
+    }
+}
+
 struct PriceDTO: Decodable, Sendable, Hashable {
     let fuelType: String
     let pricePence: Double
     let reportedAt: String
+    let warning: PriceWarning?
 
     enum CodingKeys: String, CodingKey {
         case fuelType = "fuel_type"
         case pricePence = "price_pence"
         case reportedAt = "reported_at"
+        case warning
+    }
+
+    init(fuelType: String, pricePence: Double, reportedAt: String, warning: PriceWarning? = nil) {
+        self.fuelType = fuelType
+        self.pricePence = pricePence
+        self.reportedAt = reportedAt
+        self.warning = warning
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        fuelType = try c.decode(String.self, forKey: .fuelType)
+        pricePence = try c.decode(Double.self, forKey: .pricePence)
+        reportedAt = try c.decode(String.self, forKey: .reportedAt)
+        // Absent (older backends), null, non-string and not-yet-known values all mean "no
+        // warning" rather than failing the whole station.
+        let rawWarning: String? = try? c.decodeIfPresent(String.self, forKey: .warning)
+        warning = rawWarning.flatMap(PriceWarning.init(rawValue:))
+    }
+
+    /// Orders unflagged prices before flagged ones, then by price — for picking or sorting by a
+    /// headline price without letting a flagged one win.
+    var headlineSortKey: (Int, Double) {
+        (warning == nil ? 0 : 1, pricePence)
     }
 }
 
@@ -348,9 +400,13 @@ struct PriceHistoryResponse: Decodable, Sendable {
 }
 
 extension StationDTO {
-    /// The cheapest reported price for `fuelType` at this station, if any.
+    /// The price to headline for `fuelType` at this station: the cheapest one without a
+    /// `warning`, else (only when every price for that fuel is flagged) the cheapest flagged one,
+    /// so the station still shows its price. Callers check `warning` to caveat or deprioritise it.
     func cheapestPrice(for fuelType: String) -> PriceDTO? {
-        prices.filter { $0.fuelType == fuelType }.min { $0.pricePence < $1.pricePence }
+        prices
+            .filter { $0.fuelType == fuelType }
+            .min { $0.headlineSortKey < $1.headlineSortKey }
     }
 
     /// The fuel types this station actually has a reported price for, in `FuelType.allCases`

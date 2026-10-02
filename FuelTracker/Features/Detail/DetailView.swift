@@ -124,7 +124,7 @@ struct DetailView: View {
                     Text("No prices currently available for this station.")
                         .padding(16)
                 } else {
-                    ForEach(station.prices.sorted { $0.pricePence < $1.pricePence }, id: \.fuelType) { price in
+                    ForEach(station.prices.sorted { $0.headlineSortKey < $1.headlineSortKey }, id: \.fuelType) { price in
                         priceRow(price, averages: viewModel.nationalAverages)
                         Divider().padding(.leading, 16)
                     }
@@ -241,7 +241,21 @@ struct DetailView: View {
                 Text(FuelType.longLabel(forRaw: price.fuelType)).fontWeight(.medium)
                 // Compliance: shown unmodified, original ISO string, not reformatted/relativized.
                 Text("Reported: \(price.reportedAt)").font(.caption).foregroundStyle(.secondary)
-                if let nationalAvg {
+                // A flagged price keeps its value and timestamp but drops the national-average
+                // comparison, which would present a likely-wrong price as a real saving or premium.
+                if let warning = price.warning {
+                    Text(warning.badgeLabel)
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(Color.orange.opacity(0.15)))
+                        .padding(.top, 2)
+                    Text(warning.explanation)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else if let nationalAvg {
                     let delta = price.pricePence - nationalAvg
                     Text(String(format: "%+.1fp vs national avg", delta))
                         .font(.caption2)
