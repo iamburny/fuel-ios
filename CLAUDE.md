@@ -237,7 +237,7 @@ Two distinct numbers matter for a release, and mixing them up produces confusing
 
 ## Architecture
 
-Single Xcode app target (no local SwiftPM package split). Layout mirrors Android's module split:
+One app target plus an App Clip target (no local SwiftPM package split). Layout mirrors Android's module split:
 
 ```
 FuelTracker/
@@ -252,7 +252,29 @@ FuelTracker/
   FeatureFlags/   Unleash Frontend API client
   Analytics/      AppAnalytics (Firebase wrapper)
   Location/       LocationManager
+FuelTrackerClip/  App Clip — see below
 ```
+
+### App Clip
+
+`FuelTrackerClip` (`uk.fueltracker.app.Clip`) is embedded in the app and opens from
+`https://fueltracker.uk/stations/{id}` links, showing that one station's prices. It has no source
+of its own beyond `FuelTrackerClip/`; everything else it needs (networking, DTOs, `DeepLink`,
+`FuelType`, `StationPriceRow`, `DataAttributionNotice`, ...) is compiled in via **target
+membership**. When a shared file gains a dependency, add that file to the clip target too or the
+clip stops building. Keep Google Maps, Firebase and SwiftData out of it: App Clips have a size
+limit, which is why it uses MapKit.
+
+- It has its own `FuelTrackerClip/Info.plist` (same `GENERATE_INFOPLIST_FILE = NO` rule as the app:
+  keep `CFBundleShortVersionString`/`CFBundleVersion` wired to `$(MARKETING_VERSION)`/
+  `$(CURRENT_PROJECT_VERSION)`; the clip's versions must match the app's) and its own entitlements.
+- Opening links needs `appclips:fueltracker.uk` in both targets' entitlements **and** an
+  `"appclips": {"apps": ["9SJN3YX5DH.uk.fueltracker.app.Clip"]}` entry in
+  `https://fueltracker.uk/.well-known/apple-app-site-association`. That file isn't in any of the
+  sibling repos; it's served from the website's hosting.
+- The `FuelTrackerClip` scheme sets `_XCAppClipURL` so Run in Xcode opens a station. Change the
+  id there to try another one.
+- There's no Android counterpart: Google Play Instant, the equivalent, has been retired.
 
 ### Dependency injection
 
