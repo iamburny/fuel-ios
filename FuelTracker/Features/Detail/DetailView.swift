@@ -222,7 +222,7 @@ struct DetailView: View {
                         Text(brand).font(.subheadline.bold()).foregroundStyle(.tint)
                     }
 
-                    statusBadges(station)
+                    StationStatusBadges(station: station)
 
                     let address = [station.addressLine1, station.addressLine2, station.town, station.postcode]
                         .compactMap { $0 }.joined(separator: ", ")
@@ -267,7 +267,7 @@ struct DetailView: View {
                         .padding(16)
                 } else {
                     ForEach(station.prices.sorted { $0.headlineSortKey < $1.headlineSortKey }, id: \.fuelType) { price in
-                        priceRow(price, averages: viewModel.nationalAverages)
+                        StationPriceRow(price: price, nationalAverages: viewModel.nationalAverages)
                         Divider().padding(.leading, 16)
                     }
                 }
@@ -363,67 +363,6 @@ struct DetailView: View {
         }
         // The navigation bar is see-through over the map and turns solid as content scrolls under it.
         .ignoresSafeArea(edges: .top)
-    }
-
-    @ViewBuilder
-    private func statusBadges(_ station: StationDTO) -> some View {
-        let badges: [(String, Color)] = [
-            station.temporaryClosure ? ("Temporarily Closed", .red) : nil,
-            station.isMotorway ? ("Motorway Services", Color(red: 0x3B / 255, green: 0x82 / 255, blue: 0xF6 / 255)) : nil,
-            station.isSupermarket ? ("Supermarket", Color(red: 0x22 / 255, green: 0xC5 / 255, blue: 0x5E / 255)) : nil,
-        ].compactMap { $0 }
-
-        if !badges.isEmpty {
-            HStack(spacing: 8) {
-                ForEach(badges, id: \.0) { label, color in
-                    Text(label)
-                        .font(.caption2)
-                        .foregroundStyle(color)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(color.opacity(0.15)))
-                }
-            }
-            .padding(.bottom, 4)
-        }
-    }
-
-    @ViewBuilder
-    private func priceRow(_ price: PriceDTO, averages: [NationalAverageDTO]) -> some View {
-        let nationalAvg = averages.first { $0.fuelType == price.fuelType }?.avgPricePence
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(FuelType.longLabel(forRaw: price.fuelType)).fontWeight(.medium)
-                // Compliance: shown unmodified, original ISO string, not reformatted/relativized.
-                Text("Reported: \(price.reportedAt)").font(.caption).foregroundStyle(.secondary)
-                // A flagged price keeps its value and timestamp but drops the national-average
-                // comparison, which would present a likely-wrong price as a real saving or premium.
-                if let warning = price.warning {
-                    Text(warning.badgeLabel)
-                        .font(.caption2)
-                        .foregroundStyle(.orange)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(Color.orange.opacity(0.15)))
-                        .padding(.top, 2)
-                    Text(warning.explanation)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                } else if let nationalAvg {
-                    let delta = price.pricePence - nationalAvg
-                    Text(String(format: "%+.1fp vs national avg", delta))
-                        .font(.caption2)
-                        .foregroundStyle(delta <= 0 ? Color(red: 0x22 / 255, green: 0xC5 / 255, blue: 0x5E / 255) : .red)
-                }
-            }
-            Spacer()
-            Text(String(format: "%.1fp", price.pricePence))
-                .font(.title2.bold())
-                .foregroundStyle(FuelType.displayColor(forRaw: price.fuelType))
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
     }
 
     private func bankHolidayHours(_ holiday: BankHolidayDTO) -> String {
