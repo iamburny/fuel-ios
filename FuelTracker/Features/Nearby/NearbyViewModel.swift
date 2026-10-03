@@ -86,7 +86,6 @@ final class NearbyViewModel {
     private var boundsTask: Task<Void, Never>?
     private var locationUpdatesTask: Task<Void, Never>?
     private var bootstrapTask: Task<Void, Never>?
-    private var permissionListenerTask: Task<Void, Never>?
 
     init(repository: FuelRepository, locationManager: LocationManager, preferencesStore: UserPreferencesStore, analytics: AppAnalytics) {
         self.repository = repository
@@ -104,16 +103,20 @@ final class NearbyViewModel {
         selectedFuelType = preferencesStore.lastActiveFuelType ?? preferencesStore.preferences.fuelType
         preferencesStore.lastActiveFuelType = selectedFuelType
 
-        locationManager.requestPermissionIfNeeded()
         // Give the permission dialog a brief window to be answered before firing the first
         // request — otherwise we load London (the fallback), render it, then immediately correct
         // to the real location once permission lands, which reads as a jarring flash. If
-        // permission's already granted (the common case for returning users) this returns
-        // instantly. Capped at 3s so a slow response doesn't stall the screen.
+        // permission's already granted (the common case for returning users) this is skipped.
+        // Capped at 3s so a slow response doesn't stall the screen. A later grant (the dialog
+        // answered after 3s, or via Settings) needs no listener here: it starts the location
+        // updates subscribed below, and their first fix reloads around the real position.
         if !locationManager.hasPermission {
+            // Subscribed before requesting so a grant that lands immediately isn't missed.
+            let grant = locationManager.permissionGrantedUpdates()
+            locationManager.requestPermissionIfNeeded()
             await withTaskGroup(of: Void.self) { group in
-                group.addTask { @MainActor in
-                    for await _ in self.locationManager.permissionGranted { break }
+                group.addTask {
+                    for await _ in grant { break }
                 }
                 group.addTask { try? await Task.sleep(for: .seconds(3)) }
                 await group.next()
@@ -123,22 +126,6 @@ final class NearbyViewModel {
         await loadNearby()
         startLocationUpdates()
         await refreshFavourites()
-
-        // Keep listening in case permission lands after our short wait above (e.g. the dialog
-        // took longer than 3s to answer, or it's granted later via Settings). Split into its own
-        // task (rather than continuing this same async function) so `[weak self]` can be
-        // re-checked on EVERY iteration of this effectively-infinite loop — a single `guard let
-        // self` at the top of one long-lived function would re-capture `self` strongly for the
-        // rest of its execution, silently defeating the weak capture and leaking this view model
-        // for the app's lifetime.
-        permissionListenerTask = Task { [weak self] in
-            guard let stream = self?.locationManager.permissionGranted else { return }
-            for await _ in stream {
-                guard let self else { return }
-                await self.loadNearby()
-                self.startLocationUpdates()
-            }
-        }
     }
 
     /// Subscribes to continuous GPS fixes so the map tracks the user in real time. While the user
@@ -148,10 +135,12 @@ final class NearbyViewModel {
     /// put it.
     private func startLocationUpdates() {
         locationUpdatesTask?.cancel()
+        // `self` is re-checked per fix rather than bound once up front, which would hold it
+        // strongly for this endless loop's lifetime and leak the view model.
+        let updates = locationManager.locationUpdates()
         locationUpdatesTask = Task { [weak self] in
-            guard let self else { return }
-            for await location in self.locationManager.locationUpdates() {
-                if Task.isCancelled { break }
+            for await location in updates {
+                guard let self, !Task.isCancelled else { return }
                 let lat = location.coordinate.latitude
                 let lng = location.coordinate.longitude
                 // Checked before the `moved` jitter-guard below — a course update is meaningful
@@ -170,11 +159,18 @@ final class NearbyViewModel {
                     moved = true
                 }
                 guard moved else { continue }
+                let isFirstGpsFix = !self.hasGpsFix
                 self.userLat = lat
                 self.userLng = lng
                 self.hasGpsFix = true
                 if !self.isOffGpsCenter {
                     self.cameraRecenterToken += 1
+                }
+                // The stations on screen were loaded around the London fallback (the initial
+                // one-shot fix timed out, e.g. a cold GPS start indoors), so fetch around the
+                // real position now.
+                if isFirstGpsFix {
+                    Task { [weak self] in await self?.reload() }
                 }
             }
         }
@@ -202,10 +198,11 @@ final class NearbyViewModel {
             // re-filter for display.
             let response = try await repository.getNearbyStations(lat: lat, lng: lng, radiusMiles: radiusMiles, forceRefresh: forceRefresh)
 
-            // Only jump the camera to GPS the first time we get a real fix — subsequent reloads
-            // (radius/fuel/mode changes) shouldn't yank the map back if the user has since
-            // dragged it elsewhere.
-            let isFirstFix = userLat == nil
+            // Only jump the camera on the first load, or when the first real fix replaces the
+            // London fallback (permission granted after the initial load) and the user hasn't
+            // dragged away — subsequent reloads (radius/fuel/mode changes) shouldn't yank the map
+            // back if the user has since dragged it elsewhere.
+            let isFirstFix = userLat == nil || (!hasGpsFix && location != nil && !isOffGpsCenter)
             isLoading = false
             stations = response.stations
             // hasGpsFix is sticky, so userLat/userLng have to be too — otherwise the flag says
