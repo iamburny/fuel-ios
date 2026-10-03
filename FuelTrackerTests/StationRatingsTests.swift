@@ -107,7 +107,15 @@ struct RatingDTODecodingTests {
         {"id": 1, "gov_id": "x", "name": "Test", "latitude": 0, "longitude": 0, "prices": []}
         """)
         #expect(station.ratingSummary == nil)
+        #expect(station.ratingMinRaters == nil)
         #expect(station.priceAccuracyWarning == false)
+    }
+
+    @Test func stationCarriesTheBackendsRatingThreshold() throws {
+        let station = try decode(StationDTO.self, """
+        {"id": 1, "gov_id": "x", "name": "Test", "latitude": 0, "longitude": 0, "prices": [], "rating_min_raters": 1}
+        """)
+        #expect(station.ratingMinRaters == 1)
     }
 
     @Test func stationDecodesRatingSummaryAndWarning() throws {
@@ -190,6 +198,19 @@ struct RatingDTODecodingTests {
         #expect(object?["stars"] as? Int == 4)
         #expect(object?["comment"] is NSNull)
         #expect(object?["reported_price_pence"] is NSNull)
+    }
+}
+
+struct RatingCopyTests {
+    @Test func noScoreMessageFollowsTheBackendsThreshold() {
+        #expect(RatingCopy.noScore(minRaters: nil) == "Not enough reports yet.")
+        #expect(RatingCopy.noScore(minRaters: 1) == "No score yet. Be the first to rate this station.")
+        #expect(RatingCopy.noScore(minRaters: 3) == "Not enough reports yet. A score appears once 3 drivers have rated this station.")
+    }
+
+    @Test func aSingleDriverReadsInTheSingular() {
+        #expect(RatingCopy.drivers(1) == "1 driver")
+        #expect(RatingCopy.drivers(7) == "7 drivers")
     }
 }
 

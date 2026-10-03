@@ -182,7 +182,7 @@ struct DetailView: View {
         }
         .accessibilityLabel(
             summary.map {
-                "Rated \(String(format: "%.1f", $0.avgStars)) out of 5 by \($0.raterCount) drivers. Rate this station"
+                "Rated \(String(format: "%.1f", $0.avgStars)) out of 5 by \(RatingCopy.drivers($0.raterCount)). Rate this station"
             } ?? "Rate this station"
         )
     }
@@ -351,6 +351,7 @@ struct DetailView: View {
                     StationRatingsSection(
                         viewModel: ratingsViewModel,
                         summary: station.ratingSummary,
+                        minRaters: station.ratingMinRaters,
                         useLongNames: preferencesStore.preferences.useLongFuelNames,
                         onSignIn: { showingAuth = true }
                     )

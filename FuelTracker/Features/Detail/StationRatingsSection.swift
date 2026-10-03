@@ -7,6 +7,7 @@ import SwiftUI
 struct StationRatingsSection: View {
     let viewModel: StationRatingsViewModel
     let summary: RatingSummaryDTO?
+    let minRaters: Int?
     let useLongNames: Bool
     let onSignIn: () -> Void
 
@@ -21,7 +22,7 @@ struct StationRatingsSection: View {
             if let summary {
                 summaryCard(summary)
             } else {
-                Text("Not enough reports yet. A score appears once three drivers have rated this station.")
+                Text(RatingCopy.noScore(minRaters: minRaters))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -84,7 +85,7 @@ struct StationRatingsSection: View {
                     Text(String(format: "%.1f", summary.avgStars)).font(.title2.bold())
                     StarsView(value: summary.avgStars)
                 }
-                Text("Average from \(summary.raterCount) driver\(summary.raterCount == 1 ? "" : "s")")
+                Text("Average from \(RatingCopy.drivers(summary.raterCount))")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
