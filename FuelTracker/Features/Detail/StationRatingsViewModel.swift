@@ -79,6 +79,18 @@ enum RatingCopy {
         "Something else",
     ]
 
+    /// What the ratings section says before a station has a score, given the backend's threshold.
+    static func noScore(minRaters: Int?) -> String {
+        guard let minRaters else { return "Not enough reports yet." }
+        if minRaters <= 1 { return "No score yet. Be the first to rate this station." }
+        return "Not enough reports yet. A score appears once \(minRaters) drivers have rated this station."
+    }
+
+    /// "1 driver" / "7 drivers".
+    static func drivers(_ count: Int) -> String {
+        "\(count) driver\(count == 1 ? "" : "s")"
+    }
+
     static func blockerMessage(_ raw: String, dailyCapResetsAt: String?) -> String {
         guard let blocker = RatingBlocker(rawValue: raw) else { return "You can't leave a rating right now." }
         switch blocker {
