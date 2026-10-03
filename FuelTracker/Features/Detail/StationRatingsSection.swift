@@ -51,7 +51,7 @@ struct StationRatingsSection: View {
             if viewModel.hiddenRatingCount > 0 {
                 let count = viewModel.hiddenRatingCount
                 HStack(spacing: 4) {
-                    Text("\(count) comment\(count == 1 ? "" : "s") from reviewers you've hidden.")
+                    Text("\(count) rating\(count == 1 ? "" : "s") from reviewers you've hidden.")
                     Button("Show them again") { Task { await viewModel.showHiddenReviewers() } }
                 }
                 .font(.caption)
@@ -65,7 +65,7 @@ struct StationRatingsSection: View {
                     if viewModel.isLoadingMore {
                         ProgressView()
                     } else {
-                        Text("Show more comments")
+                        Text("Show more ratings")
                     }
                 }
                 .buttonStyle(.bordered)
@@ -137,8 +137,8 @@ struct StarsView: View {
     }
 }
 
-/// One published comment, with its Report and Hide-reviewer actions. Signed-out taps on either
-/// action go to sign-in instead.
+/// One driver's rating: stars, price report and, once published, the comment with its Report and
+/// Hide-reviewer actions. Signed-out taps on either action go to sign-in instead.
 private struct RatingCommentRow: View {
     let rating: PublicRatingDTO
     let useLongNames: Bool
@@ -176,17 +176,20 @@ private struct RatingCommentRow: View {
                 Text(comment).font(.subheadline)
             }
 
-            HStack(spacing: 16) {
-                Button("Report") {
-                    if isLoggedIn { showingReportReasons = true } else { onSignIn() }
+            // Only a published comment can be reported, or used to hide its author.
+            if rating.comment != nil {
+                HStack(spacing: 16) {
+                    Button("Report") {
+                        if isLoggedIn { showingReportReasons = true } else { onSignIn() }
+                    }
+                    Button("Hide comments from this reviewer") {
+                        if isLoggedIn { onHideReviewer() } else { onSignIn() }
+                    }
                 }
-                Button("Hide comments from this reviewer") {
-                    if isLoggedIn { onHideReviewer() } else { onSignIn() }
-                }
+                .font(.caption)
+                .buttonStyle(.borderless)
+                .disabled(isBusy)
             }
-            .font(.caption)
-            .buttonStyle(.borderless)
-            .disabled(isBusy)
 
             if let message {
                 Text(message)
