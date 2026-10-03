@@ -252,7 +252,8 @@ final class FuelPricesAPIClient: FuelPricesAPI {
     func getStationRatings(stationId: Int, page: Int) async throws -> PublicRatingsResponse {
         try await client.request(APIEndpoint(
             path: "api/stations/\(stationId)/ratings", method: .get,
-            queryItems: [.init(name: "page", value: "\(page)")]
+            // include=all lists every rating behind the score; an unpublished comment comes back nil.
+            queryItems: [.init(name: "page", value: "\(page)"), .init(name: "include", value: "all")]
         ))
     }
 
