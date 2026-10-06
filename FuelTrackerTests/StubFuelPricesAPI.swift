@@ -42,6 +42,7 @@ final class StubFuelPricesAPI: FuelPricesAPI, @unchecked Sendable {
     func forgotPassword(_ body: ForgotPasswordRequest) async throws { throw StubError.unimplemented }
     func updateFcmToken(_ token: String) async throws { throw StubError.unimplemented }
     func deleteAccount() async throws { throw StubError.unimplemented }
+    func signOut() async {}
     func getPreferences() async throws -> PreferencesDTO { throw StubError.unimplemented }
     func updatePreferences(_ body: PreferencesDTO) async throws -> PreferencesDTO { throw StubError.unimplemented }
     func getFavourites() async throws -> [FavouriteDTO] { throw StubError.unimplemented }

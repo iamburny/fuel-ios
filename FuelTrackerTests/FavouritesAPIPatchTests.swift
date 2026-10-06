@@ -68,62 +68,69 @@ private extension NSLock {
     }
 }
 
-struct FavouritesAPIPatchTests {
-    @Test func updateFavouriteIssuesPatchWithBodyAndAuthHeader() async throws {
-        let tokenStore = TokenStore()
-        let savedToken = tokenStore.token
-        defer { tokenStore.token = savedToken }
-        tokenStore.token = "test-access-token"
+/// Nested in `KeychainSerializedTests` because it seeds the real Keychain-backed `TokenStore`.
+extension KeychainSerializedTests {
+    struct FavouritesAPIPatchTests {
+        @Test func updateFavouriteIssuesPatchWithBodyAndAuthHeader() async throws {
+            let tokenStore = TokenStore()
+            let savedSession = tokenStore.session
+            defer {
+                if let savedSession { try? tokenStore.setSession(savedSession) } else { tokenStore.clear() }
+            }
+            try tokenStore.setSession(TokenStore.Session(accessToken: "test-access-token", refreshToken: savedSession?.refreshToken))
 
-        CapturingURLProtocol.reset(respondingWith: Data(
-            #"{"id":5,"station_id":501,"fuel_type":"E10","notify_on_drop":false,"price_threshold_pence":null}"#.utf8
-        ))
+            CapturingURLProtocol.reset(respondingWith: Data(
+                #"{"id":5,"station_id":501,"fuel_type":"E10","notify_on_drop":false,"price_threshold_pence":null}"#.utf8
+            ))
 
-        let config = URLSessionConfiguration.ephemeral
-        config.protocolClasses = [CapturingURLProtocol.self]
-        let session = URLSession(configuration: config)
-        let apiClient = APIClient(baseURL: URL(string: "https://example.test")!, tokenStore: tokenStore, session: session)
-        let api = FuelPricesAPIClient(client: apiClient)
+            let config = URLSessionConfiguration.ephemeral
+            config.protocolClasses = [CapturingURLProtocol.self]
+            let session = URLSession(configuration: config)
+            let apiClient = APIClient(baseURL: URL(string: "https://example.test")!, tokenStore: tokenStore, session: session)
+            let api = FuelPricesAPIClient(client: apiClient)
 
-        let updated = try await api.updateFavourite(id: 5, FavouriteUpdateRequest(notifyOnDrop: false))
+            let updated = try await api.updateFavourite(id: 5, FavouriteUpdateRequest(notifyOnDrop: false))
 
-        let request = CapturingURLProtocol.lastRequest()
-        #expect(request?.httpMethod == "PATCH")
-        #expect(request?.url?.path == "/api/favourites/5")
-        #expect(request?.value(forHTTPHeaderField: "Authorization") == "Bearer test-access-token")
-        let sentBody = try request?.httpBody.map { try JSONSerialization.jsonObject(with: $0) as? [String: Any] }
-        #expect(sentBody??["notify_on_drop"] as? Bool == false)
+            let request = CapturingURLProtocol.lastRequest()
+            #expect(request?.httpMethod == "PATCH")
+            #expect(request?.url?.path == "/api/favourites/5")
+            #expect(request?.value(forHTTPHeaderField: "Authorization") == "Bearer test-access-token")
+            let sentBody = try request?.httpBody.map { try JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+            #expect(sentBody??["notify_on_drop"] as? Bool == false)
 
-        #expect(updated.id == 5)
-        #expect(updated.notifyOnDrop == false)
-    }
+            #expect(updated.id == 5)
+            #expect(updated.notifyOnDrop == false)
+        }
 
-    @Test func updateFavouriteFuelTypeIssuesPatchWithBodyAndAuthHeader() async throws {
-        let tokenStore = TokenStore()
-        let savedToken = tokenStore.token
-        defer { tokenStore.token = savedToken }
-        tokenStore.token = "test-access-token"
+        @Test func updateFavouriteFuelTypeIssuesPatchWithBodyAndAuthHeader() async throws {
+            let tokenStore = TokenStore()
+            let savedSession = tokenStore.session
+            defer {
+                if let savedSession { try? tokenStore.setSession(savedSession) } else { tokenStore.clear() }
+            }
+            try tokenStore.setSession(TokenStore.Session(accessToken: "test-access-token", refreshToken: savedSession?.refreshToken))
 
-        CapturingURLProtocol.reset(respondingWith: Data(
-            #"{"id":5,"station_id":501,"fuel_type":"HVO","notify_on_drop":true,"price_threshold_pence":null}"#.utf8
-        ))
+            CapturingURLProtocol.reset(respondingWith: Data(
+                #"{"id":5,"station_id":501,"fuel_type":"HVO","notify_on_drop":true,"price_threshold_pence":null}"#.utf8
+            ))
 
-        let config = URLSessionConfiguration.ephemeral
-        config.protocolClasses = [CapturingURLProtocol.self]
-        let session = URLSession(configuration: config)
-        let apiClient = APIClient(baseURL: URL(string: "https://example.test")!, tokenStore: tokenStore, session: session)
-        let api = FuelPricesAPIClient(client: apiClient)
+            let config = URLSessionConfiguration.ephemeral
+            config.protocolClasses = [CapturingURLProtocol.self]
+            let session = URLSession(configuration: config)
+            let apiClient = APIClient(baseURL: URL(string: "https://example.test")!, tokenStore: tokenStore, session: session)
+            let api = FuelPricesAPIClient(client: apiClient)
 
-        let updated = try await api.updateFavourite(id: 5, FavouriteFuelTypeUpdateRequest(fuelType: "HVO"))
+            let updated = try await api.updateFavourite(id: 5, FavouriteFuelTypeUpdateRequest(fuelType: "HVO"))
 
-        let request = CapturingURLProtocol.lastRequest()
-        #expect(request?.httpMethod == "PATCH")
-        #expect(request?.url?.path == "/api/favourites/5")
-        #expect(request?.value(forHTTPHeaderField: "Authorization") == "Bearer test-access-token")
-        let sentBody = try request?.httpBody.map { try JSONSerialization.jsonObject(with: $0) as? [String: Any] }
-        #expect(sentBody??["fuel_type"] as? String == "HVO")
+            let request = CapturingURLProtocol.lastRequest()
+            #expect(request?.httpMethod == "PATCH")
+            #expect(request?.url?.path == "/api/favourites/5")
+            #expect(request?.value(forHTTPHeaderField: "Authorization") == "Bearer test-access-token")
+            let sentBody = try request?.httpBody.map { try JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+            #expect(sentBody??["fuel_type"] as? String == "HVO")
 
-        #expect(updated.id == 5)
-        #expect(updated.fuelType == "HVO")
+            #expect(updated.id == 5)
+            #expect(updated.fuelType == "HVO")
+        }
     }
 }
