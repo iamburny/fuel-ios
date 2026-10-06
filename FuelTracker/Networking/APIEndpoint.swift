@@ -244,7 +244,7 @@ final class APIClient: Sendable {
         let cleared = await refreshCoordinator.afterInFlightRefresh {
             self.tokenStore.clear(ifGeneration: start.generation)
         }
-        let refreshToken = cleared.map(\.refreshToken) ?? start.session?.refreshToken
+        let refreshToken = cleared?.refreshToken ?? start.session?.refreshToken
         if let refreshToken {
             await revoke(refreshToken: refreshToken)
         }
