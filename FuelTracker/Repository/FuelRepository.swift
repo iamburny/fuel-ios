@@ -167,10 +167,17 @@ final class FuelRepository {
     // MARK: - Auth
 
     /// Persists the token/email to Keychain via `TokenStore` AND republishes the `@Observable`
-    /// `isLoggedIn`/`currentEmail` properties so SwiftUI views update automatically. Throws, and
-    /// stays signed out, if the tokens can't be saved.
-    private func setSignedIn(token: String, refreshToken: String?, email: String?) throws {
-        try tokenStore.setSession(TokenStore.Session(accessToken: token, refreshToken: refreshToken))
+    /// `isLoggedIn`/`currentEmail` properties so SwiftUI views update automatically. If the tokens
+    /// can't be saved, the session the server just issued is revoked and an `AuthError` is thrown.
+    private func setSignedIn(_ response: TokenResponse, email: String?) async throws {
+        do {
+            try tokenStore.setSession(TokenStore.Session(accessToken: response.accessToken, refreshToken: response.refreshToken))
+        } catch {
+            if let refreshToken = response.refreshToken {
+                await api.revokeRefreshToken(refreshToken)
+            }
+            throw AuthError(reason: .other, message: "Couldn't save your sign-in on this device. Please try again.")
+        }
         isLoggedIn = true
         if let email {
             tokenStore.email = email
@@ -181,7 +188,7 @@ final class FuelRepository {
     func login(email: String, password: String) async throws -> TokenResponse {
         do {
             let response = try await api.login(email: email, password: password)
-            try setSignedIn(token: response.accessToken, refreshToken: response.refreshToken, email: email)
+            try await setSignedIn(response, email: email)
             return response
         } catch let error as APIError {
             throw AuthError.from(error)
@@ -201,7 +208,7 @@ final class FuelRepository {
     func loginWithGoogle(idToken: String, email: String) async throws -> TokenResponse {
         do {
             let response = try await api.googleLogin(GoogleLoginRequest(idToken: idToken))
-            try setSignedIn(token: response.accessToken, refreshToken: response.refreshToken, email: email)
+            try await setSignedIn(response, email: email)
             return response
         } catch let error as APIError {
             throw AuthError.from(error)
@@ -213,7 +220,7 @@ final class FuelRepository {
     func loginWithApple(idToken: String, email: String?, name: String?) async throws -> TokenResponse {
         do {
             let response = try await api.appleLogin(AppleLoginRequest(idToken: idToken, email: email, name: name))
-            try setSignedIn(token: response.accessToken, refreshToken: response.refreshToken, email: email)
+            try await setSignedIn(response, email: email)
             return response
         } catch let error as APIError {
             throw AuthError.from(error)

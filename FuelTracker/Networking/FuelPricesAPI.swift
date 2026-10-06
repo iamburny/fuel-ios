@@ -33,6 +33,8 @@ protocol FuelPricesAPI: Sendable {
     func deleteAccount() async throws
     /// Clears the stored session and revokes it server-side (best-effort). Never fails.
     func signOut() async
+    /// Revokes one refresh token server-side, best-effort. Never fails.
+    func revokeRefreshToken(_ refreshToken: String) async
     func getPreferences() async throws -> PreferencesDTO
     func updatePreferences(_ body: PreferencesDTO) async throws -> PreferencesDTO
 
@@ -197,6 +199,10 @@ final class FuelPricesAPIClient: FuelPricesAPI {
 
     func signOut() async {
         await client.signOut()
+    }
+
+    func revokeRefreshToken(_ refreshToken: String) async {
+        await client.revoke(refreshToken: refreshToken)
     }
 
     func getPreferences() async throws -> PreferencesDTO {

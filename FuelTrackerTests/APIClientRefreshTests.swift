@@ -267,8 +267,27 @@ extension KeychainSerializedTests {
                 }
 
                 #expect(await sessionExpired.value == 0)
+                #expect(StubURLProtocol.counts().refresh == 2)
                 #expect(tokenStore.token == "expired-access-token")
                 #expect(tokenStore.refreshToken == "valid-refresh-token")
+            }
+        }
+
+        /// A refresh whose response was lost in transit is retried once at once with the same
+        /// token, which the server answers with a fresh pair while the token is in its grace window.
+        @Test func refreshRetriesOnceAfterTransportFailure() async throws {
+            try await withScratchTokenStore { tokenStore in
+                StubURLProtocol.script(
+                    refresh: [(StubURLProtocol.transportFailure, Data()), (200, refreshedPair)],
+                    protected: [(401, jsonData(#"{"detail":"Invalid token"}"#)), (200, jsonData("{}"))]
+                )
+                let client = makeClient(tokenStore: tokenStore)
+
+                try await client.requestNoContent(protectedEndpoint)
+
+                #expect(StubURLProtocol.counts().refresh == 2)
+                #expect(tokenStore.token == "new-access")
+                #expect(tokenStore.refreshToken == "new-refresh")
             }
         }
 
@@ -295,10 +314,18 @@ extension KeychainSerializedTests {
             }
         }
 
-        @Test func malformedRefreshBodyLeavesTokensIntactAndDoesNotSignOut() async throws {
+        /// A 2xx means the server has already rotated the refresh token, so if the new pair can't be
+        /// read the stored token is spent: keeping it would get every session revoked on its next
+        /// use. The session is cleared and the request isn't retried.
+        @Test(arguments: [
+            #"{"refresh_token":"new-refresh"}"#,
+            #"{"access_token":"new-access","token_type":"bearer"}"#,
+            "not json",
+        ])
+        func unreadableRefreshResponseSignsOutWithoutRetrying(body: String) async throws {
             try await withScratchTokenStore { tokenStore in
                 StubURLProtocol.script(
-                    refresh: [(200, jsonData(#"{"refresh_token":"new-refresh"}"#))],
+                    refresh: [(200, jsonData(body))],
                     protected: [(401, jsonData(#"{"detail":"Invalid token"}"#))]
                 )
                 let client = makeClient(tokenStore: tokenStore)
@@ -309,9 +336,10 @@ extension KeychainSerializedTests {
                     try await client.requestNoContent(protectedEndpoint)
                 }
 
-                #expect(await sessionExpired.value == 0)
-                #expect(tokenStore.token == "expired-access-token")
-                #expect(tokenStore.refreshToken == "valid-refresh-token")
+                #expect(await sessionExpired.value == 1)
+                #expect(StubURLProtocol.counts().refresh == 1)
+                #expect(StubURLProtocol.counts().protected == 1)
+                #expect(tokenStore.session == nil)
             }
         }
 
@@ -525,15 +553,25 @@ extension KeychainSerializedTests {
             }
         }
 
-        @Test func clearIfRefreshTokenOnlyClearsTheExpectedSession() async throws {
+        /// Refreshes don't start a new generation, so a clear for the original sign-in still applies
+        /// after several rotations and reports the newest refresh token.
+        @Test func clearIfGenerationSurvivesRotationsButNotANewSignIn() async throws {
             try await preservingKeychain { store in
-                try store.setSession(TokenStore.Session(accessToken: "a", refreshToken: "current"))
+                try store.setSession(TokenStore.Session(accessToken: "a", refreshToken: "A"))
+                let signedIn = store.snapshot.generation
+                #expect(try store.replaceSession(ifGeneration: signedIn, refreshToken: "A", with: TokenStore.Session(accessToken: "b", refreshToken: "B")))
+                #expect(try store.replaceSession(ifGeneration: signedIn, refreshToken: "B", with: TokenStore.Session(accessToken: "c", refreshToken: "C")))
 
-                #expect(store.clear(ifRefreshTokenIs: "stale") == false)
-                #expect(store.refreshToken == "current")
-
-                #expect(store.clear(ifRefreshTokenIs: "current"))
+                let cleared = store.clear(ifGeneration: signedIn)
+                #expect(cleared?.refreshToken == "C")
                 #expect(store.session == nil)
+
+                let stale = store.snapshot.generation
+                try store.setSession(TokenStore.Session(accessToken: "d", refreshToken: "D"))
+                #expect(store.clear(ifGeneration: stale) == nil)
+                #expect(store.refreshToken == "D")
+                #expect(try store.replaceSession(ifGeneration: stale, refreshToken: "D", with: TokenStore.Session(accessToken: "e", refreshToken: "E")) == false)
+                #expect(store.refreshToken == "D")
             }
         }
     }

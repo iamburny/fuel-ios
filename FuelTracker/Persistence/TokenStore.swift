@@ -28,6 +28,10 @@ final class TokenStore: @unchecked Sendable {
     private let legacyRefreshTokenAccount = "refresh_token"
     private let emailAccount = "user_email"
     private let lock = NSLock()
+    /// Incremented by `setSession` each time a sign-in stores a new session (never by a refresh).
+    /// Work that began under one sign-in compares it to tell whether the user has signed in again
+    /// since. Guarded by `lock`.
+    private var generation = 0
 
     /// The stored session, or `nil` when there is none or the Keychain can't be read right now.
     /// Use `loadSession()` where "unreadable" must not be mistaken for "signed out".
@@ -55,32 +59,56 @@ final class TokenStore: @unchecked Sendable {
         try lock.withLock { try loadSessionLocked() }
     }
 
-    /// Stores both tokens in one write. Throws if the Keychain write fails, leaving the previously
-    /// stored session as it was.
-    func setSession(_ session: Session) throws {
-        try lock.withLock { try writeSessionLocked(session) }
+    /// A sign-in generation paired with the session stored at that moment.
+    struct Snapshot: Sendable {
+        let session: Session?
+        let generation: Int
     }
 
-    /// Stores `session` only if the stored refresh token is still `expected`, so a refresh that
-    /// finishes after a sign-out or a new login can't overwrite it. Returns whether it wrote.
-    func replaceSession(ifRefreshTokenIs expected: String, with session: Session) throws -> Bool {
+    struct Cleared: Sendable {
+        let refreshToken: String?
+    }
+
+    /// Like `loadSession()`, plus the current sign-in generation read under the same lock.
+    func loadSnapshot() throws -> Snapshot {
+        try lock.withLock { Snapshot(session: try loadSessionLocked(), generation: generation) }
+    }
+
+    /// Non-throwing `loadSnapshot()`: `session` is `nil` when the Keychain can't be read.
+    var snapshot: Snapshot {
+        lock.withLock { Snapshot(session: try? loadSessionLocked(), generation: generation) }
+    }
+
+    /// Stores a newly signed-in session in one write and starts a new sign-in generation. Throws
+    /// if the Keychain write fails, leaving the previously stored session as it was.
+    func setSession(_ session: Session) throws {
+        try lock.withLock {
+            try writeSessionLocked(session)
+            generation += 1
+        }
+    }
+
+    /// Stores a rotated `session` only if no new sign-in has happened since `generation` and the
+    /// stored refresh token is still `refreshToken`, so a refresh finishing after a sign-out or a
+    /// new login can't overwrite it. Returns whether it wrote.
+    func replaceSession(ifGeneration generation: Int, refreshToken: String, with session: Session) throws -> Bool {
         try lock.withLock { () throws -> Bool in
-            guard try loadSessionLocked()?.refreshToken == expected else { return false }
+            guard self.generation == generation,
+                  try loadSessionLocked()?.refreshToken == refreshToken else { return false }
             try writeSessionLocked(session)
             return true
         }
     }
 
-    /// Clears everything unless the stored session now holds a refresh token other than
-    /// `expected` — a login or rotation the caller doesn't know about, which must survive.
-    /// Returns `true` when the store ends up signed out.
-    func clear(ifRefreshTokenIs expected: String?) -> Bool {
-        lock.withLock { () -> Bool in
-            if let current = try? loadSessionLocked(), current.refreshToken != expected {
-                return false
-            }
+    /// Clears everything unless a new sign-in has been stored since `generation` was read — that
+    /// session must survive. Returns `nil` when it left things alone, otherwise the refresh token
+    /// that was stored at the moment of clearing.
+    func clear(ifGeneration generation: Int) -> Cleared? {
+        lock.withLock { () -> Cleared? in
+            guard self.generation == generation else { return nil }
+            let refreshToken = (try? loadSessionLocked())?.refreshToken
             clearLocked()
-            return true
+            return Cleared(refreshToken: refreshToken)
         }
     }
 
@@ -88,6 +116,8 @@ final class TokenStore: @unchecked Sendable {
         lock.withLock { clearLocked() }
     }
 
+    /// Deletes are best-effort: if one fails there's nothing further to try, and the next read
+    /// simply finds whatever is left.
     private func clearLocked() {
         for account in [sessionAccount, legacyTokenAccount, legacyRefreshTokenAccount, emailAccount] {
             _ = try? write(nil, account: account)
