@@ -117,7 +117,7 @@ struct SettingsView: View {
                         Text("Signed in" + (repository.currentEmail.map { " as \($0)" } ?? ""))
                         Spacer()
                         Button("Sign out", role: .destructive) {
-                            repository.logout()
+                            Task { await repository.logout() }
                         }
                     }
                     HStack {

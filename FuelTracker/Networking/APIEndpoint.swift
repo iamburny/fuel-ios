@@ -71,13 +71,20 @@ private actor RefreshCoordinator {
         }
         let task = Task { try await operation() }
         inFlight = task
-        do {
-            try await task.value
-            inFlight = nil
-        } catch {
-            inFlight = nil
-            throw error
+        defer {
+            if inFlight == task { inFlight = nil }
         }
+        try await task.value
+    }
+
+    /// Runs `body` once no refresh is in flight. `body` is synchronous, so no refresh can start
+    /// between the wait ending and `body` finishing.
+    func afterInFlightRefresh<T: Sendable>(_ body: @Sendable () -> T) async -> T {
+        while let task = inFlight {
+            _ = try? await task.value
+            if inFlight == task { inFlight = nil }
+        }
+        return body()
     }
 }
 
@@ -90,10 +97,12 @@ final class APIClient: Sendable {
     private let tokenStore: TokenStore
     private let refreshCoordinator = RefreshCoordinator()
 
-    /// Invoked when a 401 on an authenticated call can't be recovered from — the refresh token
-    /// itself is missing/invalid/expired. Set by `AppContainer` once `FuelRepository` exists, to
-    /// flip `isLoggedIn`/`currentEmail` back to signed-out. Awaited (not fire-and-forget) so that
-    /// state update happens before the triggering error reaches any caller's `catch`.
+    /// Invoked when a 401 on an authenticated call can't be recovered from — the refresh token is
+    /// missing, was refused, or was spent without a usable replacement being stored — after the
+    /// stored tokens have been cleared. Set by
+    /// `AppContainer` once `FuelRepository` exists, to flip `isLoggedIn`/`currentEmail` back to
+    /// signed-out. Awaited (not fire-and-forget) so that state update happens before the
+    /// triggering error reaches any caller's `catch`.
     var onSessionExpired: (@Sendable () async -> Void)? {
         get { sessionExpiredHandler.withLock { $0 } }
         set { sessionExpiredHandler.withLock { $0 = newValue } }
@@ -130,64 +139,127 @@ final class APIClient: Sendable {
         _ = try await rawRequest(endpoint)
     }
 
-    /// Thrown by `performRefresh()` when there's no refresh token to even attempt with — distinct
-    /// from a transport-level failure (offline, timeout) so `rawRequest` can tell "nothing to
-    /// recover with, genuinely signed out" apart from "couldn't reach the server this time".
-    private struct NoRefreshTokenStored: Error, Sendable {}
+    /// Thrown by `performRefresh()` when this device's session can't continue: there's no refresh
+    /// token to try, the refresh endpoint refused it (400/401), or the server rotated it but the
+    /// replacement couldn't be read or stored — the old token is spent, and presenting it again
+    /// later would make the server revoke every session the user has. `generation` is the sign-in
+    /// it belonged to, so a newer sign-in isn't cleared by mistake.
+    ///
+    /// Any other failure (offline, timeout, 5xx, 429, a Keychain read error before the call) is
+    /// transient and keeps the stored tokens for a later retry.
+    private struct SessionLost: Error, Sendable {
+        let generation: Int
+    }
 
     /// Exchanges the stored refresh token for a new access token (+ rotated refresh token) via
     /// `POST /api/auth/refresh`. Goes straight through `performOnce`, never `rawRequest` — this
     /// call must never itself trigger the retry-on-401 logic below.
     private func performRefresh() async throws {
-        guard let refreshToken = tokenStore.refreshToken else {
-            throw NoRefreshTokenStored()
+        let snapshot = try tokenStore.loadSnapshot()
+        guard let refreshToken = snapshot.session?.refreshToken else {
+            throw SessionLost(generation: snapshot.generation)
         }
         let body = try RefreshRequest(refreshToken: refreshToken).asJSONData()
         let endpoint = APIEndpoint(path: "api/auth/refresh", method: .post, jsonBody: body)
-        let data = try await performOnce(endpoint)
-        let decoded = try JSONDecoder().decode(TokenResponse.self, from: data)
-        tokenStore.token = decoded.accessToken
-        if let newRefreshToken = decoded.refreshToken {
-            tokenStore.refreshToken = newRefreshToken
+        let data: Data
+        do {
+            data = try await postRefresh(endpoint)
+        } catch let error as APIError where error.statusCode == 400 || error.statusCode == 401 {
+            throw SessionLost(generation: snapshot.generation)
+        }
+        // A 2xx means the server has rotated `refreshToken`; from here on it must not be kept.
+        guard let decoded = try? JSONDecoder().decode(TokenResponse.self, from: data),
+              let newRefreshToken = decoded.refreshToken else {
+            throw SessionLost(generation: snapshot.generation)
+        }
+        let session = TokenStore.Session(accessToken: decoded.accessToken, refreshToken: newRefreshToken)
+        let stored: Bool
+        do {
+            stored = try tokenStore.replaceSession(ifGeneration: snapshot.generation, refreshToken: refreshToken, with: session)
+        } catch {
+            await revoke(refreshToken: newRefreshToken)
+            throw SessionLost(generation: snapshot.generation)
+        }
+        if !stored {
+            // Signed out or signed in afresh while this was in flight; the rotated token is unused.
+            await revoke(refreshToken: newRefreshToken)
+        }
+    }
+
+    /// Posts the refresh, retrying once straight away if no response arrived (timeout, dropped
+    /// connection). The server may have rotated the token before the answer was lost; presenting
+    /// it again within its grace window returns a fresh pair instead of counting as reuse.
+    private func postRefresh(_ endpoint: APIEndpoint) async throws -> Data {
+        do {
+            return try await performOnce(endpoint, accessToken: nil)
+        } catch is URLError {
+            return try await performOnce(endpoint, accessToken: nil)
         }
     }
 
     /// Wraps `performOnce` with a one-shot refresh-and-retry on a 401 from an authenticated call.
     /// `endpoint.requiresAuth` naturally excludes the refresh call itself (built without it) and
-    /// unauthenticated calls like `/login` (a wrong-password 401 there is untouched, same as
-    /// before this existed).
+    /// unauthenticated calls like `/login`, where a wrong-password 401 is passed straight through.
     private func rawRequest(_ endpoint: APIEndpoint) async throws -> Data {
+        let sentToken = endpoint.requiresAuth ? tokenStore.token : nil
         do {
-            return try await performOnce(endpoint)
+            return try await performOnce(endpoint, accessToken: sentToken)
         } catch APIError.http(status: 401, message: let message) where endpoint.requiresAuth {
+            // Another request already refreshed (or the user signed in again) after this one was
+            // sent, so retry with the newer token rather than spending another rotation.
+            if let currentToken = tokenStore.token, currentToken != sentToken {
+                return try await performOnce(endpoint, accessToken: currentToken)
+            }
             do {
                 try await refreshCoordinator.refreshOnce { try await self.performRefresh() }
-            } catch is NoRefreshTokenStored {
-                // Nothing to recover with — genuinely signed out.
-                await onSessionExpired?()
-                tokenStore.clear()
-                throw APIError.http(status: 401, message: message)
-            } catch APIError.http {
-                // The refresh endpoint itself gave a definitive HTTP rejection — the refresh
-                // token is invalid/expired/revoked. Genuinely signed out.
-                await onSessionExpired?()
-                tokenStore.clear()
+            } catch let lost as SessionLost {
+                await expireSession(ifGeneration: lost.generation)
                 throw APIError.http(status: 401, message: message)
             } catch {
-                // A transient failure while trying to refresh — offline, timeout, or a decoding
-                // hiccup on the refresh response — not a rejection of the refresh token itself.
-                // Leave the tokens intact so a later retry (once connectivity returns) can still
-                // recover the session, instead of force-signing-out on a network blip.
+                // Transient: leave the tokens intact so a later request can still recover the
+                // session, instead of force-signing-out on a network blip or server hiccup.
                 throw APIError.http(status: 401, message: message)
             }
             // Retry exactly once with the freshly-refreshed token. Deliberately not wrapped in
             // this same catch again — a 401 here is a genuine anomaly and should propagate
             // normally rather than loop.
-            return try await performOnce(endpoint)
+            return try await performOnce(endpoint, accessToken: tokenStore.token)
         }
     }
 
-    private func performOnce(_ endpoint: APIEndpoint) async throws -> Data {
+    /// Signs out after the session was lost, unless the user has signed in again since, in which
+    /// case that newer session is left alone.
+    private func expireSession(ifGeneration generation: Int) async {
+        guard tokenStore.clear(ifGeneration: generation) != nil else { return }
+        await onSessionExpired?()
+    }
+
+    /// Clears the stored session and revokes its refresh token server-side. Waits for any
+    /// in-flight refresh first, so the token revoked is the newest one (whatever that refresh
+    /// rotated to) and nothing is written back afterwards. A session from a sign-in made while
+    /// waiting is left alone, and only the token stored when sign-out began is revoked. The revoke
+    /// is best-effort and never throws.
+    func signOut() async {
+        let start = self.tokenStore.snapshot
+        let cleared = await refreshCoordinator.afterInFlightRefresh {
+            self.tokenStore.clear(ifGeneration: start.generation)
+        }
+        let refreshToken = cleared.map(\.refreshToken) ?? start.session?.refreshToken
+        if let refreshToken {
+            await revoke(refreshToken: refreshToken)
+        }
+    }
+
+    /// `POST /api/auth/logout` — unauthenticated and always 200 for any token, so the only
+    /// possible failures are transport errors, which are ignored.
+    func revoke(refreshToken: String) async {
+        guard let body = try? LogoutRequest(refreshToken: refreshToken).asJSONData() else { return }
+        let endpoint = APIEndpoint(path: "api/auth/logout", method: .post, jsonBody: body)
+        _ = try? await performOnce(endpoint, accessToken: nil)
+    }
+
+    /// Attaches `accessToken` as the Bearer token when `endpoint.requiresAuth`.
+    private func performOnce(_ endpoint: APIEndpoint, accessToken: String?) async throws -> Data {
         guard var components = URLComponents(url: baseURL.appendingPathComponent(endpoint.path), resolvingAgainstBaseURL: false) else {
             throw APIError.invalidURL
         }
@@ -209,8 +281,8 @@ final class APIClient: Sendable {
             request.httpBody = jsonBody
         }
 
-        if endpoint.requiresAuth, let token = tokenStore.token {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        if endpoint.requiresAuth, let accessToken {
+            request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         }
 
         let (data, response) = try await session.data(for: request)

@@ -37,7 +37,7 @@ final class AppContainer {
         // isLoggedIn/currentEmail back to signed-out. See APIClient.onSessionExpired.
         weak let weakRepository = repository
         apiClient.onSessionExpired = {
-            await MainActor.run { weakRepository?.logout() }
+            await MainActor.run { weakRepository?.markSignedOut() }
         }
         locationManager = LocationManager()
         analytics = FirebaseAppAnalytics() // gated internally on FirebaseApp.app() != nil

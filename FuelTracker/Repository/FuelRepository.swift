@@ -167,19 +167,28 @@ final class FuelRepository {
     // MARK: - Auth
 
     /// Persists the token/email to Keychain via `TokenStore` AND republishes the `@Observable`
-    /// `isLoggedIn`/`currentEmail` properties so SwiftUI views update automatically.
-    private func setSignedIn(token: String, refreshToken: String?, email: String) {
-        tokenStore.token = token
-        tokenStore.refreshToken = refreshToken
-        tokenStore.email = email
+    /// `isLoggedIn`/`currentEmail` properties so SwiftUI views update automatically. If the tokens
+    /// can't be saved, the session the server just issued is revoked and an `AuthError` is thrown.
+    private func setSignedIn(_ response: TokenResponse, email: String?) async throws {
+        do {
+            try tokenStore.setSession(TokenStore.Session(accessToken: response.accessToken, refreshToken: response.refreshToken))
+        } catch {
+            if let refreshToken = response.refreshToken {
+                await api.revokeRefreshToken(refreshToken)
+            }
+            throw AuthError(reason: .other, message: "Couldn't save your sign-in on this device. Please try again.")
+        }
         isLoggedIn = true
-        currentEmail = email
+        if let email {
+            tokenStore.email = email
+            currentEmail = email
+        }
     }
 
     func login(email: String, password: String) async throws -> TokenResponse {
         do {
             let response = try await api.login(email: email, password: password)
-            setSignedIn(token: response.accessToken, refreshToken: response.refreshToken, email: email)
+            try await setSignedIn(response, email: email)
             return response
         } catch let error as APIError {
             throw AuthError.from(error)
@@ -199,7 +208,7 @@ final class FuelRepository {
     func loginWithGoogle(idToken: String, email: String) async throws -> TokenResponse {
         do {
             let response = try await api.googleLogin(GoogleLoginRequest(idToken: idToken))
-            setSignedIn(token: response.accessToken, refreshToken: response.refreshToken, email: email)
+            try await setSignedIn(response, email: email)
             return response
         } catch let error as APIError {
             throw AuthError.from(error)
@@ -211,13 +220,7 @@ final class FuelRepository {
     func loginWithApple(idToken: String, email: String?, name: String?) async throws -> TokenResponse {
         do {
             let response = try await api.appleLogin(AppleLoginRequest(idToken: idToken, email: email, name: name))
-            tokenStore.token = response.accessToken
-            tokenStore.refreshToken = response.refreshToken
-            isLoggedIn = true
-            if let email {
-                tokenStore.email = email
-                currentEmail = email
-            }
+            try await setSignedIn(response, email: email)
             return response
         } catch let error as APIError {
             throw AuthError.from(error)
@@ -240,8 +243,16 @@ final class FuelRepository {
         try await api.updateFcmToken(token)
     }
 
-    func logout() {
-        tokenStore.clear()
+    /// Flips the UI to signed-out immediately, then clears the Keychain and revokes the refresh
+    /// token server-side once any in-flight refresh has settled (see `APIClient.signOut()`).
+    func logout() async {
+        markSignedOut()
+        await api.signOut()
+    }
+
+    /// Updates the observable signed-in state only; used when `APIClient` has already cleared the
+    /// tokens after the server refused the refresh token.
+    func markSignedOut() {
         isLoggedIn = false
         currentEmail = nil
     }
@@ -254,7 +265,7 @@ final class FuelRepository {
         } catch let error as APIError {
             throw AuthError.from(error)
         }
-        logout()
+        await logout()
     }
 
     // MARK: - Preferences

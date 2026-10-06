@@ -49,6 +49,15 @@ struct RefreshRequest: Encodable, Sendable {
     }
 }
 
+/// Sent to `POST /api/auth/logout` to revoke the refresh token on sign-out.
+struct LogoutRequest: Encodable, Sendable {
+    let refreshToken: String
+
+    enum CodingKeys: String, CodingKey {
+        case refreshToken = "refresh_token"
+    }
+}
+
 struct TokenResponse: Decodable, Sendable {
     let accessToken: String
     /// Optional permanently, not just during rollout — costs nothing and is cheap insurance
